@@ -41,6 +41,9 @@ function createBoard() {
     board[closestY][closestX] = 1;
     placeStone(closestX, closestY, 'white');
 
+    const userCoord = convertCoord(closestX, closestY);
+    chat("사용자", `${userCoord}`);
+
     if (checkWin(board, 1)) {
       chat("시스템", "사용자가 승리했습니다!");
       return;
@@ -65,16 +68,18 @@ function aiMove() {
   board[move.row][move.col] = -1;
   placeStone(move.col, move.row, 'black');
 
+  const aiCoord = convertCoord(move.col, move.row);
+  const moveEvaluation = evaluateMove(move.col, move.row);
+  chat("AI", `${aiCoord}${moveEvaluation}`);
+
   if (checkWin(board, -1)) {
     chat("시스템", "AI가 승리했습니다!");
     return;
   }
-
-  const coordStr = convertCoord(move.col, move.row);
-  chat("AI", `${coordStr}!`);
 }
 
 function chooseAiMove() {
+  // 1. AI가 승리할 수 있는 수를 찾음
   for (let y = 0; y < 19; y++) {
     for (let x = 0; x < 19; x++) {
       if (board[y][x] === 0) {
@@ -88,6 +93,7 @@ function chooseAiMove() {
     }
   }
 
+  // 2. 사용자가 승리할 수 있는 수를 차단
   for (let y = 0; y < 19; y++) {
     for (let x = 0; x < 19; x++) {
       if (board[y][x] === 0) {
@@ -101,6 +107,18 @@ function chooseAiMove() {
     }
   }
 
+  // 3. 사용자의 3개 이상 연속된 돌을 차단
+  for (let y = 0; y < 19; y++) {
+    for (let x = 0; x < 19; x++) {
+      if (board[y][x] === 0) {
+        if (countConsecutive(x, y, 1) >= 3) {
+          return { col: x, row: y };
+        }
+      }
+    }
+  }
+
+  // 4. 랜덤으로 수를 선택
   let col = Math.floor(Math.random() * 19);
   let row = Math.floor(Math.random() * 19);
   while (board[row][col] !== 0) {
@@ -169,6 +187,42 @@ function isForbiddenMove(x, y, player) {
   }
 
   return openThrees >= 2;
+}
+
+function countConsecutive(x, y, player) {
+  const directions = [
+    [1, 0],
+    [0, 1],
+    [1, 1],
+    [1, -1],
+  ];
+
+  let maxCount = 0;
+
+  for (const [dx, dy] of directions) {
+    let count = 1;
+    for (let i = 1; i < 5; i++) {
+      const nx = x + dx * i;
+      const ny = y + dy * i;
+      if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === player) {
+        count++;
+      } else {
+        break;
+      }
+    }
+    if (count > maxCount) {
+      maxCount = count;
+    }
+  }
+
+  return maxCount;
+}
+
+function evaluateMove(x, y) {
+  if (countConsecutive(x, y, -1) >= 3) {
+    return "!";
+  }
+  return "?";
 }
 
 function convertCoord(col, row) {
