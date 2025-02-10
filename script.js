@@ -11,19 +11,21 @@ function createBoard() {
         return;
     }
 
-    // 선 그리기
+    // 수평선과 수직선 그리기
     for (let i = 0; i < 19; i++) {
-        // 수평선
-        const horizontalLine = document.createElement("div");
-        horizontalLine.classList.add("line", "horizontal-line");
-        horizontalLine.style.top = `${i * 30}px`;
-        boardElement.appendChild(horizontalLine);
+        const lineH = document.createElement("div");
+        lineH.classList.add("line", "horizontal-line");
+        lineH.style.top = `${i * 30}px`;
+        lineH.style.width = "100%";
+        lineH.style.height = "1px";
+        boardElement.appendChild(lineH);
 
-        // 수직선
-        const verticalLine = document.createElement("div");
-        verticalLine.classList.add("line", "vertical-line");
-        verticalLine.style.left = `${i * 30}px`;
-        boardElement.appendChild(verticalLine);
+        const lineV = document.createElement("div");
+        lineV.classList.add("line", "vertical-line");
+        lineV.style.left = `${i * 30}px`;
+        lineV.style.width = "1px";
+        lineV.style.height = "100%";
+        boardElement.appendChild(lineV);
     }
 
     // 클릭 이벤트 추가 (교차점 클릭 시 돌 놓기)
