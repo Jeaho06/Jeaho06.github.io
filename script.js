@@ -5,68 +5,65 @@ document.addEventListener('DOMContentLoaded', function() {
 const board = Array(19).fill().map(() => Array(19).fill(0)); // 19x19 바둑판 배열
 
 function createBoard() {
-    const boardTable = document.getElementById("game-board");
-    if (!boardTable) {
+    const boardElement = document.getElementById("game-board");
+    if (!boardElement) {
         console.error("오목판을 찾을 수 없습니다.");
         return;
     }
-    for (let row = 0; row < 19; row++) {
-        const tableRow = document.createElement("tr");
-        for (let col = 0; col < 19; col++) {
-            const cell = document.createElement("td");
-            cell.addEventListener("click", () => userMove(row, col)); // 클릭 시 사용자 수
-            tableRow.appendChild(cell);
-        }
-        boardTable.appendChild(tableRow);
+
+    // 선 그리기
+    for (let i = 0; i < 19; i++) {
+        // 수평선
+        const horizontalLine = document.createElement("div");
+        horizontalLine.classList.add("line", "horizontal-line");
+        horizontalLine.style.top = `${i * 30}px`;
+        boardElement.appendChild(horizontalLine);
+
+        // 수직선
+        const verticalLine = document.createElement("div");
+        verticalLine.classList.add("line", "vertical-line");
+        verticalLine.style.left = `${i * 30}px`;
+        boardElement.appendChild(verticalLine);
     }
+
+    // 클릭 이벤트 추가 (교차점 클릭 시 돌 놓기)
+    boardElement.addEventListener('click', (event) => {
+        const x = Math.floor(event.offsetX / 30);
+        const y = Math.floor(event.offsetY / 30);
+
+        if (board[x][y] === 0) {
+            board[x][y] = 1; // 사용자 차례
+            placeStone(x, y, 'white');
+            aiMove(); // AI 차례
+        }
+    });
 }
 
-function updateBoard() {
-    const boardTable = document.getElementById("game-board");
-    boardTable.innerHTML = ""; // 기존 보드 내용 삭제
-    for (let row = 0; row < 19; row++) {
-        const tableRow = document.createElement("tr");
-        for (let col = 0; col < 19; col++) {
-            const cell = document.createElement("td");
-            if (board[row][col] === 1) {
-                const piece = document.createElement("div");
-                piece.classList.add("white");
-                cell.appendChild(piece);
-            } else if (board[row][col] === -1) {
-                const piece = document.createElement("div");
-                piece.classList.add("black");
-                cell.appendChild(piece);
-            }
-            cell.addEventListener("click", () => userMove(row, col)); // 클릭 시 사용자 수
-            tableRow.appendChild(cell);
-        }
-        boardTable.appendChild(tableRow);
-    }
-}
+function placeStone(x, y, color) {
+    const boardElement = document.getElementById("game-board");
 
-function userMove(row, col) {
-    if (board[row][col] === 0) {
-        board[row][col] = 1; // 사용자의 차례
-        updateBoard();
-        aiMove(); // AI가 수를 두는 함수
-    }
+    const stone = document.createElement("div");
+    stone.classList.add("stone", color);
+    stone.style.left = `${x * 30}px`;
+    stone.style.top = `${y * 30}px`;
+    boardElement.appendChild(stone);
 }
 
 function aiMove() {
-    let move = chooseAiMove(); // AI의 수 선택 (랜덤 예시)
-    board[move.row][move.col] = -1; // AI의 차례
-    updateBoard();
-    chat("AI", `${move.row},${move.col}!`); // AI의 반칙 메시지 출력
+    let move = chooseAiMove(); // AI의 수 선택
+    board[move.x][move.y] = -1; // AI의 차례
+    placeStone(move.x, move.y, 'black');
+    chat("AI", `${move.x},${move.y}!`); // AI의 반칙 메시지 출력
 }
 
 function chooseAiMove() {
-    let row = Math.floor(Math.random() * 19);
-    let col = Math.floor(Math.random() * 19);
-    while (board[row][col] !== 0) {
-        row = Math.floor(Math.random() * 19);
-        col = Math.floor(Math.random() * 19);
+    let x = Math.floor(Math.random() * 19);
+    let y = Math.floor(Math.random() * 19);
+    while (board[x][y] !== 0) {
+        x = Math.floor(Math.random() * 19);
+        y = Math.floor(Math.random() * 19);
     }
-    return { row, col };
+    return { x, y };
 }
 
 function chat(sender, message) {
@@ -76,5 +73,3 @@ function chat(sender, message) {
     chatBox.appendChild(messageElem);
     chatBox.scrollTop = chatBox.scrollHeight; // 채팅창 스크롤 내리기
 }
-
-updateBoard();
