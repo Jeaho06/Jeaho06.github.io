@@ -46,8 +46,8 @@ function placeStone(x, y, color) {
 
     const stone = document.createElement("div");
     stone.classList.add("stone", color);
-    stone.style.left = `${x * 30}px`;
-    stone.style.top = `${y * 30}px`;
+    stone.style.left = `${x * 30 - 15}px`;  // 중심을 교차점에 맞추기 위해 -15px
+    stone.style.top = `${y * 30 - 15}px`;   // 중심을 교차점에 맞추기 위해 -15px
     boardElement.appendChild(stone);
 }
 
