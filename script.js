@@ -42,7 +42,7 @@ function createBoard() {
     }
 
     board[closestY][closestX] = 1;
-    placeStone(closestX, closestY, 'white');
+    placeStone(closestX, closestY, 'black'); // 사용자는 흑돌
     playSound("Movement.mp3"); // 착수 효과음 재생
 
     const userCoord = convertCoord(closestX, closestY);
@@ -54,6 +54,7 @@ function createBoard() {
     }
 
     isAITurn = true; // AI의 턴 시작
+    showThinkingMessage(); // AI가 생각 중임을 알리는 메시지
     setTimeout(aiMove, 3000); // AI가 3초 후에 착수
   });
 }
@@ -71,7 +72,7 @@ function placeStone(col, row, color) {
 function aiMove() {
   const move = chooseAiMove();
   board[move.row][move.col] = -1;
-  placeStone(move.col, move.row, 'black');
+  placeStone(move.col, move.row, 'white'); // AI는 백돌
   playSound("Movement.mp3"); // 착수 효과음 재생
 
   const aiCoord = convertCoord(move.col, move.row);
@@ -83,6 +84,21 @@ function aiMove() {
   }
 
   isAITurn = false; // AI의 턴 종료, 사용자의 턴 시작
+}
+
+function showThinkingMessage() {
+  const messages = [
+    "Compressing objects: 100% (3/3), done.",
+    "Writing objects: 100% (3/3), 832 bytes | 832.00 KiB/s, done.",
+    "Total 3 (delta 2), reused 0 (delta 0), pack-reused 0 (from 0)",
+    "remote: Resolving deltas: 100% (2/2), completed with 2 local objects.",
+    "Analyzing board state...",
+    "Calculating optimal move...",
+    "Evaluating strategic positions...",
+  ];
+
+  const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+  chat("AI", randomMessage);
 }
 
 function chooseAiMove() {
