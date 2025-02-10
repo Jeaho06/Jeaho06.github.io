@@ -121,7 +121,7 @@ function chooseFirstAIMove() {
     [-1, -1] // 왼쪽 위
   ];
 
-  const distance = Math.random() < 0.5 ? 1 : 2; // 1칸 또는 2칸 떨어진 곳
+  const distance = Math.random() < 0.5 ? 1 : 1; // 1칸 또는 2칸 떨어진 곳
   const randomDirection = directions[Math.floor(Math.random() * directions.length)];
 
   const newX = lastMove.col + randomDirection[0] * distance;
