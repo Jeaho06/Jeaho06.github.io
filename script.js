@@ -42,14 +42,14 @@ function createBoard() {
     placeStone(closestX, closestY, 'white');
 
     const userCoord = convertCoord(closestX, closestY);
-    chat("사용자", `${userCoord}`);
+    chat("사용자", `${userCoord}?`);
 
     if (checkWin(board, 1)) {
       chat("시스템", "사용자가 승리했습니다!");
       return;
     }
 
-    aiMove();
+    setTimeout(aiMove, 3000); // AI가 3초 후에 착수
   });
 }
 
@@ -69,8 +69,7 @@ function aiMove() {
   placeStone(move.col, move.row, 'black');
 
   const aiCoord = convertCoord(move.col, move.row);
-  const moveEvaluation = evaluateMove(move.col, move.row);
-  chat("AI", `${aiCoord}${moveEvaluation}`);
+  chat("AI", `${aiCoord}!`);
 
   if (checkWin(board, -1)) {
     chat("시스템", "AI가 승리했습니다!");
@@ -216,13 +215,6 @@ function countConsecutive(x, y, player) {
   }
 
   return maxCount;
-}
-
-function evaluateMove(x, y) {
-  if (countConsecutive(x, y, -1) >= 3) {
-    return "!";
-  }
-  return "?";
 }
 
 function convertCoord(col, row) {
