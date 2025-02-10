@@ -28,6 +28,27 @@ function createBoard() {
         boardElement.appendChild(lineV);
     }
 
+    // 알파벳과 숫자 추가
+    const alphabet = 'ABCDEFGHIJKLMNABCDEFGHIJKLMNOPQRS';
+    const boardLabels = document.createElement('div');
+    boardLabels.style.position = 'absolute';
+    boardLabels.style.top = '0';
+    boardLabels.style.left = '0';
+    boardLabels.style.width = '100%';
+    boardLabels.style.display = 'grid';
+    boardLabels.style.gridTemplateColumns = 'repeat(19, 1fr)';
+    boardLabels.style.color = 'black';
+
+    // 알파벳과 숫자 표시
+    for (let i = 0; i < 19; i++) {
+        const label = document.createElement("div");
+        label.textContent = alphabet[i];
+        label.style.textAlign = "center";
+        label.style.fontSize = "12px";
+        boardLabels.appendChild(label);
+    }
+    boardElement.appendChild(boardLabels);
+
     // 클릭 이벤트 추가 (교차점 클릭 시 돌 놓기)
     boardElement.addEventListener('click', (event) => {
         const x = Math.floor(event.offsetX / 30);
