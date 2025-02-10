@@ -1,74 +1,33 @@
-/* style.css 파일 */
-body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 0;
-  background-color: #f4f4f4;
+/* style.css */
+table {
+    border-collapse: collapse;
+    margin: 20px auto;
 }
 
-header {
-  background-color: #333;
-  color: white;
-  padding: 20px;
-  text-align: center;
-}
-
-header h1 {
-  margin: 0;
-}
-
-nav ul {
-  list-style-type: none;
-  padding: 0;
-  margin: 20px 0 0 0;
-}
-
-nav ul li {
-  display: inline-block;
-  margin-right: 20px;
-}
-
-nav ul li a {
-  color: white;
-  text-decoration: none;
-  font-size: 18px;
-}
-
-/* 모바일 화면 */
-@media (max-width: 768px) {
-  nav ul {
-    padding-left: 0;
+td {
+    width: 30px;
+    height: 30px;
+    border: 1px solid #ccc;
     text-align: center;
-  }
-
-  nav ul li {
-    display: block;
-    margin-bottom: 10px;
-  }
-
-  header h1 {
-    font-size: 24px;
-  }
-
-  nav ul li a {
-    font-size: 16px;
-  }
-
-  main {
-    padding: 15px;
-  }
+    vertical-align: middle;
+    background-color: #f9f9f9;
 }
 
-@media (max-width: 480px) {
-  header h1 {
-    font-size: 20px;
-  }
+td:hover {
+    background-color: #e0e0e0;
+}
 
-  nav ul li a {
-    font-size: 14px;
-  }
+.black, .white {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-block;
+}
 
-  footer {
-    font-size: 12px;
-  }
+.black {
+    background-color: black;
+}
+
+.white {
+    background-color: white;
 }
