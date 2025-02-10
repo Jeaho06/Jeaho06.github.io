@@ -125,14 +125,74 @@ function chooseAiMove() {
     }
   }
 
-  // 4. 랜덤으로 수를 선택
-  let col = Math.floor(Math.random() * 19);
-  let row = Math.floor(Math.random() * 19);
-  while (board[row][col] !== 0) {
-    col = Math.floor(Math.random() * 19);
-    row = Math.floor(Math.random() * 19);
+  // 4. AI가 유리한 위치를 찾음 (공격 또는 방어)
+  let bestMove = findBestMove();
+  if (bestMove) {
+    return bestMove;
   }
-  return { col, row };
+
+  // 5. 기본적으로 중앙에 가까운 위치를 선택
+  return findCenterMove();
+}
+
+function findBestMove() {
+  let bestScore = -Infinity;
+  let bestMove = null;
+
+  for (let y = 0; y < 19; y++) {
+    for (let x = 0; x < 19; x++) {
+      if (board[y][x] === 0) {
+        board[y][x] = -1;
+        let score = evaluatePosition(x, y, -1);
+        board[y][x] = 0;
+
+        if (score > bestScore) {
+          bestScore = score;
+          bestMove = { col: x, row: y };
+        }
+      }
+    }
+  }
+
+  return bestMove;
+}
+
+function evaluatePosition(x, y, player) {
+  let score = 0;
+  const directions = [
+    [1, 0],
+    [0, 1],
+    [1, 1],
+    [1, -1],
+  ];
+
+  for (const [dx, dy] of directions) {
+    let count = 1;
+    for (let i = 1; i < 5; i++) {
+      const nx = x + dx * i;
+      const ny = y + dy * i;
+      if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === player) {
+        count++;
+      } else {
+        break;
+      }
+    }
+    score += count * count; // 연속된 돌의 개수에 따라 점수 부여
+  }
+
+  return score;
+}
+
+function findCenterMove() {
+  const center = 9; // 19x19 보드의 중앙 좌표
+  for (let y = center - 2; y <= center + 2; y++) {
+    for (let x = center - 2; x <= center + 2; x++) {
+      if (board[y][x] === 0) {
+        return { col: x, row: y };
+      }
+    }
+  }
+  return null;
 }
 
 function checkWin(board, player) {
