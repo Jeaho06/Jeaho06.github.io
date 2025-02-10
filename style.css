@@ -1,4 +1,4 @@
-/* style.css */
+/* 전체 화면 중앙 정렬 */
 body {
     font-family: Arial, sans-serif;
     display: flex;
@@ -7,11 +7,13 @@ body {
     height: 100vh;
     margin: 0;
     flex-direction: column;
+    background-color: #f0f0f0; /* 배경색 */
 }
 
 .game-container {
     display: flex;
     align-items: center;
+    margin-bottom: 20px;
 }
 
 .ai-container, .user-container {
@@ -32,19 +34,21 @@ body {
 
 table {
     border-collapse: collapse;
+    border: 3px solid #8b4513; /* 바둑판 테두리 색상 (갈색) */
+    background-color: #deb887; /* 바둑판 배경색 (목재 색상) */
 }
 
 td {
     width: 30px;
     height: 30px;
-    border: 1px solid #ccc;
     text-align: center;
     vertical-align: middle;
-    background-color: #f9f9f9;
+    border: 1px solid #d2691e; /* 테두리 색상 (목재 색상에 어울림) */
+    background-color: #f5deb3; /* 칸의 배경색 */
 }
 
 td:hover {
-    background-color: #e0e0e0;
+    background-color: #e1cba7; /* 호버 시 색상 */
 }
 
 .black, .white {
@@ -62,6 +66,15 @@ td:hover {
     background-color: white;
 }
 
+/* 인공지능과 사용자 구역 스타일 */
+.ai-container, .user-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+}
+
 .chat-container {
     width: 100%;
     text-align: center;
@@ -76,4 +89,5 @@ td:hover {
     overflow-y: scroll;
     margin-bottom: 10px;
     padding: 10px;
+    background-color: #f1f1f1;
 }
