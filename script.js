@@ -33,8 +33,19 @@ function createBoard() {
 
     if (board[closestY][closestX] !== 0) return;
 
+    if (isForbiddenMove(closestX, closestY, 1)) {
+      chat("시스템", "금수입니다! 다른 위치를 선택하세요.");
+      return;
+    }
+
     board[closestY][closestX] = 1;
     placeStone(closestX, closestY, 'white');
+
+    if (checkWin(board, 1)) {
+      chat("시스템", "사용자가 승리했습니다!");
+      return;
+    }
+
     aiMove();
   });
 }
@@ -51,33 +62,24 @@ function placeStone(col, row, color) {
 
 function aiMove() {
   const move = chooseAiMove();
-  if (board[move.row][move.col] !== 0) {
-    chat("AI", "반칙을 했습니다! 하하하!");
-  }
   board[move.row][move.col] = -1;
   placeStone(move.col, move.row, 'black');
+
+  if (checkWin(board, -1)) {
+    chat("시스템", "AI가 승리했습니다!");
+    return;
+  }
+
   const coordStr = convertCoord(move.col, move.row);
   chat("AI", `${coordStr}!`);
 }
 
 function chooseAiMove() {
-  const cheatProbability = 0.1;
-
-  if (Math.random() < cheatProbability) {
-    let col = Math.floor(Math.random() * 19);
-    let row = Math.floor(Math.random() * 19);
-    while (board[row][col] === 0) {
-      col = Math.floor(Math.random() * 19);
-      row = Math.floor(Math.random() * 19);
-    }
-    return { col, row };
-  }
-
   for (let y = 0; y < 19; y++) {
     for (let x = 0; x < 19; x++) {
       if (board[y][x] === 0) {
-        board[y][x] = 1;
-        if (checkWin(board, 1)) {
+        board[y][x] = -1;
+        if (checkWin(board, -1)) {
           board[y][x] = 0;
           return { col: x, row: y };
         }
@@ -89,8 +91,8 @@ function chooseAiMove() {
   for (let y = 0; y < 19; y++) {
     for (let x = 0; x < 19; x++) {
       if (board[y][x] === 0) {
-        board[y][x] = -1;
-        if (checkWin(board, -1)) {
+        board[y][x] = 1;
+        if (checkWin(board, 1)) {
           board[y][x] = 0;
           return { col: x, row: y };
         }
@@ -121,7 +123,7 @@ function checkWin(board, player) {
       if (board[y][x] === player) {
         for (const [dx, dy] of directions) {
           let count = 1;
-          for (let i = 1; i < 5; i++) {
+          for (let i = 1; i < 6; i++) {
             const nx = x + dx * i;
             const ny = y + dy * i;
             if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === player) {
@@ -138,6 +140,35 @@ function checkWin(board, player) {
     }
   }
   return false;
+}
+
+function isForbiddenMove(x, y, player) {
+  const directions = [
+    [1, 0],
+    [0, 1],
+    [1, 1],
+    [1, -1],
+  ];
+
+  let openThrees = 0;
+
+  for (const [dx, dy] of directions) {
+    let count = 1;
+    for (let i = 1; i < 5; i++) {
+      const nx = x + dx * i;
+      const ny = y + dy * i;
+      if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === player) {
+        count++;
+      } else {
+        break;
+      }
+    }
+    if (count === 3) {
+      openThrees++;
+    }
+  }
+
+  return openThrees >= 2;
 }
 
 function convertCoord(col, row) {
