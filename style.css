@@ -1,21 +1,35 @@
 /* style.css */
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.game-container {
+    display: flex;
+    margin-top: 20px;
+}
+
+.board-container {
+    margin: 0 20px;
+}
+
 table {
     border-collapse: collapse;
-    margin: 20px auto;
-    background-color: #8B4513;  /* 갈색 배경색 */
 }
 
 td {
     width: 30px;
     height: 30px;
-    border: 1px solid #5A2D10;  /* 어두운 갈색 테두리 */
+    border: 1px solid #ccc;
     text-align: center;
     vertical-align: middle;
-    background-color: #D2691E;  /* 밝은 갈색 셀 배경 */
+    background-color: #f9f9f9;
 }
 
 td:hover {
-    background-color: #A0522D;  /* 마우스를 올렸을 때 색깔 */
+    background-color: #e0e0e0;
 }
 
 .black, .white {
@@ -31,4 +45,29 @@ td:hover {
 
 .white {
     background-color: white;
+}
+
+.chat-container {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#chat-box {
+    width: 300px;
+    height: 150px;
+    border: 1px solid #ccc;
+    overflow-y: scroll;
+    margin-bottom: 10px;
+    padding: 10px;
+}
+
+#chat-input {
+    width: 240px;
+    padding: 5px;
+}
+
+button {
+    padding: 5px 10px;
 }

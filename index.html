@@ -7,7 +7,25 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <table id="board"></table>
+    <div class="game-container">
+        <!-- 왼쪽 인공지능 보드 -->
+        <div class="board-container left">
+            <table id="ai-board"></table>
+        </div>
+
+        <!-- 오른쪽 사용자 보드 -->
+        <div class="board-container right">
+            <table id="user-board"></table>
+        </div>
+    </div>
+
+    <!-- 하단 채팅창 -->
+    <div class="chat-container">
+        <div id="chat-box"></div>
+        <input type="text" id="chat-input" placeholder="인공지능의 메시지">
+        <button onclick="sendMessage()">보내기</button>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>

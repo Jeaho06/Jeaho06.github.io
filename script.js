@@ -1,33 +1,45 @@
 // script.js
 
-// 19x19 보드판 생성
-const board = document.getElementById("board");
-
-for (let i = 0; i < 19; i++) {
-    const row = document.createElement("tr");
-    for (let j = 0; j < 19; j++) {
-        const cell = document.createElement("td");
-        cell.addEventListener("click", () => placeStone(i, j)); // 클릭 이벤트로 돌 놓기
-        row.appendChild(cell);
+// AI 보드와 사용자 보드 생성 (기본적으로 동일한 구조로 설정)
+function createBoard(boardId) {
+    const board = document.getElementById(boardId);
+    for (let i = 0; i < 19; i++) {
+        const row = document.createElement("tr");
+        for (let j = 0; j < 19; j++) {
+            const cell = document.createElement("td");
+            row.appendChild(cell);
+        }
+        board.appendChild(row);
     }
-    board.appendChild(row);
 }
 
-// 현재 턴: 'black' 또는 'white'
-let currentTurn = "black";
+createBoard("ai-board");
+createBoard("user-board");
 
-// 돌을 놓는 함수
-function placeStone(row, col) {
-    const cell = board.rows[row].cells[col];
+// 인공지능 메시지 출력 함수
+function sendMessage() {
+    const chatInput = document.getElementById("chat-input");
+    const chatBox = document.getElementById("chat-box");
 
-    // 이미 돌이 놓여있는 위치는 클릭할 수 없게 처리
-    if (cell.children.length > 0) return;
-
-    // 돌 놓기
-    const stone = document.createElement("div");
-    stone.classList.add(currentTurn);
-    cell.appendChild(stone);
-
-    // 턴 바꾸기
-    currentTurn = currentTurn === "black" ? "white" : "black";
+    const message = chatInput.value;
+    if (message) {
+        const messageElement = document.createElement("div");
+        messageElement.textContent = message;
+        chatBox.appendChild(messageElement);
+        chatBox.scrollTop = chatBox.scrollHeight;  // 채팅창 스크롤을 최신 메시지로 이동
+        chatInput.value = "";
+    }
 }
+
+// 인공지능 반칙 및 메시지 예시
+function aiMove(row, col, type) {
+    const aiMessage = document.getElementById("chat-input");
+    const message = `${String.fromCharCode(65 + col)}${19 - row} ${type === 'good' ? '!' : '?'} (AI의 수)`;
+
+    sendMessage(); // 채팅 전송
+    aiMessage.value = message;  // 채팅에 메시지 추가
+}
+
+// 예시: AI가 반칙을 했을 때
+aiMove(4, 5, 'bad'); // 예시: 잘못된 수 (반칙)
+s
