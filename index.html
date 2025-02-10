@@ -8,22 +8,31 @@
 </head>
 <body>
     <div class="game-container">
-        <!-- 왼쪽 인공지능 보드 -->
-        <div class="board-container left">
-            <table id="ai-board"></table>
+        <!-- 왼쪽 인공지능 영역 -->
+        <div class="ai-container">
+            <h2>인공지능</h2>
+            <div class="ai-board">
+                <table id="board"></table>
+            </div>
         </div>
 
-        <!-- 오른쪽 사용자 보드 -->
-        <div class="board-container right">
-            <table id="user-board"></table>
+        <!-- 오목판 (가운데에 위치) -->
+        <div class="board-container">
+            <table id="game-board"></table>
+        </div>
+
+        <!-- 오른쪽 사용자 영역 -->
+        <div class="user-container">
+            <h2>사용자</h2>
+            <div class="user-board">
+                <!-- 사용자 관련 내용 (예: 이름, 정보 등) -->
+            </div>
         </div>
     </div>
 
-    <!-- 하단 채팅창 -->
+    <!-- 인공지능 채팅 -->
     <div class="chat-container">
         <div id="chat-box"></div>
-        <input type="text" id="chat-input" placeholder="인공지능의 메시지">
-        <button onclick="sendMessage()">보내기</button>
     </div>
 
     <script src="script.js"></script>
