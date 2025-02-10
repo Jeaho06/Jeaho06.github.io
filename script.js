@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
 const board = Array(19).fill().map(() => Array(19).fill(0));
 const gridSize = 30;
 let isAITurn = false; // AI의 턴인지 여부를 확인하는 변수
+let lastMove = null; // 최근에 착수한 돌의 위치
 
 function createBoard() {
   const boardElement = document.getElementById("game-board");
@@ -62,11 +63,25 @@ function createBoard() {
 function placeStone(col, row, color) {
   const boardElement = document.getElementById("game-board");
 
+  // 기존 최근 착수한 돌의 표시 제거
+  if (lastMove) {
+    const lastStone = document.querySelector(`.stone[data-col='${lastMove.col}'][data-row='${lastMove.row}']`);
+    if (lastStone) {
+      lastStone.classList.remove("last-move");
+    }
+  }
+
   const stone = document.createElement("div");
   stone.classList.add("stone", color);
   stone.style.left = `${col * gridSize - gridSize / 2}px`;
   stone.style.top = `${row * gridSize - gridSize / 2}px`;
+  stone.setAttribute("data-col", col);
+  stone.setAttribute("data-row", row);
   boardElement.appendChild(stone);
+
+  // 최근 착수한 돌 표시
+  stone.classList.add("last-move");
+  lastMove = { col, row };
 }
 
 function aiMove() {
@@ -130,25 +145,63 @@ function chooseAiMove() {
     }
   }
 
-  // 3. 사용자의 3개 이상 연속된 돌을 차단
+  // 3. AI가 연속된 3을 만들고 승리할 기회를 잡음
   for (let y = 0; y < 19; y++) {
     for (let x = 0; x < 19; x++) {
       if (board[y][x] === 0) {
-        if (countConsecutive(x, y, 1) >= 3) {
+        board[y][x] = -1;
+        if (countConsecutive(x, y, -1) >= 3 && hasOpenEnds(x, y, -1)) {
+          board[y][x] = 0;
+          return { col: x, row: y };
+        }
+        board[y][x] = 0;
+      }
+    }
+  }
+
+  // 4. 사용자의 연속된 3을 차단
+  for (let y = 0; y < 19; y++) {
+    for (let x = 0; x < 19; x++) {
+      if (board[y][x] === 0) {
+        if (countConsecutive(x, y, 1) >= 3 && hasOpenEnds(x, y, 1)) {
           return { col: x, row: y };
         }
       }
     }
   }
 
-  // 4. AI가 유리한 위치를 찾음 (공격 또는 방어)
+  // 5. AI가 유리한 위치를 찾음 (공격 또는 방어)
   let bestMove = findBestMove();
   if (bestMove) {
     return bestMove;
   }
 
-  // 5. 기본적으로 중앙에 가까운 위치를 선택
+  // 6. 기본적으로 중앙에 가까운 위치를 선택
   return findCenterMove();
+}
+
+function hasOpenEnds(x, y, player) {
+  const directions = [
+    [1, 0],
+    [0, 1],
+    [1, 1],
+    [1, -1],
+  ];
+
+  for (const [dx, dy] of directions) {
+    let openEnds = 0;
+    for (let i = -1; i <= 1; i += 2) {
+      const nx = x + dx * i;
+      const ny = y + dy * i;
+      if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === 0) {
+        openEnds++;
+      }
+    }
+    if (openEnds >= 1) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function findBestMove() {
