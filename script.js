@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 const board = Array(19).fill().map(() => Array(19).fill(0));
 const gridSize = 30;
+let isAITurn = false; // AI의 턴인지 여부를 확인하는 변수
 
 function createBoard() {
   const boardElement = document.getElementById("game-board");
@@ -25,6 +26,8 @@ function createBoard() {
   }
 
   boardElement.addEventListener('click', (event) => {
+    if (isAITurn) return; // AI의 턴일 때는 클릭 무시
+
     const rect = boardElement.getBoundingClientRect();
     const offsetX = event.clientX - rect.left;
     const offsetY = event.clientY - rect.top;
@@ -40,6 +43,7 @@ function createBoard() {
 
     board[closestY][closestX] = 1;
     placeStone(closestX, closestY, 'white');
+    playSound("Movement.mp3"); // 착수 효과음 재생
 
     const userCoord = convertCoord(closestX, closestY);
     chat("사용자", `${userCoord}?`);
@@ -49,6 +53,7 @@ function createBoard() {
       return;
     }
 
+    isAITurn = true; // AI의 턴 시작
     setTimeout(aiMove, 3000); // AI가 3초 후에 착수
   });
 }
@@ -67,6 +72,7 @@ function aiMove() {
   const move = chooseAiMove();
   board[move.row][move.col] = -1;
   placeStone(move.col, move.row, 'black');
+  playSound("Movement.mp3"); // 착수 효과음 재생
 
   const aiCoord = convertCoord(move.col, move.row);
   chat("AI", `${aiCoord}!`);
@@ -75,6 +81,8 @@ function aiMove() {
     chat("시스템", "AI가 승리했습니다!");
     return;
   }
+
+  isAITurn = false; // AI의 턴 종료, 사용자의 턴 시작
 }
 
 function chooseAiMove() {
@@ -229,4 +237,9 @@ function chat(sender, message) {
   messageElem.textContent = `${sender}: ${message}`;
   chatBox.appendChild(messageElem);
   chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function playSound(soundFile) {
+  const audio = new Audio(soundFile);
+  audio.play();
 }
