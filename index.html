@@ -3,29 +3,70 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>게임 웹사이트</title>
-  <!-- CSS 파일 연결 -->
-  <link rel="stylesheet" href="style.css">
+  <title>소수 헌터</title>
+  <style>
+    body { text-align: center; font-family: Arial, sans-serif; }
+    #board { display: grid; grid-template-columns: repeat(10, 50px); gap: 5px; justify-content: center; }
+    .cell { width: 50px; height: 50px; line-height: 50px; text-align: center; border: 1px solid #333; cursor: pointer; }
+    .selected { background-color: lightblue; }
+  </style>
 </head>
 <body>
-  <header>
-    <h1>나의 게임 웹사이트</h1>
-    <nav>
-      <ul>
-        <li><a href="#">게임 시작</a></li>
-        <li><a href="#">점수</a></li>
-        <li><a href="#">설정</a></li>
-      </ul>
-    </nav>
-  </header>
-  <main>
-    <section>
-      <h2>게임 소개</h2>
-      <p>여기에는 게임에 대한 설명이 들어갑니다.</p>
-    </section>
-  </main>
-  <footer>
-    <p>© 2025 게임 웹사이트</p>
-  </footer>
+  <h1>소수 헌터</h1>
+  <p>숫자를 선택해 합이 소수가 되면 사라집니다!</p>
+  <div id="board"></div>
+  <p>선택한 합: <span id="sum">0</span></p>
+  <p>점수: <span id="score">0</span></p>
+  <script>
+    const boardSize = 10;
+    const board = document.getElementById("board");
+    let selectedCells = [];
+    let score = 0;
+
+    function isPrime(num) {
+      if (num < 2) return false;
+      for (let i = 2; i <= Math.sqrt(num); i++) {
+        if (num % i === 0) return false;
+      }
+      return true;
+    }
+
+    function generateBoard() {
+      board.innerHTML = "";
+      for (let i = 0; i < boardSize * boardSize; i++) {
+        let cell = document.createElement("div");
+        cell.classList.add("cell");
+        cell.textContent = Math.floor(Math.random() * 99) + 1;
+        cell.addEventListener("click", () => selectCell(cell));
+        board.appendChild(cell);
+      }
+    }
+
+    function selectCell(cell) {
+      if (!cell.classList.contains("selected")) {
+        cell.classList.add("selected");
+        selectedCells.push(cell);
+      } else {
+        cell.classList.remove("selected");
+        selectedCells = selectedCells.filter(c => c !== cell);
+      }
+      updateSum();
+    }
+
+    function updateSum() {
+      let sum = selectedCells.reduce((acc, cell) => acc + parseInt(cell.textContent), 0);
+      document.getElementById("sum").textContent = sum;
+      if (isPrime(sum)) {
+        score += sum;
+        document.getElementById("score").textContent = score;
+        selectedCells.forEach(cell => cell.textContent = Math.floor(Math.random() * 99) + 1);
+        selectedCells.forEach(cell => cell.classList.remove("selected"));
+        selectedCells = [];
+        updateSum();
+      }
+    }
+
+    generateBoard();
+  </script>
 </body>
 </html>
