@@ -6,6 +6,7 @@ const board = Array(19).fill().map(() => Array(19).fill(0));
 const gridSize = 30;
 let isAITurn = false; // AI의 턴인지 여부를 확인하는 변수
 let lastMove = null; // 최근에 착수한 돌의 위치
+let isFirstMove = true; // AI의 첫 수인지 여부를 확인하는 변수
 
 function createBoard() {
   const boardElement = document.getElementById("game-board");
@@ -85,7 +86,14 @@ function placeStone(col, row, color) {
 }
 
 function aiMove() {
-  const move = chooseAiMove();
+  let move;
+  if (isFirstMove) {
+    move = chooseFirstAIMove();
+    isFirstMove = false;
+  } else {
+    move = chooseAiMove();
+  }
+
   board[move.row][move.col] = -1;
   placeStone(move.col, move.row, 'white'); // AI는 백돌
   playSound("Movement.mp3"); // 착수 효과음 재생
@@ -99,6 +107,32 @@ function aiMove() {
   }
 
   isAITurn = false; // AI의 턴 종료, 사용자의 턴 시작
+}
+
+function chooseFirstAIMove() {
+  const directions = [
+    [1, 0],  // 오른쪽
+    [-1, 0], // 왼쪽
+    [0, 1],  // 아래
+    [0, -1], // 위
+    [1, 1],  // 오른쪽 아래
+    [1, -1], // 오른쪽 위
+    [-1, 1], // 왼쪽 아래
+    [-1, -1] // 왼쪽 위
+  ];
+
+  const distance = Math.random() < 0.5 ? 1 : 2; // 1칸 또는 2칸 떨어진 곳
+  const randomDirection = directions[Math.floor(Math.random() * directions.length)];
+
+  const newX = lastMove.col + randomDirection[0] * distance;
+  const newY = lastMove.row + randomDirection[1] * distance;
+
+  if (newX >= 0 && newX < 19 && newY >= 0 && newY < 19 && board[newY][newX] === 0) {
+    return { col: newX, row: newY };
+  }
+
+  // 유효하지 않은 경우, 다른 방향으로 시도
+  return chooseFirstAIMove();
 }
 
 function showThinkingMessage() {
