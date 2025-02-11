@@ -146,6 +146,10 @@ function showThinkingMessage() {
     "Evaluating strategic positions...",
   ];
 
+  const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+  chat("AI", randomMessage);
+}
+
 
 function chooseAiMove() {
   // 1. AI가 승리할 수 있는 수를 찾음 (우선순위 1)
