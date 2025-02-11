@@ -121,7 +121,7 @@ function chooseFirstAIMove() {
     [-1, -1] // 왼쪽 위
   ];
 
-  const distance = Math.random() < 0.5 ? 1 : 2; // 1칸 또는 2칸 떨어진 곳
+  const distance = Math.random() < 0.5 ? 1 : 1; // 1칸 또는 2칸 떨어진 곳
   const randomDirection = directions[Math.floor(Math.random() * directions.length)];
 
   const newX = lastMove.col + randomDirection[0] * distance;
@@ -146,57 +146,53 @@ function showThinkingMessage() {
     "Evaluating strategic positions...",
   ];
 
-  const randomMessage = messages[Math.floor(Math.random() * messages.length)];
-  chat("AI", randomMessage);
-}
-
 
 function chooseAiMove() {
-  // 1. AI가 승리할 수 있는 수를 찾음
-  for (let y = 0; y < 19; y++) {
-    for (let x = 0; x < 19; x++) {
-      if (board[y][x] === 0) {
-        board[y][x] = -1;
-        if (checkWin(board, -1)) {
-          board[y][x] = 0;
-          return { col: x, row: y };
-        }
-        board[y][x] = 0;
-      }
-    }
+  // 1. AI가 승리할 수 있는 수를 찾음 (우선순위 1)
+  const aiWinMove = findWinMove(-1);
+  if (aiWinMove) {
+    return aiWinMove;
   }
 
-  // 2. 사용자가 승리할 수 있는 수를 차단
-  for (let y = 0; y < 19; y++) {
-    for (let x = 0; x < 19; x++) {
-      if (board[y][x] === 0) {
-        board[y][x] = 1;
-        if (checkWin(board, 1)) {
-          board[y][x] = 0;
-          return { col: x, row: y };
-        }
-        board[y][x] = 0;
-      }
-    }
+  // 2. 사용자가 승리할 수 있는 수를 차단 (우선순위 2)
+  const userWinMove = findWinMove(1);
+  if (userWinMove) {
+    return userWinMove;
   }
 
-  // 3. 사용자의 연속된 3을 막음 (양끝이 막히지 않은 상태)
-  const blockMove = blockOpenThree();
-  if (blockMove) {
-    return blockMove;
+  // 3. AI가 양끝이 막히지 않은 연속된 3을 만들 수 있는지 확인 (우선순위 3)
+  const aiOpenThreeMove = findOpenThreeMove(-1);
+  if (aiOpenThreeMove) {
+    return aiOpenThreeMove;
   }
 
-  // 4. AI가 유리한 위치를 찾음 (공격 또는 방어)
-  let bestMove = findBestMove();
-  if (bestMove) {
-    return bestMove;
+  // 4. 사용자가 양끝이 막히지 않은 연속된 3을 만들 수 있는지 확인 (우선순위 4)
+  const userOpenThreeMove = findOpenThreeMove(1);
+  if (userOpenThreeMove) {
+    return userOpenThreeMove;
   }
 
   // 5. 기본적으로 중앙에 가까운 위치를 선택
   return findCenterMove();
 }
 
-function blockOpenThree() {
+function findWinMove(player) {
+  for (let y = 0; y < 19; y++) {
+    for (let x = 0; x < 19; x++) {
+      if (board[y][x] === 0) {
+        board[y][x] = player;
+        if (checkWin(board, player)) {
+          board[y][x] = 0;
+          return { col: x, row: y };
+        }
+        board[y][x] = 0;
+      }
+    }
+  }
+  return null;
+}
+
+function findOpenThreeMove(player) {
   const directions = [
     [1, 0],
     [0, 1],
@@ -204,14 +200,9 @@ function blockOpenThree() {
     [1, -1],
   ];
 
-  let bestMove = null;
-  let bestScore = -Infinity;
-
   for (let y = 0; y < 19; y++) {
     for (let x = 0; x < 19; x++) {
       if (board[y][x] === 0) {
-        let score = 0;
-
         for (const [dx, dy] of directions) {
           let count = 1;
           let openEnds = 0;
@@ -219,11 +210,11 @@ function blockOpenThree() {
           // 앞쪽 확인
           let nx = x + dx;
           let ny = y + dy;
-          if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === 1) {
+          if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === player) {
             count++;
             nx += dx;
             ny += dy;
-            if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === 1) {
+            if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === player) {
               count++;
             }
           }
@@ -231,11 +222,11 @@ function blockOpenThree() {
           // 뒤쪽 확인
           nx = x - dx;
           ny = y - dy;
-          if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === 1) {
+          if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === player) {
             count++;
             nx -= dx;
             ny -= dy;
-            if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === 1) {
+            if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === player) {
               count++;
             }
           }
@@ -246,68 +237,15 @@ function blockOpenThree() {
             const backOpen = x - dx * 2 >= 0 && x - dx * 2 < 19 && y - dy * 2 >= 0 && y - dy * 2 < 19 && board[y - dy * 2][x - dx * 2] === 0;
 
             if (frontOpen || backOpen) {
-              score += 10; // 양끝이 막히지 않은 연속된 3은 높은 우선순위
+              return { col: x, row: y };
             }
           }
         }
-
-        if (score > bestScore) {
-          bestScore = score;
-          bestMove = { col: x, row: y };
-        }
       }
     }
   }
 
-  return bestMove;
-}
-
-function findBestMove() {
-  let bestScore = -Infinity;
-  let bestMove = null;
-
-  for (let y = 0; y < 19; y++) {
-    for (let x = 0; x < 19; x++) {
-      if (board[y][x] === 0) {
-        board[y][x] = -1;
-        let score = evaluatePosition(x, y, -1);
-        board[y][x] = 0;
-
-        if (score > bestScore) {
-          bestScore = score;
-          bestMove = { col: x, row: y };
-        }
-      }
-    }
-  }
-
-  return bestMove;
-}
-
-function evaluatePosition(x, y, player) {
-  let score = 0;
-  const directions = [
-    [1, 0],
-    [0, 1],
-    [1, 1],
-    [1, -1],
-  ];
-
-  for (const [dx, dy] of directions) {
-    let count = 1;
-    for (let i = 1; i < 5; i++) {
-      const nx = x + dx * i;
-      const ny = y + dy * i;
-      if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === player) {
-        count++;
-      } else {
-        break;
-      }
-    }
-    score += count * count; // 연속된 돌의 개수에 따라 점수 부여
-  }
-
-  return score;
+  return null;
 }
 
 function findCenterMove() {
