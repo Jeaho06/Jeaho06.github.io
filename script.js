@@ -121,7 +121,7 @@ function chooseFirstAIMove() {
     [-1, -1] // 왼쪽 위
   ];
 
-  const distance = Math.random() < 0.5 ? 1 : 1; // 1칸 또는 2칸 떨어진 곳
+  const distance = Math.random() < 0.5 ? 1 : 2; // 1칸 또는 2칸 떨어진 곳
   const randomDirection = directions[Math.floor(Math.random() * directions.length)];
 
   const newX = lastMove.col + randomDirection[0] * distance;
@@ -149,6 +149,7 @@ function showThinkingMessage() {
   const randomMessage = messages[Math.floor(Math.random() * messages.length)];
   chat("AI", randomMessage);
 }
+
 
 function chooseAiMove() {
   // 1. AI가 승리할 수 있는 수를 찾음
@@ -179,42 +180,23 @@ function chooseAiMove() {
     }
   }
 
-  // 3. AI가 연속된 3을 만들고 승리할 기회를 잡음
-  for (let y = 0; y < 19; y++) {
-    for (let x = 0; x < 19; x++) {
-      if (board[y][x] === 0) {
-        board[y][x] = -1;
-        if (countConsecutive(x, y, -1) >= 3 && hasOpenEnds(x, y, -1)) {
-          board[y][x] = 0;
-          return { col: x, row: y };
-        }
-        board[y][x] = 0;
-      }
-    }
+  // 3. 사용자의 연속된 3을 막음 (양끝이 막히지 않은 상태)
+  const blockMove = blockOpenThree();
+  if (blockMove) {
+    return blockMove;
   }
 
-  // 4. 사용자의 연속된 3을 차단
-  for (let y = 0; y < 19; y++) {
-    for (let x = 0; x < 19; x++) {
-      if (board[y][x] === 0) {
-        if (countConsecutive(x, y, 1) >= 3 && hasOpenEnds(x, y, 1)) {
-          return { col: x, row: y };
-        }
-      }
-    }
-  }
-
-  // 5. AI가 유리한 위치를 찾음 (공격 또는 방어)
+  // 4. AI가 유리한 위치를 찾음 (공격 또는 방어)
   let bestMove = findBestMove();
   if (bestMove) {
     return bestMove;
   }
 
-  // 6. 기본적으로 중앙에 가까운 위치를 선택
+  // 5. 기본적으로 중앙에 가까운 위치를 선택
   return findCenterMove();
 }
 
-function hasOpenEnds(x, y, player) {
+function blockOpenThree() {
   const directions = [
     [1, 0],
     [0, 1],
@@ -222,20 +204,62 @@ function hasOpenEnds(x, y, player) {
     [1, -1],
   ];
 
-  for (const [dx, dy] of directions) {
-    let openEnds = 0;
-    for (let i = -1; i <= 1; i += 2) {
-      const nx = x + dx * i;
-      const ny = y + dy * i;
-      if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === 0) {
-        openEnds++;
+  let bestMove = null;
+  let bestScore = -Infinity;
+
+  for (let y = 0; y < 19; y++) {
+    for (let x = 0; x < 19; x++) {
+      if (board[y][x] === 0) {
+        let score = 0;
+
+        for (const [dx, dy] of directions) {
+          let count = 1;
+          let openEnds = 0;
+
+          // 앞쪽 확인
+          let nx = x + dx;
+          let ny = y + dy;
+          if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === 1) {
+            count++;
+            nx += dx;
+            ny += dy;
+            if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === 1) {
+              count++;
+            }
+          }
+
+          // 뒤쪽 확인
+          nx = x - dx;
+          ny = y - dy;
+          if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === 1) {
+            count++;
+            nx -= dx;
+            ny -= dy;
+            if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === 1) {
+              count++;
+            }
+          }
+
+          // 양끝이 막히지 않은지 확인
+          if (count === 3) {
+            const frontOpen = x + dx * 2 >= 0 && x + dx * 2 < 19 && y + dy * 2 >= 0 && y + dy * 2 < 19 && board[y + dy * 2][x + dx * 2] === 0;
+            const backOpen = x - dx * 2 >= 0 && x - dx * 2 < 19 && y - dy * 2 >= 0 && y - dy * 2 < 19 && board[y - dy * 2][x - dx * 2] === 0;
+
+            if (frontOpen || backOpen) {
+              score += 10; // 양끝이 막히지 않은 연속된 3은 높은 우선순위
+            }
+          }
+        }
+
+        if (score > bestScore) {
+          bestScore = score;
+          bestMove = { col: x, row: y };
+        }
       }
     }
-    if (openEnds >= 1) {
-      return true;
-    }
   }
-  return false;
+
+  return bestMove;
 }
 
 function findBestMove() {
