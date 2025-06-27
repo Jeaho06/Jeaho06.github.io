@@ -1,3 +1,28 @@
+/* 폭탄 효과 스타일 */
+.bomb-effect {
+  position: absolute;
+  width: 90px; /* gridSize * 3 */
+  height: 90px; /* gridSize * 3 */
+  background-color: rgba(255, 100, 0, 0.7);
+  border: 3px solid rgba(255, 0, 0, 0.8);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  animation: explode 0.5s ease-out;
+  pointer-events: none; /* 클릭 방지 */
+}
+
+@keyframes explode {
+  from {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+  }
+  to {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0;
+  }
+}
+
+/* 기존 스타일에서 좌표 계산이 정확하도록 일부 수정 */
 body {
   font-family: Arial, sans-serif;
   display: flex;
@@ -33,7 +58,8 @@ body {
 
 #game-board {
   position: relative;
-  width: 570px;
+  /* (gridSize * 18) + (gridSize) */
+  width: 570px; 
   height: 570px;
   background-color: #deb887;
   border: 3px solid #8b4513;
@@ -42,16 +68,19 @@ body {
 .line {
   position: absolute;
   background-color: #8b4513;
+  pointer-events: none;
 }
 
 .horizontal-line {
-  width: 100%;
+  width: calc(100% - 30px);
   height: 1px;
+  left: 15px;
 }
 
 .vertical-line {
   width: 1px;
-  height: 100%;
+  height: calc(100% - 30px);
+  top: 15px;
 }
 
 .stone {
@@ -59,6 +88,8 @@ body {
   width: 30px;
   height: 30px;
   border-radius: 50%;
+  transform: translate(-50%, -50%); /* 중앙 정렬 */
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.4);
 }
 
 .stone.black {
@@ -96,13 +127,19 @@ body {
 }
 
 #chat-box {
-  width: 400px;
+  width: 500px;
   height: 150px;
   border: 1px solid #ccc;
   overflow-y: scroll;
-  margin-bottom: 10px;
+  margin: 0 auto 10px auto;
   padding: 10px;
-  background-color: #f1f1f1;
+  background-color: #fff;
+  text-align: left;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+#chat-box p {
+    margin: 2px 0;
 }
 
 /* 좌표 라벨 스타일 */
@@ -116,11 +153,11 @@ body {
 }
 
 .top-label {
-  top: -18px;
+  top: -20px;
   transform: translateX(-50%);
 }
 
 .left-label {
-  left: -18px;
+  left: -25px;
   transform: translateY(-50%);
 }
