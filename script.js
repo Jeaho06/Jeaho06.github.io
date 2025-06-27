@@ -27,7 +27,7 @@ function createBoard() {
     console.error("오목판을 찾을 수 없습니다.");
     return;
   }
-
+  // (이하 보드 생성 로직은 동일하므로 생략)
   // 바둑판 줄 생성
   for (let i = 0; i < 19; i++) {
     const lineH = document.createElement("div");
@@ -55,119 +55,121 @@ function createBoard() {
     rowLabel.textContent = i + 1;
     boardElement.appendChild(rowLabel);
   }
-
+  
   boardElement.addEventListener('click', (event) => {
     if (isAITurn) return;
-
     const rect = boardElement.getBoundingClientRect();
     const offsetX = event.clientX - rect.left;
     const offsetY = event.clientY - rect.top;
-    
     const closestX = Math.round((offsetX - gridSize / 2) / gridSize);
     const closestY = Math.round((offsetY - gridSize / 2) / gridSize);
-
     if (closestX < 0 || closestX >= 19 || closestY < 0 || closestY >= 19 || board[closestY][closestX] !== 0) return;
-    
     if (isForbiddenMove(closestX, closestY, 1)) {
       chat("시스템", "금수입니다! 다른 위치를 선택하세요.");
       return;
     }
-
     board[closestY][closestX] = 1;
     placeStone(closestX, closestY, 'black');
     playSound("Movement.mp3");
-
     const userCoord = convertCoord(closestX, closestY);
     chat("사용자", `${userCoord}?`);
-
     if (checkWin(board, 1)) {
       chat("시스템", "사용자가 승리했습니다!");
       isAITurn = true;
       return;
     }
-
     isAITurn = true;
     showThinkingMessage();
     setTimeout(aiMove, 3000);
   });
 }
 
+/**
+ * AI의 턴을 관리하는 메인 함수
+ * 1. 설치된 폭탄이 있으면 터뜨림 (최우선)
+ * 2. 이길 수 있는 수가 있으면 즉시 둠
+ * 3. 일정 확률로 반칙 또는 일반 수를 둠
+ */
 function aiMove() {
-    // 1. 가장 먼저, 설치된 폭탄이 있는지 확인
+    // [최우선] 설치된 폭탄이 있는지 확인
     if (bombState.isArmed) {
-        detonateBomb(); // 폭탄이 있으면 반드시 터뜨리고 턴 종료
+        detonateBomb(); // detonateBomb 함수가 스스로 턴을 종료하므로 여기서 return
         return;
     }
 
-    // 2. 폭탄이 없다면, 일반적인 수 결정
+    // 이길 수 있는 수가 있는지 확인
     const winMove = findWinMove(-1);
     if (winMove) {
-        performNormalMove(winMove); // 이길 수 있으면 즉시 둠
-        isAITurn = false;
+        performNormalMove(winMove);
+        isAITurn = false; // 즉시 실행되는 행동이므로 aiMove에서 턴 종료
         return;
     }
     
-    // 3. 반칙을 할지 결정
-    if (Math.random() < cheatProbability && !isFirstMove && lastMove) {
-        const cheatRoll = Math.random(); // 0 ~ 1 사이의 난수
+    // 반칙을 시도할지 결정
+    const willCheat = Math.random() < cheatProbability && !isFirstMove && lastMove;
+    if (willCheat) {
+        const cheatRoll = Math.random();
         let cheatSuccess = false;
 
         if (cheatRoll < 0.1) { // 10% 확률로 폭탄 설치
-            cheatSuccess = placeBomb();
-        } else { // 나머지 90% 확률로 다른 반칙
+            cheatSuccess = placeBomb(); // placeBomb 함수가 스스로 턴을 종료함
+        } else { // 90% 확률로 다른 반칙
             const otherCheats = [performDoubleMove, performStoneSwap];
             const chosenCheat = otherCheats[Math.floor(Math.random() * otherCheats.length)];
-            cheatSuccess = chosenCheat();
+            cheatSuccess = chosenCheat(); // 각 반칙 함수가 스스로 턴을 종료함
         }
         
-        if (!cheatSuccess) { // 반칙이 실패하면 일반 수
+        // 만약 선택된 반칙이 (돌을 놓을 곳이 없어서) 실패했다면, 일반 수를 둠
+        if (!cheatSuccess) {
             performNormalMove();
             isAITurn = false;
         }
+
     } else {
+        // 반칙을 하지 않으면 일반 수를 둠
         performNormalMove();
         isAITurn = false;
     }
 
-    // 4. AI의 수 이후 승리 조건 확인
+    // AI의 수가 끝난 후 승리 조건 확인
     if (checkWin(board, -1)) {
         chat("시스템", "AI가 승리했습니다!");
         isAITurn = true; // 게임 종료
     }
 }
 
-// --- 폭탄 관련 함수 (신규/수정) ---
+// --- 폭탄 관련 함수 ---
 
-// 폭탄을 설치하는 함수
+/**
+ * 폭탄을 설치하는 함수.
+ * 폭탄 설치는 지연 없이 즉시 이루어지지만, 그 자체가 턴 소모이므로 함수 내에서 턴을 종료함.
+ */
 function placeBomb() {
-    const target = chooseAiMove(); // 폭탄을 둘 최적의 위치 탐색
+    const target = chooseAiMove();
     const move = target.move;
-
     if (move && board[move.row][move.col] === 0) {
-        // 논리 보드에 폭탄(2) 표시
-        board[move.row][move.col] = 2;
-
-        // 전역 상태에 폭탄 정보 저장
+        board[move.row][move.col] = 2; // 논리 보드에 폭탄(2) 상태 표시
         bombState = { isArmed: true, col: move.col, row: move.row };
-
-        // 화면에 빨간 폭탄 돌 표시
         placeStone(move.col, move.row, 'bomb');
         playSound("Movement.mp3");
-
         const bombCoord = convertCoord(move.col, move.row);
-        chat("AI", `제가 ${bombCoord}에 특별한 돌을 하나 두겠습니다... (폭탄 설치)`);
+        chat("AI", `저는 ${bombCoord}에 폭탄을 설치하겠습니다.`);
         
-        isAITurn = false; // 폭탄 설치 후 즉시 턴 종료
+        // 중요: 폭탄 설치 후 즉시 턴이 종료되어야 함
+        isAITurn = false; 
         return true;
     }
-    return false; // 폭탄 설치 실패
+    return false;
 }
 
-// 폭탄을 터뜨리는 함수
+/**
+ * 폭탄을 터뜨리는 함수.
+ * 폭발 이펙트 때문에 setTimeout을 사용하므로, 함수 내부에서 비동기적으로 턴을 종료함.
+ */
 function detonateBomb() {
     const center = bombState;
     const centerCoord = convertCoord(center.col, center.row);
-    chat("AI", `${centerCoord}에 설치했던 폭탄을 터뜨립니다!`);
+    chat("AI", `저는 ${centerCoord}에 설치했던 폭탄을 터뜨리겠습니다.`);
 
     const boardElement = document.getElementById("game-board");
     const bombEffect = document.createElement("div");
@@ -185,59 +187,25 @@ function detonateBomb() {
                 }
             }
         }
-        
         bombEffect.remove();
-
-        // 폭탄 상태 초기화
         bombState = { isArmed: false, col: null, row: null };
         
-        // 폭발 후 턴 종료
+        // 중요: 폭발이 모두 끝난 후 턴 종료
         isAITurn = false;
         
-        // 혹시라도 폭발로 인해 사용자가 이기는 경우가 있는지 체크
         if (checkWin(board, 1)) {
             chat("시스템", "사용자가 승리했습니다!");
             isAITurn = true;
         }
-
     }, 500);
 }
 
 
-// --- 기존 함수들 (일부 수정) ---
+// --- 일반/기타 반칙 함수 ---
 
-// placeStone 함수는 클래스 이름만 받으면 되므로 수정 불필요
-function placeStone(col, row, color) {
-  const boardElement = document.getElementById("game-board");
-  if (lastMove) {
-    const lastStone = document.querySelector(`.stone[data-col='${lastMove.col}'][data-row='${lastMove.row}']`);
-    if (lastStone) lastStone.classList.remove("last-move");
-  }
-  const stone = document.createElement("div");
-  stone.classList.add("stone", color);
-  stone.style.left = `${col * gridSize + gridSize/2}px`;
-  stone.style.top = `${row * gridSize + gridSize/2}px`;
-  stone.setAttribute("data-col", col);
-  stone.setAttribute("data-row", row);
-  boardElement.appendChild(stone);
-
-  if (color !== 'bomb') { // 폭탄은 lastMove로 표시하지 않음
-    stone.classList.add("last-move");
-    lastMove = { col, row };
-  }
-}
-
-function removeStone(col, row) {
-    const stoneElement = document.querySelector(`.stone[data-col='${col}'][data-row='${row}']`);
-    if (stoneElement) {
-        stoneElement.remove();
-    }
-    if (row >= 0 && row < 19 && col >= 0 && col < 19) {
-        board[row][col] = 0; // 논리 보드에서도 제거
-    }
-}
-
-// performNormalMove는 aiMove 함수 내에서 턴 관리를 하므로 자체 턴 종료 로직 제거
+/**
+ * 일반 수를 두는 함수. 이 함수는 즉시 실행되므로 턴 종료를 호출자인 aiMove에 위임함.
+ */
 function performNormalMove(move = null) {
     let reason = "";
     if (move) {
@@ -247,7 +215,6 @@ function performNormalMove(move = null) {
         move = aiDecision.move;
         reason = aiDecision.reason;
     }
-    
     if (move && board[move.row][move.col] === 0) {
         board[move.row][move.col] = -1;
         placeStone(move.col, move.row, 'white');
@@ -256,6 +223,7 @@ function performNormalMove(move = null) {
         chat("AI", `저는 ${aiCoord}에 돌을 두겠습니다. ${reason}`);
         isFirstMove = false;
     } else {
+        // (이하 생략)
         const fallbackMove = findCenterMove();
         if(fallbackMove && board[fallbackMove.row][fallbackMove.col] === 0) {
              board[fallbackMove.row][fallbackMove.col] = -1;
@@ -269,17 +237,17 @@ function performNormalMove(move = null) {
     }
 }
 
-// 다른 반칙 함수들은 턴 종료 로직을 aiMove에서 관리하므로 isAITurn = false 부분만 제거 또는 확인
+/**
+ * 돌 2번 두기. setTimeout을 사용하므로 내부에서 턴을 종료함.
+ */
 function performDoubleMove() {
     const aiDecision = chooseAiMove();
     const move1 = aiDecision.move;
-    
     if (move1 && board[move1.row][move1.col] === 0) {
         board[move1.row][move1.col] = -1;
         placeStone(move1.col, move1.row, 'white');
         const aiCoord1 = convertCoord(move1.col, move1.row);
-        chat("AI", `일단 ${aiCoord1}에 한 수를 두고... (돌 2번 두기)`);
-        
+        chat("AI", `저는 일단 ${aiCoord1}에 한 수를 두고...`);
         const move2 = findNearMove(move1.col, move1.row);
         if (move2 && board[move2.row][move2.col] === 0) {
             setTimeout(() => {
@@ -287,8 +255,8 @@ function performDoubleMove() {
                 placeStone(move2.col, move2.row, 'white');
                 playSound("Movement.mp3");
                 const aiCoord2 = convertCoord(move2.col, move2.row);
-                chat("AI", `이어서 ${aiCoord2}에도 한 수 더 두겠습니다!`);
-                isAITurn = false; // 턴 종료
+                chat("AI", `이어서 ${aiCoord2}에도 한 수 더 두겠습니다.`);
+                isAITurn = false; // 2번째 수가 놓인 후 턴 종료
             }, 500);
         } else { isAITurn = false; }
         return true;
@@ -296,6 +264,9 @@ function performDoubleMove() {
     return false;
 }
 
+/**
+ * 돌 바꿔치기. setTimeout을 사용하므로 내부에서 턴을 종료함.
+ */
 function performStoneSwap() {
     if (!lastMove) return false;
     let aiStone;
@@ -311,7 +282,7 @@ function performStoneSwap() {
         const userStone = lastMove;
         const userCoord = convertCoord(userStone.col, userStone.row);
         const aiCoord = convertCoord(aiStone.col, aiStone.row);
-        chat("AI", `당신의 돌(${userCoord})과 제 돌(${aiCoord})의 위치를 바꾸겠습니다! (돌 바꿔치기)`);
+        chat("AI", `저는 당신의 돌(${userCoord})과 제 돌(${aiCoord})의 위치를 바꾸겠습니다.`);
         removeStone(userStone.col, userStone.row);
         removeStone(aiStone.col, aiStone.row);
         setTimeout(() => {
@@ -320,14 +291,39 @@ function performStoneSwap() {
             board[aiStone.row][aiStone.col] = 1;
             placeStone(aiStone.col, aiStone.row, 'black');
             playSound("Movement.mp3");
-            isAITurn = false; // 턴 종료
+            isAITurn = false; // 교체가 완료된 후 턴 종료
         }, 500);
         return true;
     }
     return false;
 }
 
-// 이하 나머지 함수들은 대부분 수정이 필요 없습니다.
+
+// --- 이하 유틸리티 및 규칙 확인 함수 (수정 없음) ---
+
+function placeStone(col, row, color) {
+  const boardElement = document.getElementById("game-board");
+  if (lastMove) {
+    const lastStone = document.querySelector(`.stone[data-col='${lastMove.col}'][data-row='${lastMove.row}']`);
+    if (lastStone) lastStone.classList.remove("last-move");
+  }
+  const stone = document.createElement("div");
+  stone.classList.add("stone", color);
+  stone.style.left = `${col * gridSize + gridSize/2}px`;
+  stone.style.top = `${row * gridSize + gridSize/2}px`;
+  stone.setAttribute("data-col", col);
+  stone.setAttribute("data-row", row);
+  boardElement.appendChild(stone);
+  if (color !== 'bomb') {
+    stone.classList.add("last-move");
+    lastMove = { col, row };
+  }
+}
+function removeStone(col, row) {
+    const stoneElement = document.querySelector(`.stone[data-col='${col}'][data-row='${row}']`);
+    if (stoneElement) stoneElement.remove();
+    if (row >= 0 && row < 19 && col >= 0 && col < 19) board[row][col] = 0;
+}
 function chooseAiMove() {
     let move;
     move = findWinMove(-1);
@@ -346,7 +342,6 @@ function chooseAiMove() {
     }
     return { move: findCenterMove(), reason: "둘 곳이 마땅치 않으니 중앙을 차지하겠습니다." };
 }
-
 function findWinMove(player) {
   for (let y = 0; y < 19; y++) {
     for (let x = 0; x < 19; x++) {
@@ -362,7 +357,6 @@ function findWinMove(player) {
   }
   return null;
 }
-
 function findOpenSequenceMove(player, length) {
     for (let y = 0; y < 19; y++) {
         for (let x = 0; x < 19; x++) {
@@ -381,7 +375,6 @@ function findOpenSequenceMove(player, length) {
     }
     return null;
 }
-
 function findNearMove(col, row) {
     const directions = [ [0, 1], [0, -1], [1, 0], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1] ];
     for (const [dx, dy] of directions) {
@@ -393,7 +386,6 @@ function findNearMove(col, row) {
     }
     return findCenterMove();
 }
-
 function findCenterMove() {
   const center = 9;
   for (let i = 0; i < 5; i++) {
@@ -407,7 +399,6 @@ function findCenterMove() {
   }
   return null;
 }
-
 function isCriticalStone(x, y, player) {
     const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
     for (const [dx, dy] of directions) {
@@ -424,7 +415,6 @@ function isCriticalStone(x, y, player) {
     }
     return false;
 }
-
 function checkWin(board, player) {
   const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
   for (let y = 0; y < 19; y++) {
@@ -448,7 +438,6 @@ function checkWin(board, player) {
   }
   return false;
 }
-
 function isForbiddenMove(x, y, player) {
     board[y][x] = player;
     let openThrees = 0;
@@ -461,7 +450,6 @@ function isForbiddenMove(x, y, player) {
     board[y][x] = 0; 
     return openThrees >= 2 || openFours >= 2;
 }
-
 function isOpenSequence(x, y, player, length, dx, dy) {
     let count = 0;
     let openEnds = 0;
@@ -482,19 +470,22 @@ function isOpenSequence(x, y, player, length, dx, dy) {
     if(nx2 >= 0 && nx2 < 19 && ny2 >= 0 && ny2 < 19 && board[ny2][nx2] === 0) openEnds++;
     return openEnds === 2;
 }
-
 function showThinkingMessage() {
-  const messages = [ "상황 분석 중...", "최적의 수를 계산하는 중...", "전략적 위치 평가 중...", "이길 수 있는 방법을 찾는 중...", "반칙을 사용할까", ];
+  const messages = [
+    "AI가 생각 중입니다...",
+    "AI가 최적의 수를 찾고 있습니다...",
+    "AI가 전략을 세우고 있습니다...",
+    "AI가 당신의 수를 분석 중입니다...",
+    "AI가 다음 수를 고민하고 있습니다..."
+  ];
   const randomMessage = messages[Math.floor(Math.random() * messages.length)];
   chat("AI", randomMessage);
 }
-
 function convertCoord(col, row) {
   const letter = String.fromCharCode(65 + col);
   const number = row + 1;
   return letter + number;
 }
-
 function chat(sender, message) {
   const chatBox = document.getElementById("chat-box");
   const messageElem = document.createElement("p");
@@ -502,7 +493,6 @@ function chat(sender, message) {
   chatBox.appendChild(messageElem);
   chatBox.scrollTop = chatBox.scrollHeight;
 }
-
 function playSound(soundFile) {
   const audio = new Audio(soundFile);
   audio.play();
