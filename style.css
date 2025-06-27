@@ -69,20 +69,11 @@ body {
   background-color: white;
 }
 
-.chat-container {
-  width: 100%;
-  text-align: center;
-  margin-top: 20px;
-  padding: 10px;
-}
-
-
 .stone.last-move::after {
   content: "";
   position: absolute;
   width: 10px;
   height: 10px;
-  background-color: white;
   border-radius: 50%;
   top: 50%;
   left: 50%;
@@ -97,6 +88,13 @@ body {
   background-color: black;
 }
 
+.chat-container {
+  width: 100%;
+  text-align: center;
+  margin-top: 20px;
+  padding: 10px;
+}
+
 #chat-box {
   width: 400px;
   height: 150px;
@@ -105,4 +103,24 @@ body {
   margin-bottom: 10px;
   padding: 10px;
   background-color: #f1f1f1;
+}
+
+/* 좌표 라벨 스타일 */
+.coordinate-label {
+  position: absolute;
+  font-size: 12px;
+  font-weight: bold;
+  color: #333;
+  pointer-events: none;
+  user-select: none;
+}
+
+.top-label {
+  top: -18px;
+  transform: translateX(-50%);
+}
+
+.left-label {
+  left: -18px;
+  transform: translateY(-50%);
 }

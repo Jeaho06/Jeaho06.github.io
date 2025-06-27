@@ -27,6 +27,22 @@ function createBoard() {
     boardElement.appendChild(lineV);
   }
 
+
+  for (let i = 0; i < 19; i++) {
+    const colLabel = document.createElement("div");
+    colLabel.className = "coordinate-label top-label";
+    colLabel.style.left = `${i * gridSize}px`;
+    colLabel.textContent = String.fromCharCode(65 + i); // A~T
+    boardElement.appendChild(colLabel);
+
+    const rowLabel = document.createElement("div");
+    rowLabel.className = "coordinate-label left-label";
+    rowLabel.style.top = `${i * gridSize}px`;
+    rowLabel.textContent = i + 1;
+    boardElement.appendChild(rowLabel);
+  }
+
+
   boardElement.addEventListener('click', (event) => {
     if (isAITurn) return; // AI의 턴일 때는 클릭 무시
 
