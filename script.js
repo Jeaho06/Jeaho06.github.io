@@ -264,6 +264,8 @@ function detonateBomb() {
   }, 500);
   return { isAsync: true };
 }
+
+/*
 function performDoubleMove() {
   const move1 = findBestMove().move;
   if (move1 && board[move1.row][move1.col] === 0) {
@@ -294,6 +296,8 @@ function performDoubleMove() {
   }
   return false;
 }
+
+
 function performStoneSwap() {
   if (!lastMove) return false;
   let aiStone;
@@ -330,6 +334,9 @@ function performStoneSwap() {
   }
   return false;
 }
+*/
+
+  
 function placeStone(col, row, color) {
   const boardElement = document.getElementById("game-board");
   if (lastMove) { const lastStone = document.querySelector(`.stone[data-col='${lastMove.col}'][data-row='${lastMove.row}']`); if (lastStone) lastStone.classList.remove("last-move"); }
