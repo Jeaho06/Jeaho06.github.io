@@ -1,8 +1,6 @@
+// 최종 버전: 지능형 AI, 상세 이유 분석, 폭탄 반칙 주석 처리
 document.addEventListener('DOMContentLoaded', function() {
-  // 1. 게임 보드 생성 함수 호출
   createBoard();
-
-  // 2. 팝업창 기능 설정 함수 호출 (하나의 리스너로 통합)
   setupPopupWindow();
 });
 
@@ -13,7 +11,7 @@ let isAITurn = false;
 let lastMove = null;
 let isFirstMove = true;
 const cheatProbability = 0.4;
-let bombState = { isArmed: false, col: null, row: null };
+// let bombState = { isArmed: false, col: null, row: null }; // [주석 처리] 폭탄 상태 변수
 
 // --- 로깅 함수 ---
 function logMove(message) {
@@ -52,20 +50,10 @@ function createBoard() {
 }
 
 function aiMove() {
-  if (bombState.isArmed) { detonateBomb(); return; }
-  let moveAction = null;
-  const winMove = findBestMove(true);
-  if (winMove && winMove.score >= 100000) {
-    moveAction = () => performNormalMove(winMove.move);
-  } else {
-    const willCheat = Math.random() < cheatProbability && !isFirstMove && lastMove;
-    // 수정된 부분: 이제 반칙은 폭탄 설치 하나만 시도합니다.
-    if (willCheat) {
-      moveAction = () => placeBomb();
-    } else {
-      moveAction = () => performNormalMove();
-    }
-  }
+  // if (bombState.isArmed) { detonateBomb(); return; } // [주석 처리] 폭탄 확인 로직
+  
+  let moveAction = () => performNormalMove();
+
   const actionResult = moveAction();
   if (actionResult && actionResult.isAsync === false) {
     if (checkWin(board, -1)) {
@@ -81,36 +69,73 @@ function aiMove() {
 function findBestMove() {
   let bestScore = -1;
   let bestMove = null;
+  let bestReason = "전략적인 판단에 따라";
+
   for (let y = 0; y < 19; y++) {
     for (let x = 0; x < 19; x++) {
       if (board[y][x] === 0) {
-        const myScore = calculateScore(x, y, -1);
-        const opponentScore = calculateScore(x, y, 1);
-        const totalScore = myScore + opponentScore * 1.2;
+        let reason = "전략적인 판단에 따라";
+        const myScoreContext = calculateScore(x, y, -1);
+        const opponentScoreContext = calculateScore(x, y, 1);
+        const myScore = myScoreContext.score;
+        const opponentScore = opponentScoreContext.score;
+        const totalScore = myScore + opponentScore;
+
         if (totalScore > bestScore) {
           bestScore = totalScore;
           bestMove = { col: x, row: y };
+          
+          if (opponentScore >= 100000) { // 상대의 열린 4 방어
+            reason = `상대방의 ${opponentScoreContext.patternName} 공격을 막기 위해`;
+          } else if (myScore >= 100000) { // 나의 열린 4 공격
+            reason = `치명적인 ${myScoreContext.patternName} 공격을 하기 위해`;
+          } else if (opponentScore >= 5000) { // 상대의 열린 3 방어
+            reason = `상대방의 ${opponentScoreContext.patternName} 공격을 막기 위해`;
+          } else if (myScore >= 5000) { // 나의 열린 3 공격
+            reason = `강력한 ${myScoreContext.patternName} 공격을 하기 위해`;
+          } else if (opponentScore >= 500) { // 상대의 닫힌 3 방해
+             reason = `상대방의 ${opponentScoreContext.patternName} 연결을 방해하기 위해`;
+          } else if (myScore >= 500) { // 나의 닫힌 3 연결
+             reason = `다음 공격을 위해 ${myScoreContext.patternName} 모양을 만들기 위해`;
+          }
+          bestReason = reason;
         }
       }
     }
   }
-  return { move: bestMove, score: bestScore };
+  return { move: bestMove, score: bestScore, reason: bestReason };
 }
+
 function calculateScore(x, y, player) {
-  let score = 0;
+  let totalScore = 0;
+  let highestPatternScore = 0;
+  let patternName = "연결";
+
+  const patterns = {
+    1000000: "5목", 100000: "열린 4", 10000: "닫힌 4", 5000: "열린 3", 500: "닫힌 3",
+    100: "열린 2", 10: "닫힌 2", 1: "외로운 돌"
+  };
+
   const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
   for (const [dx, dy] of directions) {
-    score += calculateScoreForLine(x, y, dx, dy, player);
+    const score = calculateScoreForLine(x, y, dx, dy, player);
+    if (score > highestPatternScore) {
+        highestPatternScore = score;
+        for (const [s, name] of Object.entries(patterns).reverse()){
+            if(score >= s) { patternName = name; break; }
+        }
+    }
+    totalScore += score;
   }
-  return score;
+  return { score: totalScore, patternName: patternName };
 }
+
 function calculateScoreForLine(x, y, dx, dy, player) {
-  let count = 1;
-  let openEnds = 0;
+  let count = 1; let openEnds = 0;
   // 정방향 탐색
   for (let i = 1; i < 5; i++) {
     const nx = x + i * dx; const ny = y + i * dy;
-    if (nx < 0 || ny < 0 || nx >= 19 || ny >= 19) break;
+    if (nx < 0 || ny < 0 || nx >= 19 || ny >= 19) { openEnds++; break; }
     const stone = board[ny][nx];
     if (stone === player) count++;
     else { if (stone === 0) openEnds++; break; }
@@ -118,7 +143,7 @@ function calculateScoreForLine(x, y, dx, dy, player) {
   // 역방향 탐색
   for (let i = 1; i < 5; i++) {
     const nx = x - i * dx; const ny = y - i * dy;
-    if (nx < 0 || ny < 0 || nx >= 19 || ny >= 19) break;
+    if (nx < 0 || ny < 0 || nx >= 19 || ny >= 19) { openEnds++; break; }
     const stone = board[ny][nx];
     if (stone === player) count++;
     else { if (stone === 0) openEnds++; break; }
@@ -131,26 +156,25 @@ function calculateScoreForLine(x, y, dx, dy, player) {
   return 0;
 }
 
+
 // --- 행동 함수 및 유틸리티 ---
-function performNormalMove(move = null) {
-  if (!move) {
-    const best = findBestMove();
-    move = best.move;
-  }
+function performNormalMove() {
+  const best = findBestMove();
+  const move = best.move;
+  const reason = best.reason;
   if (move && board[move.row][move.col] === 0) {
     board[move.row][move.col] = -1;
     placeStone(move.col, move.row, 'white');
     playSound("Movement.mp3");
     const aiCoord = convertCoord(move.col, move.row);
     logMove(`AI: ${aiCoord}`);
-    logReason("AI", `저는 ${aiCoord}에 두는 것이 최선이라 판단했습니다.`);
+    logReason("AI", `저는 ${reason} ${aiCoord}곳에 두겠습니다.`);
     isFirstMove = false;
     return { isAsync: false };
   }
-  // 만약 둘 곳이 없는 극히 예외적인 상황
   logReason("시스템", "AI가 둘 곳을 찾지 못했습니다.");
-  isAITurn = false; // 게임 진행을 위해 턴 넘김
-  return { isAsync: true }; // 비동기처럼 처리하여 턴 종료 방지
+  isAITurn = false;
+  return { isAsync: true };
 }
 
 function checkWin(board, player) {
@@ -179,7 +203,7 @@ function isForbiddenMove(x, y, player) {
   let openThrees = 0;
   const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
   for (const [dx, dy] of directions) {
-    if (calculateScoreForLine(x, y, dx, dy, player) >= 5000) {
+    if (calculateScoreForLine(x, y, dx, dy, player) === 5000) {
       openThrees++;
     }
   }
@@ -187,6 +211,8 @@ function isForbiddenMove(x, y, player) {
   return openThrees >= 2;
 }
 
+/*
+// --- [주석 처리] 폭탄 반칙 관련 함수들 ---
 function placeBomb() {
   const move = findBestBombLocation();
   if (move) {
@@ -203,7 +229,6 @@ function placeBomb() {
   logReason("AI", "폭탄을 설치할 만한 좋은 장소를 찾지 못했습니다.");
   return false;
 }
-
 function detonateBomb() {
   const center = bombState;
   const centerCoord = convertCoord(center.col, center.row);
@@ -232,21 +257,6 @@ function detonateBomb() {
     }
   }, 500);
   return { isAsync: true };
-}
-
-// 사용하지 않는 반칙 함수들은 삭제
-// performDoubleMove, performStoneSwap
-
-function placeStone(col, row, color) {
-  const boardElement = document.getElementById("game-board");
-  if (lastMove) { const lastStone = document.querySelector(`.stone[data-col='${lastMove.col}'][data-row='${lastMove.row}']`); if (lastStone) lastStone.classList.remove("last-move"); }
-  const stone = document.createElement("div"); stone.classList.add("stone", color); stone.style.left = `${col * gridSize + gridSize / 2}px`; stone.style.top = `${row * gridSize + gridSize / 2}px`; stone.setAttribute("data-col", col); stone.setAttribute("data-row", row); boardElement.appendChild(stone);
-  if (color !== 'bomb') { stone.classList.add("last-move"); lastMove = { col, row }; }
-}
-function removeStone(col, row) {
-  const stoneElement = document.querySelector(`.stone[data-col='${col}'][data-row='${row}']`);
-  if (stoneElement) stoneElement.remove();
-  if (row >= 0 && row < 19 && col >= 0 && col < 19) board[row][col] = 0;
 }
 function findBestBombLocation() {
     let bestLocation = null;
@@ -277,6 +287,20 @@ function findBestBombLocation() {
     if (maxScore <= 0) return null;
     return bestLocation;
 }
+*/
+
+// --- 나머지 유틸리티 함수 ---
+function placeStone(col, row, color) {
+  const boardElement = document.getElementById("game-board");
+  if (lastMove) { const lastStone = document.querySelector(`.stone[data-col='${lastMove.col}'][data-row='${lastMove.row}']`); if (lastStone) lastStone.classList.remove("last-move"); }
+  const stone = document.createElement("div"); stone.classList.add("stone", color); stone.style.left = `${col * gridSize + gridSize / 2}px`; stone.style.top = `${row * gridSize + gridSize / 2}px`; stone.setAttribute("data-col", col); stone.setAttribute("data-row", row); boardElement.appendChild(stone);
+  if (color !== 'bomb') { stone.classList.add("last-move"); lastMove = { col, row }; }
+}
+function removeStone(col, row) {
+  const stoneElement = document.querySelector(`.stone[data-col='${col}'][data-row='${row}']`);
+  if (stoneElement) stoneElement.remove();
+  if (row >= 0 && row < 19 && col >= 0 && col < 19) board[row][col] = 0;
+}
 function isCriticalStone(x, y, player) {
   const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
   for (const [dx, dy] of directions) { let count = 1; let nx = x + dx, ny = y + dy; while (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === player) { count++; nx += dx; ny += dy; } nx = x - dx; ny = y - dy; while (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === player) { count++; nx -= dx; ny -= dy; } if (count >= 3) return true; } return false;
@@ -284,8 +308,6 @@ function isCriticalStone(x, y, player) {
 function convertCoord(col, row) { const letter = String.fromCharCode(65 + col); const number = row + 1; return letter + number; }
 function playSound(soundFile) { const audio = new Audio(soundFile); audio.play(); }
 
-
-// --- 팝업창 기능 스크립트 (수정된 구조) ---
 function setupPopupWindow() {
   const updateButton = document.getElementById('update-button');
   const updatePopup = document.getElementById('update-popup');
