@@ -184,7 +184,7 @@ function placeBomb() {
     board[move.row][move.col] = 2;
     bombState = { isArmed: true, col: move.col, row: move.row };
     placeStone(move.col, move.row, 'bomb');
-    playSound("Movement.mp3");
+    playSound("tnt_installation.mp3");
     const bombCoord = convertCoord(move.col, move.row);
     logMove(`AI: ${bombCoord}!!`);
     logReason("AI", `저는 ${bombCoord}에 폭탄을 설치하겠습니다.`);
@@ -201,6 +201,7 @@ function detonateBomb() {
   const centerCoord = convertCoord(center.col, center.row);
   logMove(`AI: ${centerCoord}💥!!`);
   logReason("AI", `${centerCoord}의 폭탄을 터뜨리겠습니다.`);
+  playSound("tnt_explosion.mp3");
   const boardElement = document.getElementById("game-board");
   const bombEffect = document.createElement("div");
   bombEffect.className = "bomb-effect";
