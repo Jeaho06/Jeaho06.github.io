@@ -354,3 +354,34 @@ function isOpenSequence(x, y, player, length, dx, dy) {
 }
 function convertCoord(col, row) { const letter = String.fromCharCode(65 + col); const number = row + 1; return letter + number; }
 function playSound(soundFile) { const audio = new Audio(soundFile); audio.play(); }
+
+// --- 팝업창 기능 스크립트 ---
+document.addEventListener('DOMContentLoaded', function() {
+  // 팝업창 관련 DOM 요소들을 가져옵니다.
+  const updateButton = document.getElementById('update-button');
+  const updatePopup = document.getElementById('update-popup');
+  const popupOverlay = document.getElementById('popup-overlay');
+  const closeButton = document.getElementById('popup-close-button');
+
+  // 요소들이 존재하는지 확인 후 이벤트 리스너 추가
+  if (updateButton && updatePopup && popupOverlay && closeButton) {
+    
+    // '업데이트 내역' 버튼 클릭 시 팝업 열기
+    updateButton.addEventListener('click', () => {
+      updatePopup.style.display = 'block';
+      popupOverlay.style.display = 'block';
+    });
+
+    // '닫기' 버튼 클릭 시 팝업 닫기
+    closeButton.addEventListener('click', () => {
+      updatePopup.style.display = 'none';
+      popupOverlay.style.display = 'none';
+    });
+
+    // 뒷배경 클릭 시 팝업 닫기
+    popupOverlay.addEventListener('click', () => {
+      updatePopup.style.display = 'none';
+      popupOverlay.style.display = 'none';
+    });
+  }
+});

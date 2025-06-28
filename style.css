@@ -175,3 +175,75 @@ body {
     opacity: 0;
   }
 }
+
+/* --- 업데이트 버튼 및 팝업창 스타일 --- */
+
+/* 업데이트 내역 버튼 */
+#update-button {
+  position: fixed; /* 화면에 고정 */
+  top: 20px;
+  right: 20px;
+  padding: 10px 15px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  background-color: #333;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+  z-index: 1000; /* 다른 요소들 위에 표시 */
+}
+
+#update-button:hover {
+  background-color: #555;
+}
+
+/* 팝업창 뒷배경 (어둡게 처리) */
+#popup-overlay {
+  display: none; /* 평소에는 숨김 */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 1001;
+}
+
+/* 팝업창 본문 */
+.popup {
+  display: none; /* 평소에는 숨김 */
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  padding: 25px;
+  z-index: 1002;
+  box-sizing: border-box;
+}
+
+.popup h2 {
+  margin-top: 0;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.popup-content ul {
+  padding-left: 20px;
+}
+
+.popup-content li {
+  margin-bottom: 8px;
+}
+
+#popup-close-button {
+  display: block;
+  margin: 20px auto 0;
+  padding: 8px 20px;
+  cursor: pointer;
+}
