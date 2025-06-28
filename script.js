@@ -11,13 +11,13 @@ let lastMove = null;
 let isFirstMove = true;
 const cheatProbability = 0.4;
 let bombState = { isArmed: false, col: null, row: null };
-let moveCount = 0; // 수순 카운터 추가
+let moveCount = 0; // 수순 카운터
 
 // --- 로깅 함수 ---
-function logMove(count, message) { // 수순을 받도록 수정
+function logMove(count, message) {
   const moveLog = document.getElementById("move-log"); if (!moveLog) return;
   const messageElem = document.createElement("p");
-  messageElem.innerHTML = `${count}. ${message}`; // "1. 사용자: J10??" 형식으로 출력
+  messageElem.innerHTML = `${count}. ${message}`;
   moveLog.appendChild(messageElem);
   moveLog.scrollTop = moveLog.scrollHeight;
 }
@@ -32,7 +32,6 @@ function logReason(sender, message) {
 // --- 핵심 로직 ---
 function createBoard() {
   const boardElement = document.getElementById("game-board"); if (!boardElement) return;
-  // 보드 생성... (기존과 동일)
   for (let i = 0; i < 19; i++) {
     const lineH = document.createElement("div"); lineH.classList.add("line", "horizontal-line"); lineH.style.top = `${i * gridSize + gridSize / 2}px`; boardElement.appendChild(lineH);
     const lineV = document.createElement("div"); lineV.classList.add("line", "vertical-line"); lineV.style.left = `${i * gridSize + gridSize / 2}px`; boardElement.appendChild(lineV);
@@ -41,7 +40,6 @@ function createBoard() {
     const colLabel = document.createElement("div"); colLabel.className = "coordinate-label top-label"; colLabel.style.left = `${i * gridSize + gridSize / 2}px`; colLabel.textContent = String.fromCharCode(65 + i); boardElement.appendChild(colLabel);
     const rowLabel = document.createElement("div"); rowLabel.className = "coordinate-label left-label"; rowLabel.style.top = `${i * gridSize + gridSize / 2}px`; rowLabel.textContent = i + 1; boardElement.appendChild(rowLabel);
   }
-  
   boardElement.addEventListener('click', (event) => {
     if (isAITurn) return;
     const rect = boardElement.getBoundingClientRect(); const offsetX = event.clientX - rect.left; const offsetY = event.clientY - rect.top;
@@ -50,52 +48,55 @@ function createBoard() {
     if (isForbiddenMove(closestX, closestY, 1)) { logReason("시스템", "금수입니다! 다른 위치를 선택하세요."); return; }
     board[closestY][closestX] = 1; placeStone(closestX, closestY, 'black'); playSound("Movement.mp3");
     const userCoord = convertCoord(closestX, closestY);
-    logMove(++moveCount, `사용자: ${userCoord}??`); // 수순 증가 및 로그 기록
+    logMove(++moveCount, `사용자: ${userCoord}??`);
     if (checkWin(board, 1)) { logReason("시스템", "사용자가 승리했습니다!"); isAITurn = true; return; }
     isAITurn = true; setTimeout(aiMove, 1000);
   });
 }
 
+/**
+ * AI의 턴을 관리하는 메인 함수 (로직 전면 수정)
+ */
 function aiMove() {
   if (bombState.isArmed) { detonateBomb(); return; }
   
-  let moveAction = null;
+  let moveAction;
+  
+  // 반칙을 시도할지 결정
   const willCheat = Math.random() < cheatProbability && !isFirstMove && lastMove;
 
   if (willCheat) {
-    // 사용 가능한 반칙 목록을 동적으로 생성
     const availableCheats = [];
-    if (document.getElementById('toggle-bomb').checked) {
-      availableCheats.push(() => placeBomb());
-    }
-    if (document.getElementById('toggle-double-move').checked) {
-      availableCheats.push(() => performDoubleMove());
-    }
-    if (document.getElementById('toggle-swap').checked) {
-      availableCheats.push(() => performStoneSwap());
-    }
+    if (document.getElementById('toggle-bomb').checked) { availableCheats.push(() => placeBomb()); }
+    if (document.getElementById('toggle-double-move').checked) { availableCheats.push(() => performDoubleMove()); }
+    if (document.getElementById('toggle-swap').checked) { availableCheats.push(() => performStoneSwap()); }
 
     if (availableCheats.length > 0) {
-      // 사용 가능한 반칙 중 하나를 무작위로 선택
       const chosenCheat = availableCheats[Math.floor(Math.random() * availableCheats.length)];
       moveAction = chosenCheat;
     } else {
-      // 모든 반칙이 비활성화되어 있으면 일반 수를 둠
+      // 반칙이 모두 비활성화되어 있으면 일반 수를 둠
       moveAction = () => performNormalMove();
     }
   } else {
+    // 반칙 확률에 당첨되지 않으면 일반 수를 둠
     moveAction = () => performNormalMove();
   }
-
+  
+  // 결정된 행동 실행
   const actionResult = moveAction();
+  
+  // 행동이 동기적이고 성공적으로 끝났을 때만 턴 종료 처리
   if (actionResult && actionResult.isAsync === false) {
     if (checkWin(board, -1)) {
-      logReason("시스템", "AI가 승리했습니다!"); isAITurn = true;
+      logReason("시스템", "AI가 승리했습니다!");
+      isAITurn = true;
     } else {
       isAITurn = false;
     }
   }
 }
+
 
 // --- 지능형 AI 로직 ---
 function findBestMove() {
@@ -166,7 +167,7 @@ function performNormalMove() {
   if (move && board[move.row][move.col] === 0) {
     board[move.row][move.col] = -1; placeStone(move.col, move.row, 'white'); playSound("Movement.mp3");
     const aiCoord = convertCoord(move.col, move.row);
-    logMove(++moveCount, `AI: ${aiCoord}`);
+    logMove(++moveCount, `AI: ${aiCoord}`); // 수순 표시 수정
     logReason("AI", `저는 ${reason} ${aiCoord}곳에 두겠습니다.`);
     isFirstMove = false; return { isAsync: false };
   }
@@ -195,14 +196,14 @@ function isForbiddenMove(x, y, player) {
   board[y][x] = 0; return openThrees >= 2;
 }
 
-// --- 반칙 함수들 (복구) ---
+// --- 반칙 함수들 ---
 function placeBomb() {
   const move = findBestBombLocation();
   if (move) {
     board[move.row][move.col] = 2; bombState = { isArmed: true, col: move.col, row: move.row };
     placeStone(move.col, move.row, 'bomb'); playSound("tnt_installation.mp3");
     const bombCoord = convertCoord(move.col, move.row);
-    logMove(++moveCount, `AI: ${bombCoord}!!`);
+    logMove(++moveCount, `AI: ${bombCoord}!!`); // 수순 표시 수정
     logReason("AI", `저는 ${bombCoord}에 폭탄을 설치하겠습니다. 여기가 좋아 보이네요.`);
     isAITurn = false; return { isAsync: true };
   }
@@ -210,7 +211,7 @@ function placeBomb() {
 }
 function detonateBomb() {
   const center = bombState; const centerCoord = convertCoord(center.col, center.row);
-  logMove(++moveCount, `AI: ${centerCoord}💥!!`);
+  logMove(++moveCount, `AI: ${centerCoord}💥!!`); // 수순 표시 수정
   logReason("AI", `${centerCoord}의 폭탄을 터뜨립니다!`); playSound("tnt_explosion.mp3");
   const boardElement = document.getElementById("game-board"); const bombEffect = document.createElement("div");
   bombEffect.className = "bomb-effect"; bombEffect.style.left = `${center.col * gridSize + gridSize / 2}px`; bombEffect.style.top = `${center.row * gridSize + gridSize / 2}px`;
@@ -227,14 +228,14 @@ function performDoubleMove() {
   if (move1 && board[move1.row][move1.col] === 0) {
     board[move1.row][move1.col] = -1; placeStone(move1.col, move1.row, 'white');
     const aiCoord1 = convertCoord(move1.col, move1.row);
-    logMove(++moveCount, `AI: ${aiCoord1}!!`);
+    logMove(++moveCount, `AI: ${aiCoord1}!!`); // 수순 표시 수정
     logReason("AI", `저는 ${aiCoord1}에 첫 번째 돌을 두겠습니다.`); playSound("Movement.mp3");
     const move2 = findBestMove().move;
     if (move2 && board[move2.row][move2.col] === 0) {
       setTimeout(() => {
         board[move2.row][move2.col] = -1; placeStone(move2.col, move2.row, 'white'); playSound("Movement.mp3");
         const aiCoord2 = convertCoord(move2.col, move2.row);
-        logMove(++moveCount, `AI: ${aiCoord2}!!`);
+        logMove(++moveCount, `AI: ${aiCoord2}!!`); // 수순 표시 수정
         logReason("AI", `이어서 ${aiCoord2}에 두 번째 돌을 놓겠습니다!`);
         if (checkWin(board, -1)) { logReason("시스템", "AI가 승리했습니다!"); isAITurn = true; } else { isAITurn = false; }
       }, 800);
@@ -250,7 +251,7 @@ function performStoneSwap() {
   if (aiStone) {
     const userStone = lastMove;
     const userCoord = convertCoord(userStone.col, userStone.row); const aiCoord = convertCoord(aiStone.col, aiStone.row);
-    logMove(++moveCount, `AI: ${userCoord}↔${aiCoord}!!`);
+    logMove(++moveCount, `AI: ${userCoord}↔${aiCoord}!!`); // 수순 표시 수정
     logReason("AI", `저는 당신의 돌(${userCoord})과 제 돌(${aiCoord})의 위치를 바꾸는 반칙을 사용하겠습니다.`);
     removeStone(userStone.col, userStone.row); removeStone(aiStone.col, aiStone.row);
     setTimeout(() => {
