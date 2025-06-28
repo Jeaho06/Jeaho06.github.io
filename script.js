@@ -126,7 +126,7 @@ function aiMove() {
 function performNormalMove(move = null) {
   let reason = "";
   if (move) {
-    reason = "이 수로 제가 이길 수 있습니다.";
+    reason = "이 수로 이기기 위해";
   } else {
     const aiDecision = chooseAiMove();
     move = aiDecision.move;
@@ -138,11 +138,11 @@ function performNormalMove(move = null) {
     playSound("Movement.mp3");
     const aiCoord = convertCoord(move.col, move.row);
     logMove(`AI: ${aiCoord}`);
-    logReason("AI", reason);
+    // 수정된 부분: 좌표와 이유를 합쳐서 완전한 문장으로 설명
+    logReason("AI", `저는 ${aiCoord}에 ${reason} 돌을 두겠습니다.`);
     isFirstMove = false;
-    return { isAsync: false }; // 즉시 실행, 성공
+    return { isAsync: false };
   }
-  // 수를 둘 수 없는 경우 (로직상 거의 발생 안함)
   return false;
 }
 
@@ -156,9 +156,10 @@ function placeBomb() {
     playSound("Movement.mp3");
     const bombCoord = convertCoord(move.col, move.row);
     logMove(`AI: ${bombCoord}!!`);
-    logReason("AI", "특별한 돌을 하나 설치했습니다.");
-    isAITurn = false; // 폭탄 설치는 즉시 턴이 종료되어야 함
-    return { isAsync: true }; // 행동은 즉시지만, 턴 관리 방식 때문에 비동기로 처리
+    // 수정된 부분
+    logReason("AI", `저는 ${bombCoord}에 폭탄을 설치하겠습니다.`);
+    isAITurn = false;
+    return { isAsync: true };
   }
   return false;
 }
@@ -202,7 +203,8 @@ function performDoubleMove() {
     placeStone(move1.col, move1.row, 'white');
     const aiCoord1 = convertCoord(move1.col, move1.row);
     logMove(`AI: ${aiCoord1}!!`);
-    logReason("AI", "한 수 더 두기 반칙을 사용합니다.");
+    // 수정된 부분
+    logReason("AI", `저는 ${aiCoord1}에 첫 번째 돌을 두겠습니다.`);
     const move2 = findNearMove(move1.col, move1.row);
     if (move2 && board[move2.row][move2.col] === 0) {
       setTimeout(() => {
@@ -211,7 +213,8 @@ function performDoubleMove() {
         playSound("Movement.mp3");
         const aiCoord2 = convertCoord(move2.col, move2.row);
         logMove(`AI: ${aiCoord2}!!`);
-        logReason("AI", "이어서 한 수 더!");
+        // 수정된 부분
+        logReason("AI", `이어서 ${aiCoord2}에 두 번째 돌을 놓겠습니다.`);
         if (checkWin(board, -1)) {
           logReason("시스템", "AI가 승리했습니다!");
           isAITurn = true;
@@ -241,7 +244,8 @@ function performStoneSwap() {
     const userCoord = convertCoord(userStone.col, userStone.row);
     const aiCoord = convertCoord(aiStone.col, aiStone.row);
     logMove(`AI: ${userCoord}↔${aiCoord}!!`);
-    logReason("AI", `당신의 돌(${userCoord})과 제 돌(${aiCoord})을 바꾸겠습니다.`);
+    // 수정된 부분
+    logReason("AI", `저는 당신의 돌(${userCoord})과 제 돌(${aiCoord})의 위치를 바꾸는 반칙을 사용하겠습니다.`);
     removeStone(userStone.col, userStone.row);
     removeStone(aiStone.col, aiStone.row);
     setTimeout(() => {
@@ -277,14 +281,14 @@ function removeStone(col, row) {
 }
 function chooseAiMove() {
   let move;
-  move = findWinMove(-1); if (move) return { move: move, reason: "이 수로 제가 이길 수 있습니다!" };
-  move = findWinMove(1); if (move) return { move: move, reason: "이곳을 막지 않으면 제가 패배하기에 당신의 수를 막겠습니다." };
-  move = findOpenSequenceMove(-1, 3); if (move) return { move: move, reason: "공격의 발판을 마련하기 위해 이곳에 두겠습니다." };
-  move = findOpenSequenceMove(1, 3); if (move) return { move: move, reason: "당신의 공격을 미리 차단하겠습니다." };
-  move = findOpenSequenceMove(-1, 2); if (move) return { move: move, reason: "차근차근 제 모양을 만들어 보겠습니다." };
+  move = findWinMove(-1); if (move) return { move: move, reason: "승리하기 위해" };
+  move = findWinMove(1); if (move) return { move: move, reason: "당신의 승리를 막기 위해" };
+  move = findOpenSequenceMove(-1, 3); if (move) return { move: move, reason: "공격을 준비하기 위해" };
+  move = findOpenSequenceMove(1, 3); if (move) return { move: move, reason: "당신의 공격을 차단하기 위해" };
+  move = findOpenSequenceMove(-1, 2); if (move) return { move: move, reason: "모양을 갖추기 위해" };
   const fallbackMove = lastMove ? findNearMove(lastMove.col, lastMove.row) : findCenterMove();
-  if (fallbackMove) { return { move: fallbackMove, reason: "당신의 돌에 가까이 붙어 압박하겠습니다." }; }
-  return { move: findCenterMove(), reason: "둘 곳이 마땅치 않으니 중앙을 차지하겠습니다." };
+  if (fallbackMove) { return { move: fallbackMove, reason: "당신을 압박하기 위해" }; }
+  return { move: findCenterMove(), reason: "둘 곳이 마땅치 않아 중앙에" };
 }
 function findWinMove(player) {
   for (let y = 0; y < 19; y++) { for (let x = 0; x < 19; x++) { if (board[y][x] === 0) { board[y][x] = player; if (checkWin(board, player)) { board[y][x] = 0; return { col: x, row: y }; } board[y][x] = 0; } } } return null;
