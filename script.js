@@ -67,29 +67,20 @@ function createBoard() {
       return;
     }
     isAITurn = true;
-    setTimeout(aiMove, 2000); // AI 생각 시간 조정
+    setTimeout(aiMove, 2000);
   });
 }
 
-/**
- * AI의 턴을 관리하는 메인 함수 (수정된 버전)
- * 모든 턴 종료(isAITurn = false)는 이 함수와 비동기 콜백 함수에서만 제어합니다.
- */
 function aiMove() {
-  // 1. 폭탄이 설치되어 있으면, 반드시 터뜨리고 턴을 종료합니다.
   if (bombState.isArmed) {
     detonateBomb();
     return;
   }
-
   let moveAction = null;
-
-  // 2. 이길 수 있는 수가 있으면 즉시 그 수를 둡니다.
   const winMove = findWinMove(-1);
   if (winMove) {
     moveAction = () => performNormalMove(winMove);
   } else {
-    // 3. 이길 수는 없으면, 반칙 또는 일반 수를 결정합니다.
     const willCheat = Math.random() < cheatProbability && !isFirstMove && lastMove;
     if (willCheat) {
       const cheatRoll = Math.random();
@@ -100,28 +91,66 @@ function aiMove() {
         moveAction = otherCheats[Math.floor(Math.random() * otherCheats.length)];
       }
     } else {
-      // 4. 반칙을 하지 않으면 일반 수를 둡니다.
       moveAction = () => performNormalMove();
     }
   }
-
-  // 5. 결정된 행동을 실행합니다.
-  const actionSuccess = moveAction();
-
-  // 6. 행동이 비동기(setTimeout 사용)가 아니고, 성공적으로 실행되었다면 턴을 종료합니다.
-  // 비동기 행동은 각자의 콜백 함수 내에서 스스로 턴을 종료합니다.
-  if (actionSuccess && actionSuccess.isAsync === false) {
+  const actionResult = moveAction();
+  if (actionResult && actionResult.isAsync === false) {
     if (checkWin(board, -1)) {
       logReason("시스템", "AI가 승리했습니다!");
-      isAITurn = true; // 게임 종료
+      isAITurn = true;
     } else {
-      isAITurn = false; // 다음 사용자 턴으로
+      isAITurn = false;
     }
   }
 }
 
-// --- 행동 함수 (Action Functions) ---
-// 각 함수는 성공 여부와 비동기 여부를 반환합니다.
+// --- 지능형 폭탄 로직 ---
+
+/**
+ * 최적의 폭탄 위치를 계산하는 새로운 함수
+ */
+function findBestBombLocation() {
+    let bestLocation = null;
+    let maxScore = -Infinity;
+
+    for (let r = 0; r < 19; r++) {
+        for (let c = 0; c < 19; c++) {
+            // 빈칸만 후보지로 선정
+            if (board[r][c] === 0) {
+                let currentScore = 0;
+                // 해당 위치의 3x3 폭발 범위를 시뮬레이션
+                for (let y = r - 1; y <= r + 1; y++) {
+                    for (let x = c - 1; x <= c + 1; x++) {
+                        if (y >= 0 && y < 19 && x >= 0 && x < 19) {
+                            if (board[y][x] === 1) { // 사용자 돌(흑돌)
+                                currentScore += 3; // 기본 점수 +3
+                                // 중요한 돌(3개 이상 연결된)이면 가중치 부여
+                                if (isCriticalStone(x, y, 1)) {
+                                    currentScore += 5;
+                                }
+                            } else if (board[y][x] === -1) { // AI 돌(백돌)
+                                currentScore -= 1; // 자신의 돌 파괴 시 감점
+                            }
+                        }
+                    }
+                }
+                
+                // 최고 점수 위치 갱신
+                if (currentScore > maxScore) {
+                    maxScore = currentScore;
+                    bestLocation = { col: c, row: r };
+                }
+            }
+        }
+    }
+    // 가장 점수가 높은 곳이 0점보다 낮으면(이득이 없으면) 폭탄 설치 안함
+    if (maxScore <= 0) return null;
+    return bestLocation;
+}
+
+
+// --- 행동 함수 ---
 
 function performNormalMove(move = null) {
   let reason = "";
@@ -138,7 +167,6 @@ function performNormalMove(move = null) {
     playSound("Movement.mp3");
     const aiCoord = convertCoord(move.col, move.row);
     logMove(`AI: ${aiCoord}`);
-    // 수정된 부분: 좌표와 이유를 합쳐서 완전한 문장으로 설명
     logReason("AI", `저는 ${aiCoord}에 ${reason} 돌을 두겠습니다.`);
     isFirstMove = false;
     return { isAsync: false };
@@ -146,21 +174,25 @@ function performNormalMove(move = null) {
   return false;
 }
 
+/**
+ * placeBomb 함수를 수정하여 findBestBombLocation()을 사용
+ */
 function placeBomb() {
-  const target = chooseAiMove();
-  const move = target.move;
-  if (move && board[move.row][move.col] === 0) {
+  const move = findBestBombLocation(); // 지능형 로직으로 위치 탐색
+  
+  if (move) { // 최적의 위치가 있을 때만 폭탄 설치
     board[move.row][move.col] = 2;
     bombState = { isArmed: true, col: move.col, row: move.row };
     placeStone(move.col, move.row, 'bomb');
     playSound("Movement.mp3");
     const bombCoord = convertCoord(move.col, move.row);
     logMove(`AI: ${bombCoord}!!`);
-    // 수정된 부분
     logReason("AI", `저는 ${bombCoord}에 폭탄을 설치하겠습니다.`);
     isAITurn = false;
     return { isAsync: true };
   }
+  // 좋은 위치가 없으면 반칙 실패로 간주하고 다른 행동을 유도
+  logReason("AI", "폭탄을 설치할 만한 좋은 장소를 찾지 못했습니다.");
   return false;
 }
 
@@ -169,14 +201,12 @@ function detonateBomb() {
   const centerCoord = convertCoord(center.col, center.row);
   logMove(`AI: ${centerCoord}💥!!`);
   logReason("AI", `${centerCoord}의 폭탄을 터뜨리겠습니다.`);
-
   const boardElement = document.getElementById("game-board");
   const bombEffect = document.createElement("div");
   bombEffect.className = "bomb-effect";
   bombEffect.style.left = `${center.col * gridSize + gridSize / 2}px`;
   bombEffect.style.top = `${center.row * gridSize + gridSize / 2}px`;
   boardElement.appendChild(bombEffect);
-
   setTimeout(() => {
     for (let r = center.row - 1; r <= center.row + 1; r++) {
       for (let c = center.col - 1; c <= center.col + 1; c++) {
@@ -189,10 +219,10 @@ function detonateBomb() {
       logReason("시스템", "사용자가 승리했습니다!");
       isAITurn = true;
     } else {
-      isAITurn = false; // 폭발 후 턴 종료
+      isAITurn = false;
     }
   }, 500);
-  return { isAsync: true }; // 비동기 행동
+  return { isAsync: true };
 }
 
 function performDoubleMove() {
@@ -203,7 +233,6 @@ function performDoubleMove() {
     placeStone(move1.col, move1.row, 'white');
     const aiCoord1 = convertCoord(move1.col, move1.row);
     logMove(`AI: ${aiCoord1}!!`);
-    // 수정된 부분
     logReason("AI", `저는 ${aiCoord1}에 첫 번째 돌을 두겠습니다.`);
     const move2 = findNearMove(move1.col, move1.row);
     if (move2 && board[move2.row][move2.col] === 0) {
@@ -213,7 +242,6 @@ function performDoubleMove() {
         playSound("Movement.mp3");
         const aiCoord2 = convertCoord(move2.col, move2.row);
         logMove(`AI: ${aiCoord2}!!`);
-        // 수정된 부분
         logReason("AI", `이어서 ${aiCoord2}에 두 번째 돌을 놓겠습니다.`);
         if (checkWin(board, -1)) {
           logReason("시스템", "AI가 승리했습니다!");
@@ -244,8 +272,7 @@ function performStoneSwap() {
     const userCoord = convertCoord(userStone.col, userStone.row);
     const aiCoord = convertCoord(aiStone.col, aiStone.row);
     logMove(`AI: ${userCoord}↔${aiCoord}!!`);
-    // 수정된 부분
-    logReason("AI", `저는 당신의 돌(${userCoord})과 제 돌(${aiCoord})의 위치를 바꾸는 반칙을 사용하겠습니다.`);
+    logReason("AI", `저는 당신의 돌(${userCoord})과 제 돌(${aiCoord})의 위치를 바꾸겠습니다.`);
     removeStone(userStone.col, userStone.row);
     removeStone(aiStone.col, aiStone.row);
     setTimeout(() => {
@@ -267,7 +294,6 @@ function performStoneSwap() {
 }
 
 // 이하 유틸리티 및 규칙 확인 함수 (수정 없음)
-
 function placeStone(col, row, color) {
   const boardElement = document.getElementById("game-board");
   if (lastMove) { const lastStone = document.querySelector(`.stone[data-col='${lastMove.col}'][data-row='${lastMove.row}']`); if (lastStone) lastStone.classList.remove("last-move"); }
