@@ -204,7 +204,7 @@ function placeBomb() {
     placeStone(move.col, move.row, 'bomb'); playSound("tnt_installation.mp3");
     const bombCoord = convertCoord(move.col, move.row);
     logMove(++moveCount, `AI: ${bombCoord}!!`); // 수순 표시 수정
-    logReason("AI", `저는 ${bombCoord}에 폭탄을 설치하겠습니다. 여기가 좋아 보이네요.`);
+    logReason("AI", `저는 ${bombCoord}에 폭탄을 설치하겠습니다.`);
     isAITurn = false; return { isAsync: true };
   }
   logReason("AI", "폭탄을 설치할 만한 좋은 장소를 찾지 못했습니다."); return false;
@@ -236,7 +236,7 @@ function performDoubleMove() {
         board[move2.row][move2.col] = -1; placeStone(move2.col, move2.row, 'white'); playSound("Movement.mp3");
         const aiCoord2 = convertCoord(move2.col, move2.row);
         logMove(++moveCount, `AI: ${aiCoord2}!!`); // 수순 표시 수정
-        logReason("AI", `이어서 ${aiCoord2}에 두 번째 돌을 놓겠습니다!`);
+        logReason("AI", `이어서 ${aiCoord2}에 두 번째 돌을 놓겠습니다.`);
         if (checkWin(board, -1)) { logReason("시스템", "AI가 승리했습니다!"); isAITurn = true; } else { isAITurn = false; }
       }, 800);
     } else { isAITurn = false; }
@@ -252,7 +252,7 @@ function performStoneSwap() {
     const userStone = lastMove;
     const userCoord = convertCoord(userStone.col, userStone.row); const aiCoord = convertCoord(aiStone.col, aiStone.row);
     logMove(++moveCount, `AI: ${userCoord}↔${aiCoord}!!`); // 수순 표시 수정
-    logReason("AI", `저는 당신의 돌(${userCoord})과 제 돌(${aiCoord})의 위치를 바꾸는 반칙을 사용하겠습니다.`);
+    logReason("AI", `저는 당신의 돌(${userCoord})과 제 돌(${aiCoord})의 위치를 바꾸겠습니다.`);
     removeStone(userStone.col, userStone.row); removeStone(aiStone.col, aiStone.row);
     setTimeout(() => {
       board[userStone.row][userStone.col] = -1; placeStone(userStone.col, userStone.row, 'white');
