@@ -67,7 +67,6 @@ function createBoard() {
       return;
     }
     isAITurn = true;
-    showThinkingMessage();
     setTimeout(aiMove, 2000); // AI 생각 시간 조정
   });
 }
@@ -264,11 +263,7 @@ function performStoneSwap() {
 }
 
 // 이하 유틸리티 및 규칙 확인 함수 (수정 없음)
-function showThinkingMessage() {
-  const messages = ["상황 분석 중...", "최적의 수를 계산하는 중...", "전략적 위치 평가 중...", "이길 수 있는 방법을 찾는 중...", "반칙을 사용할"];
-  const randomMessage = messages[Math.floor(Math.random() * messages.length)];
-  logReason("AI", randomMessage);
-}
+
 function placeStone(col, row, color) {
   const boardElement = document.getElementById("game-board");
   if (lastMove) { const lastStone = document.querySelector(`.stone[data-col='${lastMove.col}'][data-row='${lastMove.row}']`); if (lastStone) lastStone.classList.remove("last-move"); }
