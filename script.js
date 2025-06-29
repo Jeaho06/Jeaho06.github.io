@@ -45,20 +45,22 @@ function createBoard() {
 
     if (closestX < 0 || closestX >= 19 || closestY < 0 || closestY >= 19) return;
     
-    // [수정] '거부권' 발동 로직: 사용자가 클릭한 순간 즉시 판단
-    // 1. 해당 위치가 비어있는지 먼저 확인
+    // '거부권'으로 막힌 곳을 클릭했을 때의 메시지
+    if (board[closestY][closestX] === 3) {
+      logReason("시스템", "그 자리에는 둘 수 없습니다.");
+      return;
+    }
+    
+    // '거부권' 발동 로직
     if (board[closestY][closestX] === 0) {
-        // 2. 해당 위치가 사용자의 승리 수인지 가상으로 확인
-        board[closestY][closestX] = 1; // 가상으로 돌을 놓음
+        board[closestY][closestX] = 1;
         const isWinningMove = checkWin(board, 1);
-        board[closestY][closestX] = 0; // 즉시 원상복구
+        board[closestY][closestX] = 0;
 
-        // 3. 승리 수이고, 거부권 사용 가능하면 발동
         if (isWinningMove && !isDestinyDenialUsed && document.getElementById('toggle-destiny-denial').checked) {
             isDestinyDenialUsed = true;
-            board[closestY][closestX] = 3; // 3: 영구적으로 막힌 칸
+            board[closestY][closestX] = 3;
 
-            // 시각적으로 막힌 위치 표시
             const deniedSpot = document.createElement("div");
             deniedSpot.className = "denied-spot";
             deniedSpot.style.left = `${closestX * gridSize + gridSize / 2}px`;
@@ -66,22 +68,17 @@ function createBoard() {
             boardElement.appendChild(deniedSpot);
 
             const deniedCoord = convertCoord(closestX, closestY);
-            logReason("시스템", "운명의 거부가 발동되었습니다.");
-            logReason("AI", `${deniedCoord}로 향하는 당신의 운명을 거부합니다.`);
-            logReason("시스템", "해당 위치는 봉인되었습니다. 다른 곳에 두십시오.");
             
-            // AI 턴을 소모하지 않고, 사용자가 다시 두도록 여기서 함수 종료
+            // --- 이 부분이 수정되었습니다 ---
+            logMove(++moveCount, `AI: 거부권을 발동하겠습니다.`);
+            logReason("AI", `${deniedCoord}에 대한 거부권을 발동합니다.`);
+            // -----------------------------
+            
             return; 
         }
     }
     
-    // 거부권으로 막힌 곳인지 확인
-    if (board[closestY][closestX] === 3) {
-      logReason("시스템", "그 자리에는 둘 수 없습니다.");
-      return;
-    }
-
-    // 그 외 일반적인 수 처리
+    // 일반적인 수 처리
     if (board[closestY][closestX] !== 0) return;
     if (isForbiddenMove(closestX, closestY, 1)) { logReason("시스템", "금수입니다! 다른 위치를 선택하세요."); return; }
     
@@ -229,7 +226,7 @@ function placeBomb() {
     placeStone(move.col, move.row, 'bomb'); playSound("tnt_installation.mp3");
     const bombCoord = convertCoord(move.col, move.row);
     logMove(++moveCount, `AI: ${bombCoord}!!`);
-    logReason("AI", `저는 ${bombCoord}에 폭탄을 설치하겠습니다. 여기가 좋아 보이네요.`);
+    logReason("AI", `저는 ${bombCoord}에 폭탄을 설치하겠습니다.`);
     isAITurn = false; return { isAsync: true };
   }
   logReason("AI", "폭탄을 설치할 만한 좋은 장소를 찾지 못했습니다."); return false;
@@ -237,7 +234,7 @@ function placeBomb() {
 function detonateBomb() {
   const center = bombState; const centerCoord = convertCoord(center.col, center.row);
   logMove(++moveCount, `AI: ${centerCoord}💥!!`);
-  logReason("AI", `${centerCoord}의 폭탄을 터뜨립니다!`); playSound("tnt_explosion.mp3");
+  logReason("AI", `${centerCoord}의 폭탄을 터뜨리겠습니다.`); playSound("tnt_explosion.mp3");
   const boardElement = document.getElementById("game-board"); const bombEffect = document.createElement("div");
   bombEffect.className = "bomb-effect"; bombEffect.style.left = `${center.col * gridSize + gridSize / 2}px`; bombEffect.style.top = `${center.row * gridSize + gridSize / 2}px`;
   boardElement.appendChild(bombEffect);
@@ -261,7 +258,7 @@ function performDoubleMove() {
         board[move2.row][move2.col] = -1; placeStone(move2.col, move2.row, 'white'); playSound("Movement.mp3");
         const aiCoord2 = convertCoord(move2.col, move2.row);
         logMove(++moveCount, `AI: ${aiCoord2}!!`);
-        logReason("AI", `이어서 ${aiCoord2}에 두 번째 돌을 놓겠습니다!`);
+        logReason("AI", `이어서 ${aiCoord2}에 두 번째 돌을 놓겠습니다.`);
         if (checkWin(board, -1)) { logReason("시스템", "AI가 승리했습니다!"); isAITurn = true; } else { isAITurn = false; }
       }, 800);
     } else { isAITurn = false; }
@@ -277,7 +274,7 @@ function performStoneSwap() {
     const userStone = lastMove;
     const userCoord = convertCoord(userStone.col, userStone.row); const aiCoord = convertCoord(aiStone.col, aiStone.row);
     logMove(++moveCount, `AI: ${userCoord}↔${aiCoord}!!`);
-    logReason("AI", `저는 당신의 돌(${userCoord})과 제 돌(${aiCoord})의 위치를 바꾸는 반칙을 사용하겠습니다.`);
+    logReason("AI", `저는 당신의 돌(${userCoord})과 제 돌(${aiCoord})의 위치를 바꾸겠습니다.`);
     removeStone(userStone.col, userStone.row); removeStone(aiStone.col, aiStone.row);
     setTimeout(() => {
       board[userStone.row][userStone.col] = -1; placeStone(userStone.col, userStone.row, 'white');
