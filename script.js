@@ -1,3 +1,11 @@
+document.addEventListener('DOMContentLoaded', async function() {
+  const savedLang = localStorage.getItem('omokLanguage') || 'ko';
+  await changeLanguage(savedLang);
+  createBoard();
+  setupPopupWindow();
+  setupLanguageSwitcher();
+});
+
 // --- 전역 변수 ---
 const board = Array(19).fill().map(() => Array(19).fill(0));
 const gridSize = 30;
@@ -11,21 +19,6 @@ let isDestinyDenialUsed = false;
 let currentLanguage = 'ko';
 let currentStrings = {};
 
-// --- 페이지 로드 시 실행 ---
-document.addEventListener('DOMContentLoaded', async function() {
-  const savedLang = localStorage.getItem('omokLanguage') || 'ko';
-  await changeLanguage(savedLang);
-  
-  // 언어 파일이 로드된 후 나머지 초기화 진행
-  createBoard();
-  setupPopupWindow();
-  setupLanguageSwitcher();
-});
-
-
-/**
- * 언어 파일을 비동기적으로 불러오고 UI를 업데이트하는 함수
- */
 async function changeLanguage(lang) {
   try {
     const response = await fetch(`./lang/${lang}.json`);
@@ -34,24 +27,16 @@ async function changeLanguage(lang) {
     currentLanguage = lang;
     document.documentElement.lang = lang;
     localStorage.setItem('omokLanguage', lang);
-    
     document.querySelectorAll('[data-i18n-key]').forEach(el => {
       const key = el.dataset.i18nKey;
-      if (currentStrings[key]) {
-        el.textContent = currentStrings[key];
-      }
+      if (currentStrings[key]) { el.textContent = currentStrings[key]; }
     });
   } catch (error) {
     console.error("Could not load language file:", error);
-    if (lang !== 'ko') {
-      await changeLanguage('ko');
-    }
+    if (lang !== 'ko') { await changeLanguage('ko'); }
   }
 }
 
-/**
- * 번역된 문자열을 가져오는 헬퍼 함수
- */
 function getString(key, replacements = {}) {
     let str = currentStrings[key] || key;
     if (typeof str !== 'string') return key;
@@ -61,8 +46,6 @@ function getString(key, replacements = {}) {
     return str;
 }
 
-
-// --- 로깅 함수 ---
 function logMove(count, message) {
   const moveLog = document.getElementById("move-log"); if (!moveLog) return;
   const messageElem = document.createElement("p");
@@ -78,7 +61,6 @@ function logReason(sender, message) {
   reasonLog.scrollTop = reasonLog.scrollHeight;
 }
 
-// --- 핵심 로직 ---
 function createBoard() {
   const boardElement = document.getElementById("game-board"); if (!boardElement) return;
   for (let i = 0; i < 19; i++) {
@@ -94,83 +76,54 @@ function createBoard() {
     if (isAITurn) return;
     const rect = boardElement.getBoundingClientRect(); const offsetX = event.clientX - rect.left; const offsetY = event.clientY - rect.top;
     const closestX = Math.round((offsetX - gridSize / 2) / gridSize); const closestY = Math.round((offsetY - gridSize / 2) / gridSize);
-
     if (closestX < 0 || closestX >= 19 || closestY < 0 || closestY >= 19) return;
-    
     if (board[closestY][closestX] === 3) {
-      logReason(getString('user_title'), getString('system_denied_spot'));
-      return;
+      logReason(getString('user_title'), getString('system_denied_spot')); return;
     }
-    
     if (board[closestY][closestX] === 0) {
         board[closestY][closestX] = 1;
         const isWinningMove = checkWin(board, 1);
         board[closestY][closestX] = 0;
-
         if (isWinningMove && !isDestinyDenialUsed && document.getElementById('toggle-destiny-denial').checked) {
-            isDestinyDenialUsed = true;
-            board[closestY][closestX] = 3; 
-
-            const deniedSpot = document.createElement("div");
-            deniedSpot.className = "denied-spot";
-            deniedSpot.style.left = `${closestX * gridSize + gridSize / 2}px`;
-            deniedSpot.style.top = `${closestY * gridSize + gridSize / 2}px`;
-            deniedSpot.setAttribute("data-col", closestX);
-            deniedSpot.setAttribute("data-row", closestY);
+            isDestinyDenialUsed = true; board[closestY][closestX] = 3; 
+            const deniedSpot = document.createElement("div"); deniedSpot.className = "denied-spot";
+            deniedSpot.style.left = `${closestX * gridSize + gridSize / 2}px`; deniedSpot.style.top = `${closestY * gridSize + gridSize / 2}px`;
+            deniedSpot.setAttribute("data-col", closestX); deniedSpot.setAttribute("data-row", closestY);
             boardElement.appendChild(deniedSpot);
-
             const deniedCoord = convertCoord(closestX, closestY);
             logMove(++moveCount, `${getString('ai_title')}: ${getString('cheat_veto')}!!`);
             logReason(getString('ai_title'), getString('ai_veto_reason', {coord: deniedCoord}));
-            
             return; 
         }
     }
-    
     if (board[closestY][closestX] !== 0) return;
     if (isForbiddenMove(closestX, closestY, 1)) { logReason(getString('user_title'), getString('system_forbidden')); return; }
-    
     board[closestY][closestX] = 1; placeStone(closestX, closestY, 'black'); playSound("Movement.mp3");
     const userCoord = convertCoord(closestX, closestY);
     logMove(++moveCount, `${getString('user_title')}: ${userCoord}??`);
     if (checkWin(board, 1)) { logReason(getString('user_title'), getString('system_user_win')); isAITurn = true; return; }
-    
     isAITurn = true; setTimeout(aiMove, 1000);
   });
 }
 
 function aiMove() {
   if (bombState.isArmed) { detonateBomb(); return; }
-  
   let moveAction;
-  
   const willCheat = Math.random() < cheatProbability && !isFirstMove && lastMove;
-
   if (willCheat) {
     const availableCheats = [];
     if (document.getElementById('toggle-bomb').checked) { availableCheats.push(() => placeBomb()); }
     if (document.getElementById('toggle-double-move').checked) { availableCheats.push(() => performDoubleMove()); }
     if (document.getElementById('toggle-swap').checked) { availableCheats.push(() => performStoneSwap()); }
-
     if (availableCheats.length > 0) {
       const chosenCheat = availableCheats[Math.floor(Math.random() * availableCheats.length)];
       moveAction = chosenCheat;
-    } else {
-      moveAction = () => performNormalMove();
-    }
-  } else {
-    moveAction = () => performNormalMove();
-  }
-  
+    } else { moveAction = () => performNormalMove(); }
+  } else { moveAction = () => performNormalMove(); }
   const actionResult = moveAction();
-  
   if (actionResult && actionResult.isAsync === false) {
-    if (checkWin(board, -1)) {
-      logReason(getString('ai_title'), getString('system_ai_win'));
-      isAITurn = true;
-    } else {
-      isAITurn = false;
-    }
+    if (checkWin(board, -1)) { logReason(getString('ai_title'), getString('system_ai_win')); isAITurn = true; } 
+    else { isAITurn = false; }
   } else if (!actionResult) {
     const normalMoveResult = performNormalMove();
     if(normalMoveResult && normalMoveResult.isAsync === false){
@@ -180,48 +133,40 @@ function aiMove() {
   }
 }
 
+// --- 지능형 AI 로직 (수정) ---
 function findBestMove() {
-  let bestScore = -Infinity; let bestMove = null; let bestReasonKey = "reason_default";
+  let bestScore = -1;
+  let bestMove = null;
+  let myBestScore = 0;
+  let opponentBestScore = 0;
+
   for (let y = 0; y < 19; y++) {
     for (let x = 0; x < 19; x++) {
       if (board[y][x] === 0) {
-        let reasonKey = "reason_default";
-        const myScoreContext = calculateScore(x, y, -1);
-        const opponentScoreContext = calculateScore(x, y, 1);
-        const myScore = myScoreContext.score;
-        const opponentScore = opponentScoreContext.score;
+        const myScore = calculateScore(x, y, -1).score;
+        const opponentScore = calculateScore(x, y, 1).score;
         const totalScore = myScore + opponentScore;
         if (totalScore > bestScore) {
-          bestScore = totalScore; bestMove = { col: x, row: y };
-          if (opponentScore >= 1000000) { reasonKey = `reason_block_win`; }
-          else if (myScore >= 1000000) { reasonKey = `reason_win`; }
-          else if (opponentScore >= 100000) { reasonKey = `reason_block_3`; }
-          else if (myScore >= 100000) { reasonKey = `reason_attack_4`; }
-          else if (opponentScore >= 5000) { reasonKey = `reason_block_3`; }
-          else if (myScore >= 5000) { reasonKey = `reason_attack_3`; }
-          else if (opponentScore >= 500) { reasonKey = `reason_disrupt`; }
-          else if (myScore >= 500) { reasonKey = `reason_build`; }
-          bestReasonKey = reasonKey;
+          bestScore = totalScore;
+          bestMove = { col: x, row: y };
+          myBestScore = myScore;
+          opponentBestScore = opponentScore;
         }
       }
     }
   }
-  return { move: bestMove, score: bestScore, reason: getString(bestReasonKey) };
+  return { move: bestMove, myScore: myBestScore, opponentScore: opponentBestScore };
 }
 
 function calculateScore(x, y, player) {
-    let totalScore = 0; let highestPatternScore = 0; let patternName = "연결";
-    const patterns = { 1000000: "5목", 100000: "열린 4", 10000: "닫힌 4", 5000: "열린 3", 500: "닫힌 3", 100: "열린 2", 10: "닫힌 2", 1: "외로운 돌" };
+    let totalScore = 0; let highestPatternScore = 0;
     const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
     for (const [dx, dy] of directions) {
         const score = calculateScoreForLine(x, y, dx, dy, player);
-        if (score > highestPatternScore) {
-            highestPatternScore = score;
-            for (const [s, name] of Object.entries(patterns).reverse()) { if (score >= s) { patternName = name; break; } }
-        }
+        if (score > highestPatternScore) { highestPatternScore = score; }
         totalScore += score;
     }
-    return { score: totalScore, patternName: patternName };
+    return { score: totalScore, highestPattern: highestPatternScore };
 }
 
 function calculateScoreForLine(x, y, dx, dy, player) {
@@ -246,34 +191,44 @@ function calculateScoreForLine(x, y, dx, dy, player) {
     return 0;
 }
 
+// --- 행동 함수 및 유틸리티 (수정) ---
 function performNormalMove() {
-    const best = findBestMove(); const move = best.move; const reason = best.reason;
+    const best = findBestMove();
+    const move = best.move;
+    
     if (move && board[move.row][move.col] === 0) {
-        board[move.row][move.col] = -1; placeStone(move.col, move.row, 'white'); playSound("Movement.mp3");
+        // 이유 분석 로직
+        let reasonKey = 'reason_default';
+        if (best.opponentScore >= 100000) { reasonKey = 'reason_block_win'; }
+        else if (best.myScore >= 100000) { reasonKey = 'reason_win'; }
+        else if (best.opponentScore >= 5000) { reasonKey = 'reason_block_3'; }
+        else if (best.myScore >= 5000) { reasonKey = 'reason_attack_3'; }
+        else if (best.myScore >= 10000) { reasonKey = 'reason_attack_4'; }
+
+        const reason = getString(reasonKey);
         const aiCoord = convertCoord(move.col, move.row);
+        
+        board[move.row][move.col] = -1;
+        placeStone(move.col, move.row, 'white');
+        playSound("Movement.mp3");
+        
         logMove(++moveCount, `${getString('ai_title')}: ${aiCoord}`);
         logReason(getString('ai_title'), getString('ai_reason_template', { reason: reason, coord: aiCoord }));
-        isFirstMove = false; return { isAsync: false };
+        
+        isFirstMove = false;
+        return { isAsync: false };
     }
-    logReason(getString('ai_title'), getString('system_no_move')); isAITurn = false; return { isAsync: true };
+    
+    logReason(getString('ai_title'), getString('system_no_move'));
+    isAITurn = false;
+    return { isAsync: true };
 }
 
+// (이하 나머지 함수들은 이전 버전과 동일)
 function checkWin(board, player) {
     const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
-    for (let y = 0; y < 19; y++) {
-        for (let x = 0; x < 19; x++) {
-            if (board[y][x] === player) {
-                for (const [dx, dy] of directions) {
-                    let count = 1;
-                    for (let i = 1; i < 5; i++) { const nx = x + i * dx; const ny = y + i * dy; if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === player) count++; else break; }
-                    if (count >= 5) return true;
-                }
-            }
-        }
-    }
-    return false;
+    for (let y = 0; y < 19; y++) { for (let x = 0; x < 19; x++) { if (board[y][x] === player) { for (const [dx, dy] of directions) { let count = 1; for (let i = 1; i < 5; i++) { const nx = x + i * dx; const ny = y + i * dy; if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === player) count++; else break; } if (count >= 5) return true; } } } } return false;
 }
-
 function isForbiddenMove(x, y, player) {
     if (player !== 1) return false;
     board[y][x] = player; let openThrees = 0;
@@ -281,7 +236,6 @@ function isForbiddenMove(x, y, player) {
     for (const [dx, dy] of directions) { if (calculateScoreForLine(x, y, dx, dy, player) === 5000) openThrees++; }
     board[y][x] = 0; return openThrees >= 2;
 }
-
 function placeBomb() {
     const move = findBestBombLocation();
     if (move) {
@@ -294,7 +248,6 @@ function placeBomb() {
     }
     logReason(getString('ai_title'), getString('system_bomb_fail')); return false;
 }
-
 function detonateBomb() {
     const center = bombState; const centerCoord = convertCoord(center.col, center.row);
     logMove(++moveCount, `${getString('ai_title')}: ${centerCoord}💥!!`);
@@ -309,7 +262,6 @@ function detonateBomb() {
     }, 500);
     return { isAsync: true };
 }
-
 function performDoubleMove() {
     const move1 = findBestMove().move;
     if (move1 && board[move1.row][move1.col] === 0) {
@@ -331,7 +283,6 @@ function performDoubleMove() {
     }
     return false;
 }
-
 function performStoneSwap() {
     if (!lastMove) return false;
     let aiStone;
@@ -352,14 +303,12 @@ function performStoneSwap() {
     }
     return false;
 }
-
 function placeStone(col, row, color) {
     const boardElement = document.getElementById("game-board");
     if (lastMove) { const lastStone = document.querySelector(`.stone[data-col='${lastMove.col}'][data-row='${lastMove.row}']`); if (lastStone) lastStone.classList.remove("last-move"); }
     const stone = document.createElement("div"); stone.classList.add("stone", color); stone.style.left = `${col * gridSize + gridSize / 2}px`; stone.style.top = `${row * gridSize + gridSize / 2}px`; stone.setAttribute("data-col", col); stone.setAttribute("data-row", row); boardElement.appendChild(stone);
     if (color !== 'bomb') { stone.classList.add("last-move"); lastMove = { col, row }; }
 }
-
 function removeStone(col, row) {
     const stoneElement = document.querySelector(`.stone[data-col='${col}'][data-row='${row}']`);
     if (stoneElement) stoneElement.remove();
@@ -367,7 +316,6 @@ function removeStone(col, row) {
     if (deniedSpotElement) deniedSpotElement.remove();
     if (row >= 0 && row < 19 && col >= 0 && col < 19) board[row][col] = 0;
 }
-
 function findBestBombLocation() {
     let bestLocation = null; let maxScore = -Infinity;
     for (let r = 0; r < 19; r++) {
@@ -389,12 +337,10 @@ function findBestBombLocation() {
     if (maxScore <= 0) return null;
     return bestLocation;
 }
-
 function isCriticalStone(x, y, player) {
     const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
     for (const [dx, dy] of directions) { let count = 1; let nx = x + dx, ny = y + dy; while (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === player) { count++; nx += dx; ny += dy; } nx = x - dx; ny = y - dy; while (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === player) { count++; nx -= dx; ny -= dy; } if (count >= 3) return true; } return false;
 }
-
 function convertCoord(col, row) { const letter = String.fromCharCode(65 + col); const number = row + 1; return letter + number; }
 function playSound(soundFile) { const audio = new Audio(soundFile); audio.play(); }
 
@@ -427,8 +373,8 @@ function setupPopupWindow() {
         versionLogs.forEach((log, i) => {
             log.classList.toggle('active-version', i === index);
         });
-        nextBtn.classList.toggle('disabled', index === 0); // Next는 최신 버전일 때 비활성화
-        prevBtn.classList.toggle('disabled', index === versionLogs.length - 1); // Prev는 가장 오래된 버전일 때 비활성화
+        nextBtn.classList.toggle('disabled', index === 0);
+        prevBtn.classList.toggle('disabled', index === versionLogs.length - 1);
     };
 
     if (updateButton && updatePopup && popupOverlay && closeButton && prevBtn && nextBtn) {
@@ -445,7 +391,6 @@ function setupPopupWindow() {
         closeButton.addEventListener('click', closePopup);
         popupOverlay.addEventListener('click', closePopup);
         
-        // < (이전 버전 보기)
         prevBtn.addEventListener('click', () => {
             const versionLogs = versionContainer.querySelectorAll('.version-log');
             if (currentVersionIndex < versionLogs.length - 1) {
@@ -454,7 +399,6 @@ function setupPopupWindow() {
             }
         });
 
-        // > (최신 버전 보기)
         nextBtn.addEventListener('click', () => {
             if (currentVersionIndex > 0) {
                 currentVersionIndex--;
