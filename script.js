@@ -9,13 +9,14 @@ let bombState = { isArmed: false, col: null, row: null };
 let moveCount = 0;
 let isDestinyDenialUsed = false;
 let currentLanguage = 'ko';
-let currentStrings = {}; // 불러온 언어 데이터를 저장할 객체
+let currentStrings = {};
 
 // --- 페이지 로드 시 실행 ---
 document.addEventListener('DOMContentLoaded', async function() {
   const savedLang = localStorage.getItem('omokLanguage') || 'ko';
-  await changeLanguage(savedLang); // 언어 파일을 먼저 불러옴
+  await changeLanguage(savedLang);
   
+  // 언어 파일이 로드된 후 나머지 초기화 진행
   createBoard();
   setupPopupWindow();
   setupLanguageSwitcher();
@@ -31,10 +32,9 @@ async function changeLanguage(lang) {
     if (!response.ok) throw new Error("Language file not found!");
     currentStrings = await response.json();
     currentLanguage = lang;
-    document.documentElement.lang = lang; // html lang 속성 변경
+    document.documentElement.lang = lang;
     localStorage.setItem('omokLanguage', lang);
     
-    // UI의 모든 정적 텍스트 업데이트
     document.querySelectorAll('[data-i18n-key]').forEach(el => {
       const key = el.dataset.i18nKey;
       if (currentStrings[key]) {
@@ -43,7 +43,6 @@ async function changeLanguage(lang) {
     });
   } catch (error) {
     console.error("Could not load language file:", error);
-    // 언어 파일 로딩 실패 시, 기본 언어(ko)로 재시도
     if (lang !== 'ko') {
       await changeLanguage('ko');
     }
@@ -55,7 +54,7 @@ async function changeLanguage(lang) {
  */
 function getString(key, replacements = {}) {
     let str = currentStrings[key] || key;
-    if (typeof str !== 'string') return key; // 번역이 없거나 잘못된 경우 키 반환
+    if (typeof str !== 'string') return key;
     for (const placeholder in replacements) {
         str = str.replace(`{${placeholder}}`, replacements[placeholder]);
     }
@@ -172,7 +171,7 @@ function aiMove() {
     } else {
       isAITurn = false;
     }
-  } else if (!actionResult) { // 반칙이 실패했을 경우
+  } else if (!actionResult) {
     const normalMoveResult = performNormalMove();
     if(normalMoveResult && normalMoveResult.isAsync === false){
       if (checkWin(board, -1)) { logReason(getString('ai_title'), getString('system_ai_win')); isAITurn = true; }
@@ -196,7 +195,7 @@ function findBestMove() {
           bestScore = totalScore; bestMove = { col: x, row: y };
           if (opponentScore >= 1000000) { reasonKey = `reason_block_win`; }
           else if (myScore >= 1000000) { reasonKey = `reason_win`; }
-          else if (opponentScore >= 100000) { reasonKey = `reason_block_3`; } // 열린 4는 3을 막는것과 같음
+          else if (opponentScore >= 100000) { reasonKey = `reason_block_3`; }
           else if (myScore >= 100000) { reasonKey = `reason_attack_4`; }
           else if (opponentScore >= 5000) { reasonKey = `reason_block_3`; }
           else if (myScore >= 5000) { reasonKey = `reason_attack_3`; }
@@ -416,7 +415,7 @@ function setupPopupWindow() {
             const logDiv = document.createElement('div');
             logDiv.classList.add('version-log');
             const notesHtml = log.notes.map(note => `<li>${note}</li>`).join('');
-            logDiv.innerHTML = `<p><strong>Version: ${log.version}</strong> (${log.date})</p><ul>${notesHtml}</ul>`;
+            logDiv.innerHTML = `<p><strong>Version ${log.version}</strong> (${log.date})</p><ul>${notesHtml}</ul>`;
             versionContainer.appendChild(logDiv);
         });
         showVersion(currentVersionIndex);
@@ -428,8 +427,8 @@ function setupPopupWindow() {
         versionLogs.forEach((log, i) => {
             log.classList.toggle('active-version', i === index);
         });
-        nextBtn.classList.toggle('disabled', index === 0);
-        prevBtn.classList.toggle('disabled', index === versionLogs.length - 1);
+        nextBtn.classList.toggle('disabled', index === 0); // Next는 최신 버전일 때 비활성화
+        prevBtn.classList.toggle('disabled', index === versionLogs.length - 1); // Prev는 가장 오래된 버전일 때 비활성화
     };
 
     if (updateButton && updatePopup && popupOverlay && closeButton && prevBtn && nextBtn) {

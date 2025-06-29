@@ -204,6 +204,7 @@ input:checked + .slider:before {
   to { transform: translate(-50%, -50%) scale(1.2); opacity: 0; }
 }
 
+/* --- 상단 버튼 및 팝업창 스타일 (수정) --- */
 .top-right-controls {
   position: fixed;
   top: 20px;
@@ -229,13 +230,15 @@ input:checked + .slider:before {
   background-color: #555;
 }
 
+/* 드롭다운 컨테이너 */
 .language-switcher {
   position: relative;
   display: inline-block;
 }
 
+/* 드롭다운 내용 (기본 숨김) */
 .dropdown-content {
-  display: none;
+  display: none; /* 평소에는 숨김 */
   position: absolute;
   right: 0;
   background-color: #f1f1f1;
@@ -258,6 +261,7 @@ input:checked + .slider:before {
   background-color: #ddd;
 }
 
+/* 드롭다운 보이기 (JS로 제어) */
 .show-dropdown {
   display: block;
 }
