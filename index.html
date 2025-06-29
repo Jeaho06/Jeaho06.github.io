@@ -13,26 +13,31 @@
   <div id="popup-overlay"></div>
   <div id="update-popup" class="popup">
     <h2>업데이트 내역</h2>
-    <div class="popup-content">
-      <ul>
-        <li>
-          <p><strong>버전: 1.1</strong> (2025-06-29)</p>
-          <ul>
-            <li>반칙 제어 UI 추가</li>
-            <li>기보에 수순 표시 기능 추가</li>
-            <li>AI 방어 로직 개선</li>
-          </ul>
-        </li>
-        <hr>
-        <li>
-          <p><strong>버전: 1.0</strong> (2025-06-28)</p>
-          <ul>
-            <li>JeahoGames 오목 최초 버전 출시</li>
-            <li>지능형 AI 및 반칙 기능 탑재</li>
-            <li>업데이트 내역 팝업 기능 추가</li>
-          </ul>
-        </li>
-      </ul>
+
+    <div id="version-details-container">
+      
+      <div class="version-log active-version">
+        <p><strong>버전: 1.1</strong> (2025-06-29)</p>
+        <ul>
+          <li>반칙 제어 UI 추가</li>
+          <li>기보에 수순 표시 기능 추가</li>
+          <li>AI 방어 로직 개선</li>
+        </ul>
+      </div>
+
+      <div class="version-log">
+        <p><strong>버전: 1.0</strong> (2025-06-28)</p>
+        <ul>
+          <li>JeahoGames 오목 최초 버전 출시</li>
+          <li>지능형 AI 및 반칙 기능 탑재</li>
+          <li>업데이트 내역 팝업 기능 추가</li>
+        </ul>
+      </div>
+
+    </div>
+    <div class="popup-nav">
+      <button id="prev-version-btn">&lt;</button>
+      <button id="next-version-btn">&gt;</button>
     </div>
     <p style="text-align: center; margin: 20px 0 0; font-size: 14px; color: #555;">JeahoGames</p>
     <button id="popup-close-button">닫기</button>

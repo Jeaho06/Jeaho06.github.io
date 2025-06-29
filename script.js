@@ -305,21 +305,67 @@ function isCriticalStone(x, y, player) {
 function convertCoord(col, row) { const letter = String.fromCharCode(65 + col); const number = row + 1; return letter + number; }
 function playSound(soundFile) { const audio = new Audio(soundFile); audio.play(); }
 
+// --- 팝업창 기능 스크립트 (페이지 넘김 기능으로 수정) ---
 function setupPopupWindow() {
   const updateButton = document.getElementById('update-button');
   const updatePopup = document.getElementById('update-popup');
   const popupOverlay = document.getElementById('popup-overlay');
   const closeButton = document.getElementById('popup-close-button');
-  if (updateButton && updatePopup && popupOverlay && closeButton) {
+  
+  // 내비게이션 요소 추가
+  const prevBtn = document.getElementById('prev-version-btn');
+  const nextBtn = document.getElementById('next-version-btn');
+  const versionLogs = document.querySelectorAll('.version-log');
+  
+  let currentVersionIndex = 0;
+
+  if (updateButton && updatePopup && popupOverlay && closeButton && prevBtn && nextBtn) {
+    
+    // 특정 버전의 내용을 보여주는 함수
+    const showVersion = (index) => {
+      // 모든 버전 내용을 숨김
+      versionLogs.forEach(log => {
+        log.classList.remove('active-version');
+      });
+      // 요청된 인덱스의 버전만 보이게 함
+      versionLogs[index].classList.add('active-version');
+
+      // 버튼 활성화/비활성화 상태 업데이트
+      prevBtn.classList.toggle('disabled', index === 0);
+      nextBtn.classList.toggle('disabled', index === versionLogs.length - 1);
+    };
+
+    // '업데이트 내역' 버튼 클릭 시 팝업 열기 (항상 최신 버전부터 보여줌)
     updateButton.addEventListener('click', () => {
+      currentVersionIndex = 0; // 항상 최신 버전(0번 인덱스)부터 시작
+      showVersion(currentVersionIndex);
       updatePopup.style.display = 'block';
       popupOverlay.style.display = 'block';
     });
+
     const closePopup = () => {
       updatePopup.style.display = 'none';
       popupOverlay.style.display = 'none';
     };
+
+    // '닫기'와 뒷배경 클릭 시 팝업 닫기
     closeButton.addEventListener('click', closePopup);
     popupOverlay.addEventListener('click', closePopup);
+
+    // '<' (이전) 버튼 클릭 이벤트
+    prevBtn.addEventListener('click', () => {
+      if (currentVersionIndex > 0) {
+        currentVersionIndex--;
+        showVersion(currentVersionIndex);
+      }
+    });
+
+    // '>' (다음) 버튼 클릭 이벤트
+    nextBtn.addEventListener('click', () => {
+      if (currentVersionIndex < versionLogs.length - 1) {
+        currentVersionIndex++;
+        showVersion(currentVersionIndex);
+      }
+    });
   }
 }
