@@ -26,41 +26,17 @@
   "ai_double_move_1": "私は{coord}に最初の一手を置きます。",
   "ai_double_move_2": "続いて{coord}に二手目を置きます！",
   "ai_swap_reason": "あなたの石({userCoord})と私の石({aiCoord})を交換する反則を使います。",
-  "reason_win": "勝利する",
-  "reason_block_win": "あなたの勝利を阻止する",
-  "reason_attack_4": "必勝の開き四を作る",
-  "reason_attack_3": "強力な開き三を作る",
-  "reason_block_3": "あなたの開き三を阻止する",
-  "reason_disrupt": "相手の連結を妨害する",
-  "reason_build": "形を整える",
-  "reason_pressure": "あなたを圧迫する",
-  "reason_center": "良い場所がないので中央を占める",
-  "reason_default": "戦略的な手を打つ",
+  "reason_win": "この手で勝利できるので",
+  "reason_block_win": "あなたの勝利を阻止するため",
+  "reason_attack_4": "必勝の「開き四」を作るため",
+  "reason_block_4": "あなたの「開き四」を阻止するため",
+  "reason_attack_3": "強力な「開き三」を作るため",
+  "reason_block_3": "あなたの「開き三」を阻止するため",
+  "reason_default": "戦略的に最善だと判断したため",
   "update_logs": [
-    {
-      "version": "1.2",
-      "date": "2025-06-30",
-      "notes": [
-        "新規反則「運命の拒否」追加",
-        "多言語サポートシステムの導入"
-      ]
-    },
-    {
-      "version": "1.1",
-      "date": "2025-06-29",
-      "notes": [
-        "反則制御UI追加",
-        "棋譜に手数表示機能追加",
-        "AI防御ロジック改善"
-      ]
-    },
-    {
-      "version": "1.0",
-      "date": "2025-06-28",
-      "notes": [
-        "JeahoGames 五目並べ初版リリース",
-        "知能型AI及び反則機能搭載"
-      ]
-    }
+    { "version": "1.3", "date": "2025-06-29", "notes": ["AIの理由説明ロジックを改善"] },
+    { "version": "1.2", "date": "2025-06-30", "notes": ["新規反則「運命の拒否」追加", "多言語サポートシステムの導入"] },
+    { "version": "1.1", "date": "2025-06-29", "notes": ["反則制御UI追加", "棋譜に手数表示機能追加"] },
+    { "version": "1.0", "date": "2025-06-28", "notes": ["JeahoGames 五目並べ初版リリース"] }
   ]
 }

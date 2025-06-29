@@ -1,30 +1,70 @@
 {
-  "update_history_btn": "업데이트 내역", "language_btn": "언어", "update_history_title": "업데이트 내역", "close_btn": "닫기",
-  "ai_title": "인공지능", "user_title": "사용자", "cheat_allow_title": "반칙 허용",
-  "cheat_veto": "거부권", "cheat_bomb": "폭탄 설치", "cheat_double_move": "2번 두기", "cheat_swap": "돌 바꾸기",
-  "log_move_title": "기보 (좌표)", "log_reason_title": "설명 (이유 및 시스템)",
-  "system_forbidden": "금수입니다! 다른 위치를 선택하세요.", "system_user_win": "사용자가 승리했습니다!",
-  "system_ai_win": "AI가 승리했습니다!", "system_denied_spot": "그 자리에는 둘 수 없습니다.",
+  "update_history_btn": "업데이트 내역",
+  "language_btn": "언어",
+  "update_history_title": "업데이트 내역",
+  "close_btn": "닫기",
+  "ai_title": "인공지능",
+  "user_title": "사용자",
+  "cheat_allow_title": "반칙 허용",
+  "cheat_veto": "운명의 거부 (1회)",
+  "cheat_bomb": "폭탄 설치",
+  "cheat_double_move": "2번 두기",
+  "cheat_swap": "돌 바꾸기",
+  "log_move_title": "기보 (좌표)",
+  "log_reason_title": "설명 (이유 및 시스템)",
+  "system_forbidden": "금수입니다! 다른 위치를 선택하세요.",
+  "system_user_win": "사용자가 승리했습니다!",
+  "system_ai_win": "AI가 승리했습니다!",
+  "system_denied_spot": "그 자리에는 둘 수 없습니다.",
   "system_veto_activated": "운명의 거부가 발동되었습니다.",
   "system_bomb_fail": "폭탄을 설치할 만한 좋은 장소를 찾지 못했습니다.",
   "system_no_move": "AI가 둘 곳을 찾지 못했습니다.",
   "ai_reason_template": "저는 {reason} {coord}에 두겠습니다.",
   "ai_veto_reason": "{coord}로 향하는 당신의 운명을 거부합니다.",
-  "ai_bomb_place_reason": "저는 {coord}에 폭탄을 설치하겠습니다. 여기가 좋아 보이네요.",
-  "ai_bomb_detonate_reason": "{coord}의 폭탄을 터뜨립니다!",
+  "ai_bomb_place_reason": "저는 {coord}에 폭탄을 설치하겠습니다.",
+  "ai_bomb_detonate_reason": "{coord}의 폭탄을 터뜨리겠습니다.",
   "ai_double_move_1": "저는 {coord}에 첫 번째 돌을 두겠습니다.",
-  "ai_double_move_2": "이어서 {coord}에 두 번째 돌을 놓겠습니다!",
-  "ai_swap_reason": "저는 당신의 돌({userCoord})과 제 돌({aiCoord})의 위치를 바꾸는 반칙을 사용하겠습니다.",
-  "reason_win": "이 수로 승리할 수 있으므로",
+  "ai_double_move_2": "이어서 {coord}에 두 번째 돌을 놓겠습니다.",
+  "ai_swap_reason": "저는 당신의 돌({userCoord})과 제 돌({aiCoord})의 위치를 바꾸겠습니다.",
+  "reason_win": "이 수로 승리할 수 있기 때문에",
   "reason_block_win": "당신의 승리를 막기 위해",
-  "reason_attack_4": "필승의 '열린 4'를 만들기 위해",
-  "reason_block_4": "당신의 '열린 4'를 막기 위해",
-  "reason_attack_3": "강력한 '열린 3' 공격을 하기 위해",
-  "reason_block_3": "당신의 '열린 3' 공격을 막기 위해",
+  "reason_attack_4": "필승의 열린 4를 만들기 위해",
+  "reason_block_4": "당신의 열린 4를 막기 위해",
+  "reason_attack_3": "강력한 열린 3 공격을 하기 위해",
+  "reason_block_3": "당신의 열린 3 공격을 막기 위해",
   "reason_default": "전략적으로 최선이라 판단하여",
   "update_logs": [
-    { "version": "1.2", "date": "2025-06-30", "notes": ["신규 반칙 '거부권' 추가", "다국어 지원 시스템 도입"] },
-    { "version": "1.1", "date": "2025-06-29", "notes": ["반칙 제어 UI 추가", "기보에 수순 표시 기능 추가", "AI 방어 로직 개선"] },
-    { "version": "1.0", "date": "2025-06-28", "notes": ["JeahoGames 오목 최초 버전 출시", "지능형 AI 및 반칙 기능 탑재"] }
+    {
+      "version": "1.3",
+      "date": "2025-06-29",
+      "notes": [
+        "AI의 이유 설명 로직 개선"
+      ]
+    },
+    {
+      "version": "1.2",
+      "date": "2025-06-30",
+      "notes": [
+        "신규 반칙 '운명의 거부' 추가",
+        "다국어 지원 시스템 도입"
+      ]
+    },
+    {
+      "version": "1.1",
+      "date": "2025-06-29",
+      "notes": [
+        "반칙 제어 UI 추가",
+        "기보에 수순 표시 기능 추가",
+        "AI 방어 로직 개선"
+      ]
+    },
+    {
+      "version": "1.0",
+      "date": "2025-06-28",
+      "notes": [
+        "JeahoGames 오목 최초 버전 출시",
+        "지능형 AI 및 반칙 기능 탑재"
+      ]
+    }
   ]
 }
