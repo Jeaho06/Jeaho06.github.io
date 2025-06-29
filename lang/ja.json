@@ -1,0 +1,66 @@
+{
+  "update_history_btn": "更新履歴",
+  "language_btn": "言語",
+  "update_history_title": "更新履歴",
+  "close_btn": "閉じる",
+  "ai_title": "AI",
+  "user_title": "ユーザー",
+  "cheat_allow_title": "反則許可",
+  "cheat_veto": "運命の拒否 (1回)",
+  "cheat_bomb": "爆弾設置",
+  "cheat_double_move": "二手指し",
+  "cheat_swap": "石交換",
+  "log_move_title": "棋譜 (座標)",
+  "log_reason_title": "説明 (理由 & システム)",
+  "system_forbidden": "禁じ手です！他の場所を選択してください。",
+  "system_user_win": "ユーザーが勝ちました！",
+  "system_ai_win": "AIが勝ちました！",
+  "system_denied_spot": "そこには置けません。",
+  "system_veto_activated": "「運命の拒否」が発動しました。",
+  "system_bomb_fail": "爆弾を設置する良い場所が見つかりませんでした。",
+  "system_no_move": "AIが置ける場所を見つけられませんでした。",
+  "ai_reason_template": "私は{reason}ため、{coord}に置きます。",
+  "ai_veto_reason": "{coord}に向かうあなたの運명을拒否します。",
+  "ai_bomb_place_reason": "私は{coord}に爆弾を設置します。ここが良さそうです。",
+  "ai_bomb_detonate_reason": "{coord}の爆弾を爆発させます！",
+  "ai_double_move_1": "私は{coord}に最初の一手を置きます。",
+  "ai_double_move_2": "続いて{coord}に二手目を置きます！",
+  "ai_swap_reason": "あなたの石({userCoord})と私の石({aiCoord})を交換する反則を使います。",
+  "reason_win": "勝利する",
+  "reason_block_win": "あなたの勝利を阻止する",
+  "reason_attack_4": "必勝の形を作る",
+  "reason_attack_3": "強力な攻撃を準備する",
+  "reason_block_3": "あなたの攻撃を事前に遮断する",
+  "reason_disrupt": "相手の連結を妨害する",
+  "reason_build": "形を整える",
+  "reason_pressure": "あなたを圧迫する",
+  "reason_center": "良い場所がないので中央を占める",
+  "reason_default": "戦略的な判断をする",
+  "update_logs": [
+    {
+      "version": "1.2",
+      "date": "2025-06-30",
+      "notes": [
+        "新規反則「運命の拒否」追加",
+        "多言語サポートシステムの導入"
+      ]
+    },
+    {
+      "version": "1.1",
+      "date": "2025-06-29",
+      "notes": [
+        "反則制御UI追加",
+        "棋譜に手数表示機能追加",
+        "AI防御ロジック改善"
+      ]
+    },
+    {
+      "version": "1.0",
+      "date": "2025-06-28",
+      "notes": [
+        "JeahoGames 五目並べ初版リリース",
+        "知能型AI及び反則機能搭載"
+      ]
+    }
+  ]
+}
