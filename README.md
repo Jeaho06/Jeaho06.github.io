@@ -10,11 +10,7 @@ An online Omok (Gomoku/Five-in-a-Row) game with a new concept where the AI oppon
 
 <br>
 
-<p align="center">
-  <a href="https://omok.ai.kr">
-    <img src="https://i.imgur.com/17cffd.png" width="700" alt="Omok Game Screenshot">
-  </a>
-</p>
+
 
 ---
 
