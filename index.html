@@ -17,6 +17,13 @@
     <div id="version-details-container">
       
       <div class="version-log active-version">
+        <p><strong>버전: 1.2</strong> (2025-06-29)</p>
+        <ul>
+          <li>신규 반칙 '거부권' 추가</li>
+        </ul>
+      </div>
+
+      <div class="version-log">
         <p><strong>버전: 1.1</strong> (2025-06-29)</p>
         <ul>
           <li>반칙 제어 UI 추가</li>
@@ -35,13 +42,16 @@
       </div>
 
     </div>
+
     <div class="popup-nav">
       <button id="prev-version-btn">&lt;</button>
       <button id="next-version-btn">&gt;</button>
     </div>
+
     <p style="text-align: center; margin: 20px 0 0; font-size: 14px; color: #555;">JeahoGames</p>
     <button id="popup-close-button">닫기</button>
   </div>
+
 
   <div class="game-container">
     <div class="ai-container">
@@ -49,6 +59,14 @@
         <h2>인공지능</h2>
         <div id="cheat-controls">
           <h3>반칙 허용</h3>
+          <div class="control-group">
+            <label class="switch">
+              <input type="checkbox" id="toggle-destiny-denial" checked>
+              <span class="slider"></span>
+            </label>
+            <span>거부권</span>
+          </div>
+          <hr style="margin: 10px 0; border: none; border-top: 1px solid #ddd;">
           <div class="control-group">
             <label class="switch">
               <input type="checkbox" id="toggle-bomb" checked>
