@@ -46,7 +46,6 @@ function getString(key, replacements = {}) {
     return str;
 }
 
-
 function logMove(count, message) {
   const moveLog = document.getElementById("move-log"); if (!moveLog) return;
   const messageElem = document.createElement("p");
@@ -134,17 +133,18 @@ function aiMove() {
   }
 }
 
-// --- 지능형 AI 로직 (수정) ---
+// --- 지능형 AI 로직 (수정된 최종 버전) ---
 function findBestMove() {
-  let bestScore = -1;
   let bestMove = null;
+  let bestScore = -1;
 
   for (let y = 0; y < 19; y++) {
     for (let x = 0; x < 19; x++) {
       if (board[y][x] === 0) {
-        const myScore = calculateScore(x, y, -1).score;
-        const opponentScore = calculateScore(x, y, 1).score;
+        const myScore = calculateScore(x, y, -1).totalScore;
+        const opponentScore = calculateScore(x, y, 1).totalScore;
         const totalScore = myScore + opponentScore;
+
         if (totalScore > bestScore) {
           bestScore = totalScore;
           bestMove = { col: x, row: y };
@@ -152,18 +152,21 @@ function findBestMove() {
       }
     }
   }
-  return bestMove; // 이제 이유가 아닌 좌표만 반환
+  return bestMove;
 }
 
 function calculateScore(x, y, player) {
-    let totalScore = 0; let highestPatternScore = 0;
+    let totalScore = 0;
+    let highestPattern = 0;
     const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
     for (const [dx, dy] of directions) {
         const score = calculateScoreForLine(x, y, dx, dy, player);
-        if (score > highestPatternScore) { highestPatternScore = score; }
+        if (score > highestPattern) {
+            highestPattern = score;
+        }
         totalScore += score;
     }
-    return { score: totalScore, highestPattern: highestPatternScore };
+    return { totalScore, highestPattern };
 }
 
 function calculateScoreForLine(x, y, dx, dy, player) {
@@ -189,66 +192,32 @@ function calculateScoreForLine(x, y, dx, dy, player) {
 }
 
 /**
- * [신규] 특정 수의 모든 공격/수비 패턴을 분석하는 함수
+ * AI의 수를 실행하고 이유를 분석하여 출력하는 함수
  */
-function analyzeMove(x, y) {
-    const analysis = {
-        myPatterns: {},
-        opponentPatterns: {}
-    };
-    const players = [{p: -1, type: 'myPatterns'}, {p: 1, type: 'opponentPatterns'}];
-    const patterns = { 1000000: "win", 100000: "live_four", 10000: "dead_four", 5000: "live_three", 500: "dead_three"};
-
-    players.forEach(playerInfo => {
-        const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
-        for(const [dx, dy] of directions) {
-            const score = calculateScoreForLine(x, y, dx, dy, playerInfo.p);
-            for (const [s, name] of Object.entries(patterns)) {
-                if (score >= s) {
-                    analysis[playerInfo.type][name] = (analysis[playerInfo.type][name] || 0) + 1;
-                    break; // 가장 높은 패턴 하나만 기록
-                }
-            }
-        }
-    });
-    return analysis;
-}
-
-// --- 행동 함수 및 유틸리티 (수정) ---
 function performNormalMove() {
     const move = findBestMove();
     
     if (move && board[move.row][move.col] === 0) {
-        // [수정] 이유를 상세하게 생성하는 로직
-        const analysis = analyzeMove(move.col, move.row);
-        let reason = "";
+        const myPattern = calculateScore(move.col, move.row, -1).highestPattern;
+        const opponentPattern = calculateScore(move.col, move.row, 1).highestPattern;
         
-        if (analysis.myPatterns.win) {
-            reason = getString('reason_win');
-        } else if (analysis.opponentPatterns.win) {
-            reason = getString('reason_block_win');
-        } else if (analysis.myPatterns.live_four) {
-            reason = getString('reason_attack_4');
-        } else if (analysis.opponentPatterns.live_four) {
-            reason = getString('reason_block_4');
-        } else if (analysis.opponentPatterns.live_three) {
-            reason = getString('reason_block_3');
-            if(analysis.myPatterns.live_three) {
-                reason += ` 동시에, 저의 ${getString('reason_attack_3').replace('만들기', '만드는 공격')}도 됩니다.`;
-            }
-        } else if (analysis.myPatterns.live_three) {
-            reason = getString('reason_attack_3');
-        } else {
-            reason = getString('reason_default');
-        }
-        
+        let reasonKey = 'reason_default';
+        if (myPattern >= 1000000) reasonKey = 'reason_win';
+        else if (opponentPattern >= 1000000) reasonKey = 'reason_block_win';
+        else if (myPattern >= 100000) reasonKey = 'reason_attack_4';
+        else if (opponentPattern >= 100000) reasonKey = 'reason_block_4';
+        else if (opponentPattern >= 5000) reasonKey = 'reason_block_3';
+        else if (myPattern >= 5000) reasonKey = 'reason_attack_3';
+
+        const reason = getString(reasonKey);
         const aiCoord = convertCoord(move.col, move.row);
+        
         board[move.row][move.col] = -1;
         placeStone(move.col, move.row, 'white');
         playSound("Movement.mp3");
         
         logMove(++moveCount, `${getString('ai_title')}: ${aiCoord}`);
-        logReason(getString('ai_title'), `저는 ${reason} 위해 ${aiCoord}에 두겠습니다.`);
+        logReason(getString('ai_title'), getString('ai_reason_template', { reason: reason, coord: aiCoord }));
         
         isFirstMove = false;
         return { isAsync: false };
@@ -259,7 +228,7 @@ function performNormalMove() {
     return { isAsync: true };
 }
 
-// (이하 나머지 코드는 이전 버전과 동일)
+// (이하 나머지 함수들은 이전 버전과 동일)
 function checkWin(board, player) {
     const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
     for (let y = 0; y < 19; y++) { for (let x = 0; x < 19; x++) { if (board[y][x] === player) { for (const [dx, dy] of directions) { let count = 1; for (let i = 1; i < 5; i++) { const nx = x + i * dx; const ny = y + i * dy; if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === player) count++; else break; } if (count >= 5) return true; } } } } return false;
@@ -300,25 +269,20 @@ function detonateBomb() {
 function performDoubleMove() {
     const move1 = findBestMove();
     if (move1 && board[move1.row][move1.col] === 0) {
-        // 첫 번째 수에 대한 상세 이유 분석
-        const analysis1 = analyzeMove(move1.col, move1.row);
-        let reason1 = analysis1.opponentPatterns.live_three ? getString('reason_block_3') : (analysis1.myPatterns.live_three ? getString('reason_attack_3') : getString('reason_default'));
-        
-        board[move1.row][move1.col] = -1; placeStone(move1.col, move1.row, 'white');
-        const aiCoord1 = convertCoord(move1.col, move1.row);
-        logMove(++moveCount, `${getString('ai_title')}: ${aiCoord1}!!`);
-        logReason(getString('ai_title'), `저는 ${reason1} 위해 ${aiCoord1}에 첫 번째 돌을 두겠습니다.`); playSound("Movement.mp3");
-
-        const move2 = findBestMove();
+        performNormalMove(move1); // 첫 번째 수는 일반 수처럼 두고 이유까지 출력
+        const move2 = findBestMove(); // 바뀐 판에서 두 번째 최선의 수를 찾음
         if (move2 && board[move2.row][move2.col] === 0) {
             setTimeout(() => {
-                const analysis2 = analyzeMove(move2.col, move2.row);
-                let reason2 = analysis2.opponentPatterns.live_three ? getString('reason_block_3') : (analysis2.myPatterns.live_three ? getString('reason_attack_3') : getString('reason_default'));
+                const analysis2 = calculateScore(move2.col, move2.row, -1);
+                let reasonKey2 = 'reason_default';
+                if(analysis2.highestPattern >= 5000) reasonKey2 = 'reason_attack_3';
                 
-                board[move2.row][move2.col] = -1; placeStone(move2.col, move2.row, 'white'); playSound("Movement.mp3");
+                board[move2.row][move2.col] = -1; 
+                placeStone(move2.col, move2.row, 'white'); 
+                playSound("Movement.mp3");
                 const aiCoord2 = convertCoord(move2.col, move2.row);
                 logMove(++moveCount, `${getString('ai_title')}: ${aiCoord2}!!`);
-                logReason(getString('ai_title'), `이어서 ${reason2} 위해 ${aiCoord2}에 두 번째 돌을 놓겠습니다!`);
+                logReason(getString('ai_title'), getString('ai_double_move_2', { coord: aiCoord2 }));
                 if (checkWin(board, -1)) { logReason(getString('ai_title'), getString('system_ai_win')); isAITurn = true; } else { isAITurn = false; }
             }, 800);
         } else { isAITurn = false; }
