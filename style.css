@@ -1,38 +1,39 @@
 body {
   font-family: Arial, sans-serif;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
   height: 100vh;
   margin: 0;
-  flex-direction: column;
   background-color: #f0f0f0;
+  padding-top: 80px; /* 상단 버튼과의 충돌을 피하기 위한 여백 */
+  box-sizing: border-box;
 }
 
 .game-container {
   display: flex;
-  align-items: center; /* 수직 중앙 정렬 */
+  align-items: flex-start;
+  justify-content: center;
   margin-bottom: 20px;
+  width: 90%;
+  max-width: 1200px;
 }
 
 .ai-container, .user-container {
   flex: 1;
   display: flex;
-  flex-direction: column; 
-  justify-content: center; /* 수직 중앙 정렬 */
-  align-items: center; /* 수평 중앙 정렬 */
-  padding: 10px;
-  min-width: 160px; /* 최소 너비를 늘려 공간 확보 */
-  height: 570px; /* 보드와 높이를 맞춤 */
+  flex-direction: column;
+  align-items: center;
+  padding: 0 20px;
   box-sizing: border-box;
+  text-align: center;
 }
 
 .board-container {
-  flex: 2;
+  flex: 0 0 610px; /* 고정 너비를 주어 오목판이 줄어들지 않도록 함 */
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px;
 }
 
 #game-board {
@@ -47,47 +48,44 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
 }
 
 #cheat-controls {
   margin-top: 20px;
-  padding: 20px; /* 내부 여백 증가 */
+  padding: 15px;
   border: 1px solid #ddd;
   border-radius: 8px;
   background-color: #f9f9f9;
-  text-align: left;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  width: auto; /* 내용에 맞게 너비 조절 */
+  min-width: 180px;
 }
 
 #cheat-controls h3 {
   margin-top: 0;
   margin-bottom: 15px;
   text-align: center;
-  font-size: 18px; /* 글자 크기 증가 */
+  font-size: 16px;
   color: #333;
 }
 
 .control-group {
   display: flex;
   align-items: center;
-  margin-bottom: 12px; /* 간격 증가 */
+  margin-bottom: 12px;
 }
 
 .control-group:last-child {
   margin-bottom: 0;
 }
 
-.control-group span {
-  margin-left: 12px; /* 간격 증가 */
-  font-size: 16px; /* 글자 크기 증가 */
-}
-
-/* 토글 스위치 크기 조정 */
 .switch {
   position: relative;
   display: inline-block;
-  width: 50px;
-  height: 28px;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0; /* 스위치가 찌그러지지 않도록 함 */
 }
 
 .switch input {
@@ -105,16 +103,16 @@ body {
   bottom: 0;
   background-color: #ccc;
   transition: .4s;
-  border-radius: 28px;
+  border-radius: 24px;
 }
 
 .slider:before {
   position: absolute;
   content: "";
-  height: 20px;
-  width: 20px;
-  left: 4px;
-  bottom: 4px;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
   background-color: white;
   transition: .4s;
   border-radius: 50%;
@@ -129,10 +127,57 @@ input:focus + .slider {
 }
 
 input:checked + .slider:before {
-  transform: translateX(22px);
+  transform: translateX(20px);
 }
 
-/* --- 이하 기존 스타일 --- */
+.control-group span {
+  margin-left: 10px;
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+.ai-container > .info-wrapper > h2, 
+.user-container > h2 {
+  margin-bottom: 10px;
+}
+
+.chat-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  width: 90%;
+  max-width: 700px; /* 채팅창 최대 너비 수정 */
+  text-align: center;
+}
+
+.chat-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 50%;
+}
+
+.chat-box {
+  width: 100%;
+  height: 150px;
+  border: 1px solid #ccc;
+  overflow-y: scroll;
+  padding: 10px;
+  background-color: #fff;
+  text-align: left;
+  font-family: 'Courier New', Courier, monospace;
+  box-sizing: border-box;
+}
+
+#move-log p {
+  margin: 2px 0;
+  font-weight: bold;
+}
+
+#reasoning-log p {
+  margin: 2px 0;
+}
+
 .line {
   position: absolute;
   background-color: #8b4513;
@@ -177,20 +222,6 @@ input:checked + .slider:before {
   pointer-events: none;
   border: 2px dashed red;
 }
-
-.chat-container {
-  display: flex; justify-content: center; gap: 20px; width: 700px; text-align: center;
-}
-.chat-wrapper {
-  display: flex; flex-direction: column; align-items: center; width: 50%;
-}
-.chat-box {
-  width: 100%; height: 150px; border: 1px solid #ccc; overflow-y: scroll;
-  padding: 10px; background-color: #fff; text-align: left;
-  font-family: 'Courier New', Courier, monospace; box-sizing: border-box;
-}
-#move-log p { margin: 2px 0; font-weight: bold; }
-#reasoning-log p { margin: 2px 0; }
 .coordinate-label {
   position: absolute; font-size: 12px; font-weight: bold;
   color: #333; pointer-events: none; user-select: none;
