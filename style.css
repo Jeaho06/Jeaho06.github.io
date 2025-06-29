@@ -11,19 +11,20 @@ body {
 
 .game-container {
   display: flex;
-  align-items: center;
+  align-items: center; /* 수직 중앙 정렬 */
   margin-bottom: 20px;
 }
 
 .ai-container, .user-container {
   flex: 1;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  flex-direction: column; 
+  justify-content: center; /* 수직 중앙 정렬 */
+  align-items: center; /* 수평 중앙 정렬 */
   padding: 10px;
-  min-width: 150px;
-  align-self: stretch;
+  min-width: 160px; /* 최소 너비를 늘려 공간 확보 */
+  height: 570px; /* 보드와 높이를 맞춤 */
+  box-sizing: border-box;
 }
 
 .board-container {
@@ -50,7 +51,7 @@ body {
 
 #cheat-controls {
   margin-top: 20px;
-  padding: 15px;
+  padding: 20px; /* 내부 여백 증가 */
   border: 1px solid #ddd;
   border-radius: 8px;
   background-color: #f9f9f9;
@@ -62,14 +63,14 @@ body {
   margin-top: 0;
   margin-bottom: 15px;
   text-align: center;
-  font-size: 16px;
+  font-size: 18px; /* 글자 크기 증가 */
   color: #333;
 }
 
 .control-group {
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 12px; /* 간격 증가 */
 }
 
 .control-group:last-child {
@@ -77,15 +78,16 @@ body {
 }
 
 .control-group span {
-  margin-left: 10px;
-  font-size: 14px;
+  margin-left: 12px; /* 간격 증가 */
+  font-size: 16px; /* 글자 크기 증가 */
 }
 
+/* 토글 스위치 크기 조정 */
 .switch {
   position: relative;
   display: inline-block;
-  width: 44px;
-  height: 24px;
+  width: 50px;
+  height: 28px;
 }
 
 .switch input {
@@ -103,16 +105,16 @@ body {
   bottom: 0;
   background-color: #ccc;
   transition: .4s;
-  border-radius: 24px;
+  border-radius: 28px;
 }
 
 .slider:before {
   position: absolute;
   content: "";
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  bottom: 3px;
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
   background-color: white;
   transition: .4s;
   border-radius: 50%;
@@ -127,9 +129,10 @@ input:focus + .slider {
 }
 
 input:checked + .slider:before {
-  transform: translateX(20px);
+  transform: translateX(22px);
 }
 
+/* --- 이하 기존 스타일 --- */
 .line {
   position: absolute;
   background-color: #8b4513;
@@ -204,7 +207,6 @@ input:checked + .slider:before {
   to { transform: translate(-50%, -50%) scale(1.2); opacity: 0; }
 }
 
-/* --- 상단 버튼 및 팝업창 스타일 (수정) --- */
 .top-right-controls {
   position: fixed;
   top: 20px;
@@ -230,15 +232,13 @@ input:checked + .slider:before {
   background-color: #555;
 }
 
-/* 드롭다운 컨테이너 */
 .language-switcher {
   position: relative;
   display: inline-block;
 }
 
-/* 드롭다운 내용 (기본 숨김) */
 .dropdown-content {
-  display: none; /* 평소에는 숨김 */
+  display: none;
   position: absolute;
   right: 0;
   background-color: #f1f1f1;
@@ -261,7 +261,6 @@ input:checked + .slider:before {
   background-color: #ddd;
 }
 
-/* 드롭다운 보이기 (JS로 제어) */
 .show-dropdown {
   display: block;
 }
