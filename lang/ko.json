@@ -6,7 +6,7 @@
   "ai_title": "인공지능",
   "user_title": "사용자",
   "cheat_allow_title": "반칙 허용",
-  "cheat_veto": "운명의 거부 (1회)",
+  "cheat_veto": "거부권",
   "cheat_bomb": "폭탄 설치",
   "cheat_double_move": "2번 두기",
   "cheat_swap": "돌 바꾸기",
@@ -45,7 +45,7 @@
       "version": "1.2",
       "date": "2025-06-30",
       "notes": [
-        "신규 반칙 '운명의 거부' 추가",
+        "신규 반칙 '거부권' 추가",
         "다국어 지원 시스템 도입"
       ]
     },
