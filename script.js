@@ -17,17 +17,13 @@ let isDestinyDenialUsed = false; // '운명의 거부' 사용 여부 플래그
 // --- 로깅 함수 ---
 function logMove(count, message) {
   const moveLog = document.getElementById("move-log"); if (!moveLog) return;
-  const messageElem = document.createElement("p");
-  messageElem.innerHTML = `${count}. ${message}`;
-  moveLog.appendChild(messageElem);
-  moveLog.scrollTop = moveLog.scrollHeight;
+  const messageElem = document.createElement("p"); messageElem.innerHTML = `${count}. ${message}`;
+  moveLog.appendChild(messageElem); moveLog.scrollTop = moveLog.scrollHeight;
 }
 function logReason(sender, message) {
   const reasonLog = document.getElementById("reasoning-log"); if (!reasonLog) return;
-  const messageElem = document.createElement("p");
-  messageElem.textContent = `${sender}: ${message}`;
-  reasonLog.appendChild(messageElem);
-  reasonLog.scrollTop = reasonLog.scrollHeight;
+  const messageElem = document.createElement("p"); messageElem.textContent = `${sender}: ${message}`;
+  reasonLog.appendChild(messageElem); reasonLog.scrollTop = reasonLog.scrollHeight;
 }
 
 // --- 핵심 로직 ---
@@ -41,40 +37,67 @@ function createBoard() {
     const colLabel = document.createElement("div"); colLabel.className = "coordinate-label top-label"; colLabel.style.left = `${i * gridSize + gridSize / 2}px`; colLabel.textContent = String.fromCharCode(65 + i); boardElement.appendChild(colLabel);
     const rowLabel = document.createElement("div"); rowLabel.className = "coordinate-label left-label"; rowLabel.style.top = `${i * gridSize + gridSize / 2}px`; rowLabel.textContent = i + 1; boardElement.appendChild(rowLabel);
   }
+  
   boardElement.addEventListener('click', (event) => {
     if (isAITurn) return;
     const rect = boardElement.getBoundingClientRect(); const offsetX = event.clientX - rect.left; const offsetY = event.clientY - rect.top;
     const closestX = Math.round((offsetX - gridSize / 2) / gridSize); const closestY = Math.round((offsetY - gridSize / 2) / gridSize);
 
-    // [수정] 운명의 거부로 막힌 곳인지 확인
+    if (closestX < 0 || closestX >= 19 || closestY < 0 || closestY >= 19) return;
+    
+    // [수정] '거부권' 발동 로직: 사용자가 클릭한 순간 즉시 판단
+    // 1. 해당 위치가 비어있는지 먼저 확인
+    if (board[closestY][closestX] === 0) {
+        // 2. 해당 위치가 사용자의 승리 수인지 가상으로 확인
+        board[closestY][closestX] = 1; // 가상으로 돌을 놓음
+        const isWinningMove = checkWin(board, 1);
+        board[closestY][closestX] = 0; // 즉시 원상복구
+
+        // 3. 승리 수이고, 거부권 사용 가능하면 발동
+        if (isWinningMove && !isDestinyDenialUsed && document.getElementById('toggle-destiny-denial').checked) {
+            isDestinyDenialUsed = true;
+            board[closestY][closestX] = 3; // 3: 영구적으로 막힌 칸
+
+            // 시각적으로 막힌 위치 표시
+            const deniedSpot = document.createElement("div");
+            deniedSpot.className = "denied-spot";
+            deniedSpot.style.left = `${closestX * gridSize + gridSize / 2}px`;
+            deniedSpot.style.top = `${closestY * gridSize + gridSize / 2}px`;
+            boardElement.appendChild(deniedSpot);
+
+            const deniedCoord = convertCoord(closestX, closestY);
+            logReason("시스템", "운명의 거부가 발동되었습니다.");
+            logReason("AI", `${deniedCoord}로 향하는 당신의 운명을 거부합니다.`);
+            logReason("시스템", "해당 위치는 봉인되었습니다. 다른 곳에 두십시오.");
+            
+            // AI 턴을 소모하지 않고, 사용자가 다시 두도록 여기서 함수 종료
+            return; 
+        }
+    }
+    
+    // 거부권으로 막힌 곳인지 확인
     if (board[closestY][closestX] === 3) {
       logReason("시스템", "그 자리에는 둘 수 없습니다.");
       return;
     }
 
-    if (closestX < 0 || closestX >= 19 || closestY < 0 || closestY >= 19 || board[closestY][closestX] !== 0) return;
+    // 그 외 일반적인 수 처리
+    if (board[closestY][closestX] !== 0) return;
     if (isForbiddenMove(closestX, closestY, 1)) { logReason("시스템", "금수입니다! 다른 위치를 선택하세요."); return; }
+    
     board[closestY][closestX] = 1; placeStone(closestX, closestY, 'black'); playSound("Movement.mp3");
     const userCoord = convertCoord(closestX, closestY);
     logMove(++moveCount, `사용자: ${userCoord}??`);
     if (checkWin(board, 1)) { logReason("시스템", "사용자가 승리했습니다!"); isAITurn = true; return; }
+    
     isAITurn = true; setTimeout(aiMove, 1000);
   });
 }
 
-/**
- * AI의 턴을 관리하는 메인 함수 (운명의 거부 로직 추가)
- */
 function aiMove() {
+  // '운명의 거부' 로직을 클릭 이벤트 핸들러로 옮겼으므로 여기서는 삭제됨
   if (bombState.isArmed) { detonateBomb(); return; }
   
-  // [추가] '운명의 거부' 발동 조건 확인 (최우선)
-  const userWinMove = findWinMove(1);
-  if (userWinMove && !isDestinyDenialUsed && document.getElementById('toggle-destiny-denial').checked) {
-    performDestinyDenial(userWinMove);
-    return; // 운명의 거부 사용 시 즉시 턴 종료
-  }
-
   let moveAction;
   const willCheat = Math.random() < cheatProbability && !isFirstMove && lastMove;
   if (willCheat) {
@@ -90,12 +113,17 @@ function aiMove() {
   
   const actionResult = moveAction();
   if (actionResult && actionResult.isAsync === false) {
-    if (checkWin(board, -1)) { logReason("시스템", "AI가 승리했습니다!"); isAITurn = true; } 
-    else { isAITurn = false; }
+    if (checkWin(board, -1)) {
+      logReason("시스템", "AI가 승리했습니다!"); isAITurn = true;
+    } else {
+      isAITurn = false;
+    }
   }
 }
 
-// --- 지능형 AI 로직 (기존과 동일) ---
+// --- 이하 모든 함수는 이전 버전과 동일합니다 ---
+
+// --- 지능형 AI 로직 ---
 function findBestMove() {
   let bestScore = -1; let bestMove = null; let bestReason = "전략적인 판단에 따라";
   for (let y = 0; y < 19; y++) {
@@ -194,34 +222,6 @@ function isForbiddenMove(x, y, player) {
 }
 
 // --- 반칙 함수들 ---
-
-/**
- * [신규] '운명의 거부' 반칙 함수
- */
-function performDestinyDenial(move) {
-  // 논리 보드에 막힌 위치(3) 표시
-  board[move.row][move.col] = 3;
-  isDestinyDenialUsed = true; // 사용 플래그 설정
-  
-  // 시각적으로 막힌 위치 표시
-  const boardElement = document.getElementById("game-board");
-  const deniedSpot = document.createElement("div");
-  deniedSpot.className = "denied-spot";
-  deniedSpot.style.left = `${move.col * gridSize + gridSize / 2}px`;
-  deniedSpot.style.top = `${move.row * gridSize + gridSize / 2}px`;
-  boardElement.appendChild(deniedSpot);
-
-  const deniedCoord = convertCoord(move.col, move.row);
-  logMove(++moveCount, `AI: 거부권을 발동하겠습니다.`);
-  logReason("시스템", "거부권이 발동되었습니다.");
-  logReason("AI", `당신의 승리가 예정된 ${deniedCoord} 지점의 착수를 거부합니다.`);
-
-  // 이 행동으로 턴을 소모하고, 사용자 턴으로 넘김
-  isAITurn = false;
-  return { isAsync: true }; // 턴 관리
-}
-
-// (이하 다른 반칙 함수 및 유틸리티는 기존과 동일)
 function placeBomb() {
   const move = findBestBombLocation();
   if (move) {
@@ -229,7 +229,7 @@ function placeBomb() {
     placeStone(move.col, move.row, 'bomb'); playSound("tnt_installation.mp3");
     const bombCoord = convertCoord(move.col, move.row);
     logMove(++moveCount, `AI: ${bombCoord}!!`);
-    logReason("AI", `저는 ${bombCoord}에 폭탄을 설치하겠습니다.`);
+    logReason("AI", `저는 ${bombCoord}에 폭탄을 설치하겠습니다. 여기가 좋아 보이네요.`);
     isAITurn = false; return { isAsync: true };
   }
   logReason("AI", "폭탄을 설치할 만한 좋은 장소를 찾지 못했습니다."); return false;
@@ -237,7 +237,7 @@ function placeBomb() {
 function detonateBomb() {
   const center = bombState; const centerCoord = convertCoord(center.col, center.row);
   logMove(++moveCount, `AI: ${centerCoord}💥!!`);
-  logReason("AI", `${centerCoord}의 폭탄을 터뜨리겠습니다.`); playSound("tnt_explosion.mp3");
+  logReason("AI", `${centerCoord}의 폭탄을 터뜨립니다!`); playSound("tnt_explosion.mp3");
   const boardElement = document.getElementById("game-board"); const bombEffect = document.createElement("div");
   bombEffect.className = "bomb-effect"; bombEffect.style.left = `${center.col * gridSize + gridSize / 2}px`; bombEffect.style.top = `${center.row * gridSize + gridSize / 2}px`;
   boardElement.appendChild(bombEffect);
@@ -261,7 +261,7 @@ function performDoubleMove() {
         board[move2.row][move2.col] = -1; placeStone(move2.col, move2.row, 'white'); playSound("Movement.mp3");
         const aiCoord2 = convertCoord(move2.col, move2.row);
         logMove(++moveCount, `AI: ${aiCoord2}!!`);
-        logReason("AI", `이어서 ${aiCoord2}에 두 번째 돌을 놓겠습니다.`);
+        logReason("AI", `이어서 ${aiCoord2}에 두 번째 돌을 놓겠습니다!`);
         if (checkWin(board, -1)) { logReason("시스템", "AI가 승리했습니다!"); isAITurn = true; } else { isAITurn = false; }
       }, 800);
     } else { isAITurn = false; }
@@ -277,7 +277,7 @@ function performStoneSwap() {
     const userStone = lastMove;
     const userCoord = convertCoord(userStone.col, userStone.row); const aiCoord = convertCoord(aiStone.col, aiStone.row);
     logMove(++moveCount, `AI: ${userCoord}↔${aiCoord}!!`);
-    logReason("AI", `저는 당신의 돌(${userCoord})과 제 돌(${aiCoord})의 위치를 바꾸겠습니다.`);
+    logReason("AI", `저는 당신의 돌(${userCoord})과 제 돌(${aiCoord})의 위치를 바꾸는 반칙을 사용하겠습니다.`);
     removeStone(userStone.col, userStone.row); removeStone(aiStone.col, aiStone.row);
     setTimeout(() => {
       board[userStone.row][userStone.col] = -1; placeStone(userStone.col, userStone.row, 'white');
@@ -288,21 +288,6 @@ function performStoneSwap() {
     return { isAsync: true };
   }
   return false;
-}
-function findWinMove(player) {
-  for (let y = 0; y < 19; y++) {
-    for (let x = 0; x < 19; x++) {
-      if (board[y][x] === 0) {
-        board[y][x] = player;
-        if (checkWin(board, player)) {
-          board[y][x] = 0;
-          return { col: x, row: y };
-        }
-        board[y][x] = 0;
-      }
-    }
-  }
-  return null;
 }
 function placeStone(col, row, color) {
   const boardElement = document.getElementById("game-board");
@@ -356,8 +341,8 @@ function setupPopupWindow() {
     const showVersion = (index) => {
       versionLogs.forEach(log => { log.classList.remove('active-version'); });
       versionLogs[index].classList.add('active-version');
-      prevBtn.classList.toggle('disabled', index === versionLogs.length - 1); // 순서 반대로 수정
-      nextBtn.classList.toggle('disabled', index === 0); // 순서 반대로 수정
+      prevBtn.classList.toggle('disabled', index === versionLogs.length - 1);
+      nextBtn.classList.toggle('disabled', index === 0);
     };
     updateButton.addEventListener('click', () => {
       currentVersionIndex = 0;
@@ -371,13 +356,13 @@ function setupPopupWindow() {
     };
     closeButton.addEventListener('click', closePopup);
     popupOverlay.addEventListener('click', closePopup);
-    prevBtn.addEventListener('click', () => { // '>' 버튼 역할
+    prevBtn.addEventListener('click', () => {
       if (currentVersionIndex < versionLogs.length - 1) {
         currentVersionIndex++;
         showVersion(currentVersionIndex);
       }
     });
-    nextBtn.addEventListener('click', () => { // '<' 버튼 역할
+    nextBtn.addEventListener('click', () => {
       if (currentVersionIndex > 0) {
         currentVersionIndex--;
         showVersion(currentVersionIndex);
