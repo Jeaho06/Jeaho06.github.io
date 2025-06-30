@@ -13,11 +13,8 @@ let gameOver = false;
 
 // --- 페이지 로드 및 초기화 ---
 document.addEventListener('DOMContentLoaded', async function() {
-  // 1. 저장된 언어 설정 불러오기 (없으면 'ko' 기본)
   const savedLang = localStorage.getItem('omokLanguage') || 'ko';
-  // 2. 언어 파일 비동기 로드 및 UI 텍스트 적용 (완료될 때까지 대기)
   await changeLanguage(savedLang);
-  // 3. 언어 적용 후 게임 전체 초기화
   initializeGame();
 });
 
@@ -25,9 +22,9 @@ document.addEventListener('DOMContentLoaded', async function() {
  * 게임의 모든 상태와 이벤트를 초기화하는 메인 함수
  */
 function initializeGame() {
-    createBoardUI();      // 보드 UI(줄, 좌표)를 한 번만 그림
-    setupEventListeners();  // 모든 이벤트 리스너를 설정
-    resetGame();          // 게임 상태(변수, 돌, 로그)를 초기화
+    createBoardUI();
+    setupEventListeners();
+    resetGame();
 }
 
 /**
@@ -50,12 +47,15 @@ function resetGame() {
     document.getElementById('reasoning-log').innerHTML = '';
     
     const boardElement = document.getElementById('game-board');
+    // 게임 보드 내의 돌과 표시만 제거
     const dynamicElements = boardElement.querySelectorAll('.stone, .denied-spot');
     dynamicElements.forEach(el => el.remove());
 
     const gameOverMessage = document.getElementById('game-over-message');
-    gameOverMessage.classList.add('hidden');
-    gameOverMessage.textContent = '';
+    if (gameOverMessage) {
+        gameOverMessage.classList.add('hidden');
+        gameOverMessage.textContent = '';
+    }
 }
 
 /**
@@ -69,7 +69,6 @@ function setupEventListeners() {
     setupLanguageSwitcher();
     setupPopupOverlay();
 }
-
 
 // --- 언어 및 로깅 관련 함수 ---
 async function changeLanguage(lang) {
@@ -88,13 +87,13 @@ async function changeLanguage(lang) {
   } catch (error) {
     console.error("Could not load language file:", error);
     if (lang !== 'ko') {
-      await changeLanguage('ko'); // 실패 시 한국어로 재시도
+      await changeLanguage('ko');
     }
   }
 }
 
 function getString(key, replacements = {}) {
-    let str = currentStrings[key] || `[${key}]`; // 번역이 없으면 키를 표시
+    let str = currentStrings[key] || `[${key}]`;
     if (typeof str !== 'string') return key;
     for (const placeholder in replacements) {
         str = str.replace(`{${placeholder}}`, replacements[placeholder]);
@@ -109,7 +108,6 @@ function logMove(count, message) {
   moveLog.appendChild(messageElem);
   moveLog.scrollTop = moveLog.scrollHeight;
 }
-
 function logReason(sender, message) {
   const reasonLog = document.getElementById("reasoning-log"); if (!reasonLog) return;
   const messageElem = document.createElement("p");
@@ -118,11 +116,10 @@ function logReason(sender, message) {
   reasonLog.scrollTop = reasonLog.scrollHeight;
 }
 
-
 // --- UI 생성 및 이벤트 핸들러 설정 ---
 function createBoardUI() {
   const boardElement = document.getElementById("game-board"); if (!boardElement) return;
-  boardElement.innerHTML = ''; // 중복 생성을 막기 위해 초기화
+  boardElement.innerHTML = '';
   
   for (let i = 0; i < 19; i++) {
     const lineH = document.createElement("div"); lineH.classList.add("line", "horizontal-line"); lineH.style.top = `${i * gridSize + gridSize / 2}px`; boardElement.appendChild(lineH);
@@ -132,7 +129,6 @@ function createBoardUI() {
     const colLabel = document.createElement("div"); colLabel.className = "coordinate-label top-label"; colLabel.style.left = `${i * gridSize + gridSize / 2}px`; colLabel.textContent = String.fromCharCode(65 + i); boardElement.appendChild(colLabel);
     const rowLabel = document.createElement("div"); rowLabel.className = "coordinate-label left-label"; rowLabel.style.top = `${i * gridSize + gridSize / 2}px`; rowLabel.textContent = i + 1; boardElement.appendChild(rowLabel);
   }
-  // 게임 종료 메시지 표시용 div 추가
   const gameOverDiv = document.createElement('div');
   gameOverDiv.id = 'game-over-message';
   gameOverDiv.className = 'hidden';
@@ -177,6 +173,7 @@ function setupBoardClickListener() {
             const deniedCoord = convertCoord(closestX, closestY);
             logMove(++moveCount, `${getString('ai_title')}: ${getString('cheat_veto')}!!`);
             logReason(getString('ai_title'), getString('ai_veto_reason', {coord: deniedCoord}));
+            
             return; 
         }
     }
@@ -210,15 +207,14 @@ function setupHowToPlayPopup() {
     const button = document.getElementById('how-to-play-button');
     const popup = document.getElementById('how-to-play-popup');
     const closeButton = document.getElementById('how-to-play-close-button');
-    const overlay = document.getElementById('popup-overlay');
-    if(button && popup && closeButton && overlay) {
+    if(button && popup && closeButton) {
         button.addEventListener('click', () => {
             popup.style.display = 'block';
-            overlay.style.display = 'block';
+            document.getElementById('popup-overlay').style.display = 'block';
         });
         closeButton.addEventListener('click', () => {
             popup.style.display = 'none';
-            overlay.style.display = 'none';
+            document.getElementById('popup-overlay').style.display = 'none';
         });
     }
 }
@@ -231,6 +227,7 @@ function setupUpdatePopup() {
     const nextBtn = document.getElementById('next-version-btn');
     const versionContainer = document.getElementById('version-details-container');
     let currentVersionIndex = 0;
+
     const renderUpdateLogs = () => {
         const logs = currentStrings.update_logs || [];
         versionContainer.innerHTML = '';
@@ -243,6 +240,7 @@ function setupUpdatePopup() {
         });
         showVersion(0);
     };
+
     const showVersion = (index) => {
         const versionLogs = versionContainer.querySelectorAll('.version-log');
         if (!versionLogs.length) return;
@@ -253,6 +251,7 @@ function setupUpdatePopup() {
         nextBtn.classList.toggle('disabled', index === 0);
         prevBtn.classList.toggle('disabled', index === versionLogs.length - 1);
     };
+
     if (updateButton && updatePopup && closeButton && prevBtn && nextBtn) {
         updateButton.addEventListener('click', () => {
             renderUpdateLogs();
@@ -264,7 +263,8 @@ function setupUpdatePopup() {
             document.getElementById('popup-overlay').style.display = 'none';
         });
         prevBtn.addEventListener('click', () => {
-            if (currentVersionIndex < versionContainer.querySelectorAll('.version-log').length - 1) {
+            const versionLogs = versionContainer.querySelectorAll('.version-log');
+            if (currentVersionIndex < versionLogs.length - 1) {
                 showVersion(currentVersionIndex + 1);
             }
         });
@@ -307,7 +307,6 @@ function aiMove() {
       moveAction = chosenCheat;
     } else { moveAction = () => performNormalMove(); }
   } else { moveAction = () => performNormalMove(); }
-  
   const actionResult = moveAction();
   if (actionResult && actionResult.isAsync === false) {
     if (checkWin(board, -1)) { endGame(getString('system_ai_win')); } 
@@ -377,15 +376,15 @@ function calculateScoreForLine(x, y, dx, dy, player) {
 function performNormalMove(predefinedMove = null) {
     const move = predefinedMove || findBestMove();
     if (move && board[move.row][move.col] === 0) {
-        const myPattern = calculateScore(move.col, move.row, -1).highestPattern;
-        const opponentPattern = calculateScore(move.col, move.row, 1).highestPattern;
+        const myContext = calculateScore(move.col, move.row, -1);
+        const opponentContext = calculateScore(move.col, move.row, 1);
         let reasonKey = 'reason_default';
-        if (myPattern >= 1000000) reasonKey = 'reason_win';
-        else if (opponentPattern >= 1000000) reasonKey = 'reason_block_win';
-        else if (myPattern >= 100000) reasonKey = 'reason_attack_4';
-        else if (opponentPattern >= 100000) reasonKey = 'reason_block_4';
-        else if (opponentPattern >= 5000) reasonKey = 'reason_block_3';
-        else if (myPattern >= 5000) reasonKey = 'reason_attack_3';
+        if (myContext.highestPattern >= 1000000) reasonKey = 'reason_win';
+        else if (opponentContext.highestPattern >= 1000000) reasonKey = 'reason_block_win';
+        else if (myContext.highestPattern >= 100000) reasonKey = 'reason_attack_4';
+        else if (opponentContext.highestPattern >= 100000) reasonKey = 'reason_block_4';
+        else if (opponentContext.highestPattern >= 5000) reasonKey = 'reason_block_3';
+        else if (myContext.highestPattern >= 5000) reasonKey = 'reason_attack_3';
         const reason = getString(reasonKey);
         const aiCoord = convertCoord(move.col, move.row);
         board[move.row][move.col] = -1;
@@ -401,6 +400,7 @@ function performNormalMove(predefinedMove = null) {
     return { isAsync: true };
 }
 
+// --- 나머지 함수들 ---
 function checkWin(board, player) {
     const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
     for (let y = 0; y < 19; y++) { for (let x = 0; x < 19; x++) { if (board[y][x] === player) { for (const [dx, dy] of directions) { let count = 1; for (let i = 1; i < 5; i++) { const nx = x + i * dx; const ny = y + i * dy; if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === player) count++; else break; } if (count >= 5) return true; } } } } return false;
@@ -412,8 +412,6 @@ function isForbiddenMove(x, y, player) {
     for (const [dx, dy] of directions) { if (calculateScoreForLine(x, y, dx, dy, player) === 5000) openThrees++; }
     board[y][x] = 0; return openThrees >= 2;
 }
-
-// --- 반칙 함수들 ---
 function placeBomb() {
     const move = findBestBombLocation();
     if (move) {
@@ -443,6 +441,7 @@ function detonateBomb() {
 function performDoubleMove() {
     const firstMoveResult = performNormalMove();
     if (firstMoveResult && firstMoveResult.isAsync === false) {
+        if (gameOver) return {isAsync: true}; // 첫 수로 게임이 끝나면 두 번째 수 두지 않음
         const move2 = findBestMove();
         if (move2 && board[move2.row][move2.col] === 0) {
             setTimeout(() => {
@@ -479,8 +478,6 @@ function performStoneSwap() {
     }
     return false;
 }
-
-// --- 나머지 유틸리티 ---
 function placeStone(col, row, color) {
     const boardElement = document.getElementById("game-board");
     if (lastMove) { const lastStone = document.querySelector(`.stone[data-col='${lastMove.col}'][data-row='${lastMove.row}']`); if (lastStone) lastStone.classList.remove("last-move"); }
@@ -521,11 +518,9 @@ function isCriticalStone(x, y, player) {
 }
 function convertCoord(col, row) { const letter = String.fromCharCode(65 + col); const number = row + 1; return letter + number; }
 function playSound(soundFile) { const audio = new Audio(soundFile); audio.play(); }
-
 function setupPopupWindow() {
     const updateButton = document.getElementById('update-button');
     const updatePopup = document.getElementById('update-popup');
-    const popupOverlay = document.getElementById('popup-overlay');
     const closeButton = document.getElementById('popup-close-button');
     const prevBtn = document.getElementById('prev-version-btn');
     const nextBtn = document.getElementById('next-version-btn');
@@ -541,33 +536,35 @@ function setupPopupWindow() {
             logDiv.innerHTML = `<p><strong>Version ${log.version}</strong> (${log.date})</p><ul>${notesHtml}</ul>`;
             versionContainer.appendChild(logDiv);
         });
-        showVersion(currentVersionIndex);
+        showVersion(0);
     };
     const showVersion = (index) => {
         const versionLogs = versionContainer.querySelectorAll('.version-log');
         if (!versionLogs.length) return;
-        versionLogs.forEach((log, i) => {
-            log.classList.toggle('active-version', i === index);
-        });
+        currentVersionIndex = index;
+        versionLogs.forEach((log, i) => { log.classList.toggle('active-version', i === index); });
         nextBtn.classList.toggle('disabled', index === 0);
         prevBtn.classList.toggle('disabled', index === versionLogs.length - 1);
     };
-    if (updateButton && updatePopup && popupOverlay && closeButton && prevBtn && nextBtn) {
+    if (updateButton && updatePopup && closeButton && prevBtn && nextBtn) {
         updateButton.addEventListener('click', () => {
-            currentVersionIndex = 0; renderUpdateLogs();
-            updatePopup.style.display = 'block'; popupOverlay.style.display = 'block';
+            renderUpdateLogs();
+            updatePopup.style.display = 'block';
+            document.getElementById('popup-overlay').style.display = 'block';
         });
-        const closePopup = () => {
-            updatePopup.style.display = 'none'; popupOverlay.style.display = 'none';
-        };
-        closeButton.addEventListener('click', closePopup);
-        popupOverlay.addEventListener('click', closePopup);
+        closeButton.addEventListener('click', () => {
+            updatePopup.style.display = 'none';
+            document.getElementById('popup-overlay').style.display = 'none';
+        });
         prevBtn.addEventListener('click', () => {
-            const versionLogs = versionContainer.querySelectorAll('.version-log');
-            if (currentVersionIndex < versionLogs.length - 1) { currentVersionIndex++; showVersion(currentVersionIndex); }
+            if (currentVersionIndex < versionContainer.querySelectorAll('.version-log').length - 1) {
+                showVersion(currentVersionIndex + 1);
+            }
         });
         nextBtn.addEventListener('click', () => {
-            if (currentVersionIndex > 0) { currentVersionIndex--; showVersion(currentVersionIndex); }
+            if (currentVersionIndex > 0) {
+                showVersion(currentVersionIndex - 1);
+            }
         });
     }
 }
