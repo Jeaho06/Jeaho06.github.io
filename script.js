@@ -20,14 +20,12 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 function initializeGame() {
     createBoardUI();
-    setupEventListeners();
     resetGame();
+    setupEventListeners();
 }
 
 function resetGame() {
-    for (let i = 0; i < 19; i++) {
-        board[i].fill(0);
-    }
+    for (let i = 0; i < 19; i++) { board[i].fill(0); }
     isAITurn = false;
     lastMove = null;
     isFirstMove = true;
@@ -55,6 +53,7 @@ function setupEventListeners() {
     setupLanguageSwitcher();
     setupPopupOverlay();
 }
+
 
 // --- 언어 및 로깅 관련 함수 ---
 async function changeLanguage(lang) {
@@ -91,7 +90,6 @@ function logMove(count, message) {
   moveLog.appendChild(messageElem);
   moveLog.scrollTop = moveLog.scrollHeight;
 }
-
 function logReason(sender, message) {
   const reasonLog = document.getElementById("reasoning-log"); if (!reasonLog) return;
   const messageElem = document.createElement("p");
@@ -99,6 +97,7 @@ function logReason(sender, message) {
   reasonLog.appendChild(messageElem);
   reasonLog.scrollTop = reasonLog.scrollHeight;
 }
+
 
 // --- UI 생성 및 이벤트 핸들러 설정 ---
 function createBoardUI() {
@@ -250,58 +249,44 @@ function endGame(message) {
     logReason("시스템", message);
 }
 
-/**
- * AI의 턴을 관리하는 메인 함수 (오류 수정된 최종 버전)
- */
+// --- AI 로직 ---
 function aiMove() {
-  if (bombState.isArmed) { 
-    detonateBomb();
-    return;
-  }
+  if (bombState.isArmed) { detonateBomb(); return; }
   
   let moveAction;
-  const willCheat = Math.random() < cheatProbability && !isFirstMove && lastMove;
 
-  if (willCheat) {
-    const availableCheats = [];
-    if (document.getElementById('toggle-bomb').checked) { availableCheats.push(() => placeBomb()); }
-    if (document.getElementById('toggle-double-move').checked) { availableCheats.push(() => performDoubleMove()); }
-    if (document.getElementById('toggle-swap').checked) { availableCheats.push(() => performStoneSwap()); }
-
-    if (availableCheats.length > 0) {
-      const chosenCheat = availableCheats[Math.floor(Math.random() * availableCheats.length)];
-      moveAction = chosenCheat;
+  // [수정] AI의 첫 턴일 경우, 무조건 일반 수를 두도록 변경
+  if (isFirstMove) {
+    moveAction = () => performNormalMove();
+  } else {
+    const willCheat = Math.random() < cheatProbability && lastMove;
+    if (willCheat) {
+      const availableCheats = [];
+      if (document.getElementById('toggle-bomb').checked) { availableCheats.push(() => placeBomb()); }
+      if (document.getElementById('toggle-double-move').checked) { availableCheats.push(() => performDoubleMove()); }
+      if (document.getElementById('toggle-swap').checked) { availableCheats.push(() => performStoneSwap()); }
+      if (availableCheats.length > 0) {
+        const chosenCheat = availableCheats[Math.floor(Math.random() * availableCheats.length)];
+        moveAction = chosenCheat;
+      } else { moveAction = () => performNormalMove(); }
     } else {
       moveAction = () => performNormalMove();
     }
-  } else {
-    moveAction = () => performNormalMove();
   }
   
   const actionResult = moveAction();
-  
-  // 동기적 행동(일반 수)이 성공했을 때 턴 종료 처리
   if (actionResult && actionResult.isAsync === false) {
-    if (checkWin(board, -1)) { 
-      endGame(getString('system_ai_win')); 
-    } else { 
-      isAITurn = false; 
-    }
-  } 
-  // 반칙 행동이 실패(false 반환)했을 때의 처리
-  else if (!actionResult) {
+    if (checkWin(board, -1)) { endGame(getString('system_ai_win')); } 
+    else { isAITurn = false; }
+  } else if (!actionResult) {
     const normalMoveResult = performNormalMove();
-    // [오타 수정] normalMove_Result -> normalMoveResult
-    if (normalMoveResult && normalMoveResult.isAsync === false) {
-      if (checkWin(board, -1)) { 
-        endGame(getString('system_ai_win'));
-      } else { 
-        isAITurn = false; 
-      }
+    if(normalMoveResult && normalMoveResult.isAsync === false){
+      if (checkWin(board, -1)) { endGame(getString('system_ai_win')); }
+      else { isAITurn = false; }
     }
   }
-  // 비동기 행동(반칙 성공)의 경우, 각 반칙 함수 내부의 setTimeout에서 턴을 종료시키므로 여기서는 처리하지 않음
 }
+
 function findBestMove() {
   let bestMove = null;
   let bestScore = -1;
@@ -319,15 +304,19 @@ function findBestMove() {
         }
     }
   }
-  return bestMove || findCenterMove(); // 후보가 없으면 중앙에 둠
+  return bestMove || (relevantMoves.length > 0 ? relevantMoves[0] : null) || findCenterMove();
 }
 
+/**
+ * [수정] AI가 탐색할 후보군을 찾아내는 함수
+ */
 function getRelevantMoves() {
     const relevantMoves = new Set();
-    if (isFirstMove) {
-        relevantMoves.add("9,9");
+    // 첫 수라면 중앙만 후보로 제시
+    if (isFirstMove || !lastMove) {
         return [{ col: 9, row: 9 }];
     }
+
     const range = 2;
     for (let r = 0; r < 19; r++) {
         for (let c = 0; c < 19; c++) {
@@ -344,6 +333,20 @@ function getRelevantMoves() {
             }
         }
     }
+    // 만약 후보지가 없다면(매우 드문 경우), 마지막 수 주변이라도 탐색
+    if (relevantMoves.size === 0 && lastMove) {
+        for (let i = -1; i <= 1; i++) {
+            for (let j = -1; j <= 1; j++) {
+                 if (i === 0 && j === 0) continue;
+                 const nr = lastMove.row + i;
+                 const nc = lastMove.col + j;
+                 if (nr >= 0 && nr < 19 && nc >= 0 && nc < 19 && board[nr][nc] === 0) {
+                     relevantMoves.add(`${nr},${nc}`);
+                 }
+            }
+        }
+    }
+
     return Array.from(relevantMoves).map(s => {
         const [row, col] = s.split(',');
         return { col: parseInt(col), row: parseInt(row) };
@@ -361,7 +364,6 @@ function calculateScore(x, y, player) {
     }
     return { totalScore, highestPattern };
 }
-
 function calculateScoreForLine(x, y, dx, dy, player) {
     let count = 1; let openEnds = 0;
     for (let i = 1; i < 5; i++) {
@@ -383,7 +385,6 @@ function calculateScoreForLine(x, y, dx, dy, player) {
     if (count === 1 && openEnds === 2) return 1;
     return 0;
 }
-
 function performNormalMove(predefinedMove = null) {
     const move = predefinedMove || findBestMove();
     if (move && board[move.row][move.col] === 0) {
@@ -410,7 +411,6 @@ function performNormalMove(predefinedMove = null) {
     isAITurn = false;
     return { isAsync: true };
 }
-
 function checkWin(board, player) {
     const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
     for (let y = 0; y < 19; y++) { for (let x = 0; x < 19; x++) { if (board[y][x] === player) { for (const [dx, dy] of directions) { let count = 1; for (let i = 1; i < 5; i++) { const nx = x + i * dx; const ny = y + i * dy; if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === player) count++; else break; } if (count >= 5) return true; } } } } return false;
@@ -422,7 +422,6 @@ function isForbiddenMove(x, y, player) {
     for (const [dx, dy] of directions) { if (calculateScoreForLine(x, y, dx, dy, player) === 5000) openThrees++; }
     board[y][x] = 0; return openThrees >= 2;
 }
-
 function placeBomb() {
     const move = findBestBombLocation();
     if (move) {
