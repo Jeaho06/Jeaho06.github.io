@@ -201,11 +201,11 @@ function setupHowToPlayPopup() {
 function setupUpdatePopup() {
     const updateButton = document.getElementById('update-button');
     const updatePopup = document.getElementById('update-popup');
-    const closeButton = document.getElementById('popup-close-button');
     const prevBtn = document.getElementById('prev-version-btn');
     const nextBtn = document.getElementById('next-version-btn');
     const versionContainer = document.getElementById('version-details-container');
     let currentVersionIndex = 0;
+
     const renderUpdateLogs = () => {
         const logs = currentStrings.update_logs || [];
         versionContainer.innerHTML = '';
@@ -218,21 +218,40 @@ function setupUpdatePopup() {
         });
         showVersion(0);
     };
+
     const showVersion = (index) => {
         const versionLogs = versionContainer.querySelectorAll('.version-log');
         if (!versionLogs.length) return;
         currentVersionIndex = index;
-        versionLogs.forEach((log, i) => { log.classList.toggle('active-version', i === index); });
-        nextBtn.classList.toggle('disabled', index === 0);
-        prevBtn.classList.toggle('disabled', index === versionLogs.length - 1);
+        versionLogs.forEach((log, i) => {
+            log.classList.toggle('active-version', i === index);
+        });
+        // [수정] 버튼 활성화/비활성화 로직 오류 수정
+        prevBtn.classList.toggle('disabled', index === versionLogs.length - 1); // 이전 버튼(<)은 가장 오래된 버전(마지막)일 때 비활성화
+        nextBtn.classList.toggle('disabled', index === 0); // 다음 버튼(>)은 가장 최신 버전(처음)일 때 비활성화
     };
-    if (updateButton && updatePopup && closeButton && prevBtn && nextBtn) {
+
+    if (updateButton && updatePopup && prevBtn && nextBtn) {
         updateButton.addEventListener('click', () => {
             renderUpdateLogs();
             updatePopup.style.display = 'block';
             document.getElementById('popup-overlay').style.display = 'block';
         });
-        // 이 팝업의 닫기 버튼은 공용 오버레이 핸들러가 처리하므로 개별 설정 불필요
+
+        // '>' 버튼 (더 예전 버전으로 이동)
+        prevBtn.addEventListener('click', () => {
+            const versionLogs = versionContainer.querySelectorAll('.version-log');
+            if (currentVersionIndex < versionLogs.length - 1) {
+                showVersion(currentVersionIndex + 1);
+            }
+        });
+
+        // '<' 버튼 (더 최신 버전으로 이동)
+        nextBtn.addEventListener('click', () => {
+            if (currentVersionIndex > 0) {
+                showVersion(currentVersionIndex - 1);
+            }
+        });
     }
 }
 
