@@ -1,44 +1,100 @@
-document.addEventListener('DOMContentLoaded', async function() {
-  const savedLang = localStorage.getItem('omokLanguage') || 'ko';
-  await changeLanguage(savedLang);
-  createBoard();
-  setupPopupWindow();
-  setupLanguageSwitcher();
-});
-
 // --- 전역 변수 ---
 const board = Array(19).fill().map(() => Array(19).fill(0));
 const gridSize = 30;
 let isAITurn = false;
 let lastMove = null;
 let isFirstMove = true;
-const cheatProbability = 0.4;
-let bombState = { isArmed: false, col: null, row: null };
 let moveCount = 0;
 let isDestinyDenialUsed = false;
+let bombState = { isArmed: false, col: null, row: null };
 let currentLanguage = 'ko';
 let currentStrings = {};
+let gameOver = false;
 
+// --- 페이지 로드 및 초기화 ---
+document.addEventListener('DOMContentLoaded', async function() {
+  // 1. 저장된 언어 설정 불러오기 (없으면 'ko' 기본)
+  const savedLang = localStorage.getItem('omokLanguage') || 'ko';
+  // 2. 언어 파일 비동기 로드 및 UI 텍스트 적용 (완료될 때까지 대기)
+  await changeLanguage(savedLang);
+  // 3. 언어 적용 후 게임 전체 초기화
+  initializeGame();
+});
+
+/**
+ * 게임의 모든 상태와 이벤트를 초기화하는 메인 함수
+ */
+function initializeGame() {
+    createBoardUI();      // 보드 UI(줄, 좌표)를 한 번만 그림
+    setupEventListeners();  // 모든 이벤트 리스너를 설정
+    resetGame();          // 게임 상태(변수, 돌, 로그)를 초기화
+}
+
+/**
+ * 게임 상태를 초기화하는 함수 (새 게임 버튼 클릭 시 호출)
+ */
+function resetGame() {
+    for (let i = 0; i < 19; i++) {
+        board[i].fill(0);
+    }
+    
+    isAITurn = false;
+    lastMove = null;
+    isFirstMove = true;
+    moveCount = 0;
+    isDestinyDenialUsed = false;
+    bombState = { isArmed: false, col: null, row: null };
+    gameOver = false;
+
+    document.getElementById('move-log').innerHTML = '';
+    document.getElementById('reasoning-log').innerHTML = '';
+    
+    const boardElement = document.getElementById('game-board');
+    const dynamicElements = boardElement.querySelectorAll('.stone, .denied-spot');
+    dynamicElements.forEach(el => el.remove());
+
+    const gameOverMessage = document.getElementById('game-over-message');
+    gameOverMessage.classList.add('hidden');
+    gameOverMessage.textContent = '';
+}
+
+/**
+ * 모든 UI 요소의 이벤트 리스너를 설정하는 함수
+ */
+function setupEventListeners() {
+    setupBoardClickListener();
+    setupNewGameButton();
+    setupHowToPlayPopup();
+    setupUpdatePopup();
+    setupLanguageSwitcher();
+    setupPopupOverlay();
+}
+
+
+// --- 언어 및 로깅 관련 함수 ---
 async function changeLanguage(lang) {
   try {
     const response = await fetch(`./lang/${lang}.json`);
-    if (!response.ok) throw new Error("Language file not found!");
+    if (!response.ok) throw new Error(`Language file for ${lang} not found!`);
     currentStrings = await response.json();
     currentLanguage = lang;
     document.documentElement.lang = lang;
     localStorage.setItem('omokLanguage', lang);
+    
     document.querySelectorAll('[data-i18n-key]').forEach(el => {
       const key = el.dataset.i18nKey;
       if (currentStrings[key]) { el.textContent = currentStrings[key]; }
     });
   } catch (error) {
     console.error("Could not load language file:", error);
-    if (lang !== 'ko') { await changeLanguage('ko'); }
+    if (lang !== 'ko') {
+      await changeLanguage('ko'); // 실패 시 한국어로 재시도
+    }
   }
 }
 
 function getString(key, replacements = {}) {
-    let str = currentStrings[key] || key;
+    let str = currentStrings[key] || `[${key}]`; // 번역이 없으면 키를 표시
     if (typeof str !== 'string') return key;
     for (const placeholder in replacements) {
         str = str.replace(`{${placeholder}}`, replacements[placeholder]);
@@ -53,6 +109,7 @@ function logMove(count, message) {
   moveLog.appendChild(messageElem);
   moveLog.scrollTop = moveLog.scrollHeight;
 }
+
 function logReason(sender, message) {
   const reasonLog = document.getElementById("reasoning-log"); if (!reasonLog) return;
   const messageElem = document.createElement("p");
@@ -61,8 +118,12 @@ function logReason(sender, message) {
   reasonLog.scrollTop = reasonLog.scrollHeight;
 }
 
-function createBoard() {
+
+// --- UI 생성 및 이벤트 핸들러 설정 ---
+function createBoardUI() {
   const boardElement = document.getElementById("game-board"); if (!boardElement) return;
+  boardElement.innerHTML = ''; // 중복 생성을 막기 위해 초기화
+  
   for (let i = 0; i < 19; i++) {
     const lineH = document.createElement("div"); lineH.classList.add("line", "horizontal-line"); lineH.style.top = `${i * gridSize + gridSize / 2}px`; boardElement.appendChild(lineH);
     const lineV = document.createElement("div"); lineV.classList.add("line", "vertical-line"); lineV.style.left = `${i * gridSize + gridSize / 2}px`; boardElement.appendChild(lineV);
@@ -71,41 +132,167 @@ function createBoard() {
     const colLabel = document.createElement("div"); colLabel.className = "coordinate-label top-label"; colLabel.style.left = `${i * gridSize + gridSize / 2}px`; colLabel.textContent = String.fromCharCode(65 + i); boardElement.appendChild(colLabel);
     const rowLabel = document.createElement("div"); rowLabel.className = "coordinate-label left-label"; rowLabel.style.top = `${i * gridSize + gridSize / 2}px`; rowLabel.textContent = i + 1; boardElement.appendChild(rowLabel);
   }
+  // 게임 종료 메시지 표시용 div 추가
+  const gameOverDiv = document.createElement('div');
+  gameOverDiv.id = 'game-over-message';
+  gameOverDiv.className = 'hidden';
+  boardElement.appendChild(gameOverDiv);
+}
+
+function setupBoardClickListener() {
+  const boardElement = document.getElementById("game-board");
   
   boardElement.addEventListener('click', (event) => {
-    if (isAITurn) return;
-    const rect = boardElement.getBoundingClientRect(); const offsetX = event.clientX - rect.left; const offsetY = event.clientY - rect.top;
-    const closestX = Math.round((offsetX - gridSize / 2) / gridSize); const closestY = Math.round((offsetY - gridSize / 2) / gridSize);
+    if (isAITurn || gameOver) return;
+    const rect = boardElement.getBoundingClientRect();
+    const offsetX = event.clientX - rect.left;
+    const offsetY = event.clientY - rect.top;
+    const closestX = Math.round((offsetX - gridSize / 2) / gridSize);
+    const closestY = Math.round((offsetY - gridSize / 2) / gridSize);
+    
     if (closestX < 0 || closestX >= 19 || closestY < 0 || closestY >= 19) return;
+    
     if (board[closestY][closestX] === 3) {
-      logReason(getString('user_title'), getString('system_denied_spot')); return;
+      logReason(getString('user_title'), getString('system_denied_spot'));
+      return;
     }
+    
     if (board[closestY][closestX] === 0) {
         board[closestY][closestX] = 1;
         const isWinningMove = checkWin(board, 1);
         board[closestY][closestX] = 0;
+
         if (isWinningMove && !isDestinyDenialUsed && document.getElementById('toggle-destiny-denial').checked) {
-            isDestinyDenialUsed = true; board[closestY][closestX] = 3; 
-            const deniedSpot = document.createElement("div"); deniedSpot.className = "denied-spot";
-            deniedSpot.style.left = `${closestX * gridSize + gridSize / 2}px`; deniedSpot.style.top = `${closestY * gridSize + gridSize / 2}px`;
-            deniedSpot.setAttribute("data-col", closestX); deniedSpot.setAttribute("data-row", closestY);
+            isDestinyDenialUsed = true;
+            board[closestY][closestX] = 3; 
+
+            const deniedSpot = document.createElement("div");
+            deniedSpot.className = "denied-spot";
+            deniedSpot.style.left = `${closestX * gridSize + gridSize / 2}px`;
+            deniedSpot.style.top = `${closestY * gridSize + gridSize / 2}px`;
+            deniedSpot.setAttribute("data-col", closestX);
+            deniedSpot.setAttribute("data-row", closestY);
             boardElement.appendChild(deniedSpot);
+
             const deniedCoord = convertCoord(closestX, closestY);
             logMove(++moveCount, `${getString('ai_title')}: ${getString('cheat_veto')}!!`);
             logReason(getString('ai_title'), getString('ai_veto_reason', {coord: deniedCoord}));
             return; 
         }
     }
+    
     if (board[closestY][closestX] !== 0) return;
     if (isForbiddenMove(closestX, closestY, 1)) { logReason(getString('user_title'), getString('system_forbidden')); return; }
-    board[closestY][closestX] = 1; placeStone(closestX, closestY, 'black'); playSound("Movement.mp3");
+    
+    board[closestY][closestX] = 1;
+    placeStone(closestX, closestY, 'black');
+    playSound("Movement.mp3");
+    
     const userCoord = convertCoord(closestX, closestY);
     logMove(++moveCount, `${getString('user_title')}: ${userCoord}??`);
-    if (checkWin(board, 1)) { logReason(getString('user_title'), getString('system_user_win')); isAITurn = true; return; }
-    isAITurn = true; setTimeout(aiMove, 1000);
+    
+    if (checkWin(board, 1)) {
+        endGame(getString('system_user_win'));
+        return;
+    }
+    
+    isAITurn = true;
+    setTimeout(aiMove, 1000);
   });
 }
 
+function setupNewGameButton() {
+    const newGameButton = document.getElementById('new-game-button');
+    if(newGameButton) newGameButton.addEventListener('click', resetGame);
+}
+
+function setupHowToPlayPopup() {
+    const button = document.getElementById('how-to-play-button');
+    const popup = document.getElementById('how-to-play-popup');
+    const closeButton = document.getElementById('how-to-play-close-button');
+    const overlay = document.getElementById('popup-overlay');
+    if(button && popup && closeButton && overlay) {
+        button.addEventListener('click', () => {
+            popup.style.display = 'block';
+            overlay.style.display = 'block';
+        });
+        closeButton.addEventListener('click', () => {
+            popup.style.display = 'none';
+            overlay.style.display = 'none';
+        });
+    }
+}
+
+function setupUpdatePopup() {
+    const updateButton = document.getElementById('update-button');
+    const updatePopup = document.getElementById('update-popup');
+    const closeButton = document.getElementById('popup-close-button');
+    const prevBtn = document.getElementById('prev-version-btn');
+    const nextBtn = document.getElementById('next-version-btn');
+    const versionContainer = document.getElementById('version-details-container');
+    let currentVersionIndex = 0;
+    const renderUpdateLogs = () => {
+        const logs = currentStrings.update_logs || [];
+        versionContainer.innerHTML = '';
+        logs.forEach(log => {
+            const logDiv = document.createElement('div');
+            logDiv.classList.add('version-log');
+            const notesHtml = log.notes.map(note => `<li>${note}</li>`).join('');
+            logDiv.innerHTML = `<p><strong>Version ${log.version}</strong> (${log.date})</p><ul>${notesHtml}</ul>`;
+            versionContainer.appendChild(logDiv);
+        });
+        showVersion(0);
+    };
+    const showVersion = (index) => {
+        const versionLogs = versionContainer.querySelectorAll('.version-log');
+        if (!versionLogs.length) return;
+        currentVersionIndex = index;
+        versionLogs.forEach((log, i) => {
+            log.classList.toggle('active-version', i === index);
+        });
+        nextBtn.classList.toggle('disabled', index === 0);
+        prevBtn.classList.toggle('disabled', index === versionLogs.length - 1);
+    };
+    if (updateButton && updatePopup && closeButton && prevBtn && nextBtn) {
+        updateButton.addEventListener('click', () => {
+            renderUpdateLogs();
+            updatePopup.style.display = 'block';
+            document.getElementById('popup-overlay').style.display = 'block';
+        });
+        closeButton.addEventListener('click', () => {
+            updatePopup.style.display = 'none';
+            document.getElementById('popup-overlay').style.display = 'none';
+        });
+        prevBtn.addEventListener('click', () => {
+            if (currentVersionIndex < versionContainer.querySelectorAll('.version-log').length - 1) {
+                showVersion(currentVersionIndex + 1);
+            }
+        });
+        nextBtn.addEventListener('click', () => {
+            if (currentVersionIndex > 0) {
+                showVersion(currentVersionIndex - 1);
+            }
+        });
+    }
+}
+
+function setupPopupOverlay() {
+    const overlay = document.getElementById('popup-overlay');
+    overlay.addEventListener('click', () => {
+        document.querySelectorAll('.popup').forEach(p => p.style.display = 'none');
+        overlay.style.display = 'none';
+    });
+}
+
+function endGame(message) {
+    gameOver = true;
+    const gameOverMessage = document.getElementById('game-over-message');
+    gameOverMessage.textContent = message;
+    gameOverMessage.classList.remove('hidden');
+    logReason("시스템", message);
+}
+
+// --- AI 로직 ---
 function aiMove() {
   if (bombState.isArmed) { detonateBomb(); return; }
   let moveAction;
@@ -120,31 +307,29 @@ function aiMove() {
       moveAction = chosenCheat;
     } else { moveAction = () => performNormalMove(); }
   } else { moveAction = () => performNormalMove(); }
+  
   const actionResult = moveAction();
   if (actionResult && actionResult.isAsync === false) {
-    if (checkWin(board, -1)) { logReason(getString('ai_title'), getString('system_ai_win')); isAITurn = true; } 
+    if (checkWin(board, -1)) { endGame(getString('system_ai_win')); } 
     else { isAITurn = false; }
   } else if (!actionResult) {
     const normalMoveResult = performNormalMove();
     if(normalMoveResult && normalMoveResult.isAsync === false){
-      if (checkWin(board, -1)) { logReason(getString('ai_title'), getString('system_ai_win')); isAITurn = true; }
+      if (checkWin(board, -1)) { endGame(getString('system_ai_win')); }
       else { isAITurn = false; }
     }
   }
 }
 
-// --- 지능형 AI 로직 (수정된 최종 버전) ---
 function findBestMove() {
   let bestMove = null;
   let bestScore = -1;
-
   for (let y = 0; y < 19; y++) {
     for (let x = 0; x < 19; x++) {
       if (board[y][x] === 0) {
         const myScore = calculateScore(x, y, -1).totalScore;
         const opponentScore = calculateScore(x, y, 1).totalScore;
         const totalScore = myScore + opponentScore;
-
         if (totalScore > bestScore) {
           bestScore = totalScore;
           bestMove = { col: x, row: y };
@@ -161,9 +346,7 @@ function calculateScore(x, y, player) {
     const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
     for (const [dx, dy] of directions) {
         const score = calculateScoreForLine(x, y, dx, dy, player);
-        if (score > highestPattern) {
-            highestPattern = score;
-        }
+        if (score > highestPattern) { highestPattern = score; }
         totalScore += score;
     }
     return { totalScore, highestPattern };
@@ -191,16 +374,11 @@ function calculateScoreForLine(x, y, dx, dy, player) {
     return 0;
 }
 
-/**
- * AI의 수를 실행하고 이유를 분석하여 출력하는 함수
- */
-function performNormalMove() {
-    const move = findBestMove();
-    
+function performNormalMove(predefinedMove = null) {
+    const move = predefinedMove || findBestMove();
     if (move && board[move.row][move.col] === 0) {
         const myPattern = calculateScore(move.col, move.row, -1).highestPattern;
         const opponentPattern = calculateScore(move.col, move.row, 1).highestPattern;
-        
         let reasonKey = 'reason_default';
         if (myPattern >= 1000000) reasonKey = 'reason_win';
         else if (opponentPattern >= 1000000) reasonKey = 'reason_block_win';
@@ -208,27 +386,21 @@ function performNormalMove() {
         else if (opponentPattern >= 100000) reasonKey = 'reason_block_4';
         else if (opponentPattern >= 5000) reasonKey = 'reason_block_3';
         else if (myPattern >= 5000) reasonKey = 'reason_attack_3';
-
         const reason = getString(reasonKey);
         const aiCoord = convertCoord(move.col, move.row);
-        
         board[move.row][move.col] = -1;
         placeStone(move.col, move.row, 'white');
         playSound("Movement.mp3");
-        
         logMove(++moveCount, `${getString('ai_title')}: ${aiCoord}`);
         logReason(getString('ai_title'), getString('ai_reason_template', { reason: reason, coord: aiCoord }));
-        
         isFirstMove = false;
         return { isAsync: false };
     }
-    
     logReason(getString('ai_title'), getString('system_no_move'));
     isAITurn = false;
     return { isAsync: true };
 }
 
-// (이하 나머지 함수들은 이전 버전과 동일)
 function checkWin(board, player) {
     const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
     for (let y = 0; y < 19; y++) { for (let x = 0; x < 19; x++) { if (board[y][x] === player) { for (const [dx, dy] of directions) { let count = 1; for (let i = 1; i < 5; i++) { const nx = x + i * dx; const ny = y + i * dy; if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === player) count++; else break; } if (count >= 5) return true; } } } } return false;
@@ -240,6 +412,8 @@ function isForbiddenMove(x, y, player) {
     for (const [dx, dy] of directions) { if (calculateScoreForLine(x, y, dx, dy, player) === 5000) openThrees++; }
     board[y][x] = 0; return openThrees >= 2;
 }
+
+// --- 반칙 함수들 ---
 function placeBomb() {
     const move = findBestBombLocation();
     if (move) {
@@ -262,28 +436,23 @@ function detonateBomb() {
     setTimeout(() => {
         for (let r = center.row - 1; r <= center.row + 1; r++) { for (let c = center.col - 1; c <= center.col + 1; c++) { if (r >= 0 && r < 19 && c >= 0 && c < 19) removeStone(c, r); } }
         bombEffect.remove(); bombState = { isArmed: false, col: null, row: null };
-        if (checkWin(board, 1)) { logReason(getString('ai_title'), getString('system_user_win')); isAITurn = true; } else { isAITurn = false; }
+        if (checkWin(board, 1)) { endGame(getString('system_user_win')); } else { isAITurn = false; }
     }, 500);
     return { isAsync: true };
 }
 function performDoubleMove() {
-    const move1 = findBestMove();
-    if (move1 && board[move1.row][move1.col] === 0) {
-        performNormalMove(move1); // 첫 번째 수는 일반 수처럼 두고 이유까지 출력
-        const move2 = findBestMove(); // 바뀐 판에서 두 번째 최선의 수를 찾음
+    const firstMoveResult = performNormalMove();
+    if (firstMoveResult && firstMoveResult.isAsync === false) {
+        const move2 = findBestMove();
         if (move2 && board[move2.row][move2.col] === 0) {
             setTimeout(() => {
-                const analysis2 = calculateScore(move2.col, move2.row, -1);
-                let reasonKey2 = 'reason_default';
-                if(analysis2.highestPattern >= 5000) reasonKey2 = 'reason_attack_3';
-                
                 board[move2.row][move2.col] = -1; 
                 placeStone(move2.col, move2.row, 'white'); 
                 playSound("Movement.mp3");
                 const aiCoord2 = convertCoord(move2.col, move2.row);
                 logMove(++moveCount, `${getString('ai_title')}: ${aiCoord2}!!`);
                 logReason(getString('ai_title'), getString('ai_double_move_2', { coord: aiCoord2 }));
-                if (checkWin(board, -1)) { logReason(getString('ai_title'), getString('system_ai_win')); isAITurn = true; } else { isAITurn = false; }
+                if (checkWin(board, -1)) { endGame(getString('system_ai_win')); } else { isAITurn = false; }
             }, 800);
         } else { isAITurn = false; }
         return { isAsync: true };
@@ -304,12 +473,14 @@ function performStoneSwap() {
             board[userStone.row][userStone.col] = -1; placeStone(userStone.col, userStone.row, 'white');
             board[aiStone.row][aiStone.col] = 1; placeStone(aiStone.col, aiStone.row, 'black');
             playSound("Movement.mp3");
-            if (checkWin(board, -1)) { logReason(getString('ai_title'), getString('system_ai_win')); isAITurn = true; } else { isAITurn = false; }
+            if (checkWin(board, -1)) { endGame(getString('system_ai_win')); } else { isAITurn = false; }
         }, 500);
         return { isAsync: true };
     }
     return false;
 }
+
+// --- 나머지 유틸리티 ---
 function placeStone(col, row, color) {
     const boardElement = document.getElementById("game-board");
     if (lastMove) { const lastStone = document.querySelector(`.stone[data-col='${lastMove.col}'][data-row='${lastMove.row}']`); if (lastStone) lastStone.classList.remove("last-move"); }

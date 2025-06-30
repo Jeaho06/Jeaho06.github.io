@@ -296,6 +296,47 @@ input:checked + .slider:before {
   display: block;
 }
 
+
+#game-over-message {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    font-size: 48px;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    z-index: 100;
+    border-radius: inherit;
+}
+
+.hidden {
+    display: none !important;
+}
+
+#how-to-play-popup .popup-content { margin-top: 15px; }
+#how-to-play-popup p { margin: 10px 0; }
+#how-to-play-popup ul { padding-left: 20px; margin-top: 5px; }
+#how-to-play-popup li { margin-bottom: 8px; }
+
+.site-footer {
+    margin-top: 20px;
+    padding: 10px;
+    text-align: center;
+    font-size: 14px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+.site-footer a { color: #555; text-decoration: none; }
+.site-footer a:hover { text-decoration: underline; }
+
+
 #popup-overlay {
   display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
   background-color: rgba(0, 0, 0, 0.6); z-index: 2001;
@@ -354,3 +395,4 @@ input:checked + .slider:before {
 .site-footer a:hover {
   text-decoration: underline;
 }
+
