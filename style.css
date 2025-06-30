@@ -13,7 +13,7 @@ body {
 
 .game-container {
   display: flex;
-  align-items: center; /* 자식 요소들을 수직 중앙에 배치 */
+  align-items: center;
   justify-content: center;
   margin-bottom: 20px;
   width: 90%;
@@ -25,11 +25,11 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center; /* 내용을 컨테이너 중앙에 배치 */
-  padding: 0 20px;
+  justify-content: flex-start; /* 상단 정렬 */
+  padding: 20px;
   box-sizing: border-box;
   text-align: center;
-  min-height: 570px; /* 오목판 높이와 맞춤 */
+  min-height: 610px; /* 보드와 높이를 맞춤 */
 }
 
 .board-container {
@@ -62,7 +62,7 @@ body {
   background-color: #f9f9f9;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   width: auto;
-  min-width: 200px; /* 최소 너비 조정 */
+  min-width: 200px;
 }
 
 #cheat-controls h3 {
@@ -76,7 +76,7 @@ body {
 .control-group {
   display: flex;
   align-items: center;
-  justify-content: flex-start; /* 왼쪽 정렬 */
+  justify-content: flex-start;
   margin-bottom: 12px;
 }
 
@@ -278,7 +278,6 @@ input:checked + .slider:before {
   border-radius: 5px;
   overflow: hidden;
 }
-
 .dropdown-content a {
   color: black;
   padding: 12px 16px;
@@ -286,11 +285,9 @@ input:checked + .slider:before {
   display: block;
   text-align: center;
 }
-
 .dropdown-content a:hover {
   background-color: #ddd;
 }
-
 .show-dropdown {
   display: block;
 }
@@ -311,18 +308,13 @@ input:checked + .slider:before {
   border-radius: 5px; border: 1px solid #ccc; background-color: #f0f0f0;
 }
 .popup-close-button:hover { background-color: #e0e0e0; }
-
-#how-to-play-popup .popup-content { margin-top: 15px; }
-#how-to-play-popup p { margin: 10px 0; }
-#how-to-play-popup ul { padding-left: 20px; margin-top: 5px; }
-#how-to-play-popup li { margin-bottom: 8px; }
-
-#update-popup .popup-content { margin-top: 15px; }
+#how-to-play-popup .popup-content, #update-popup .popup-content { margin-top: 15px; }
+#how-to-play-popup p, #update-popup p { margin: 10px 0; }
+#how-to-play-popup ul, #update-popup ul { padding-left: 20px; margin-top: 5px; }
+#how-to-play-popup li, #update-popup li { margin-bottom: 8px; }
 .version-log { display: none; }
 .version-log.active-version { display: block; }
 .version-log p { font-weight: bold; }
-.version-log ul { padding-left: 20px; }
-.version-log li { margin-bottom: 8px; }
 .popup-nav {
   display: flex; justify-content: center; align-items: center;
   gap: 40px; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;
@@ -367,11 +359,9 @@ input:checked + .slider:before {
     pointer-events: none;
     transition: opacity 0.5s ease;
 }
-
-#game-over-message:not(.hidden) {
+#game-over-message.visible {
     opacity: 1;
 }
-
 .hidden {
     display: none !important;
 }

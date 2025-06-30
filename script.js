@@ -18,18 +18,12 @@ document.addEventListener('DOMContentLoaded', async function() {
   initializeGame();
 });
 
-/**
- * 게임의 모든 상태와 이벤트를 초기화하는 메인 함수 (수정된 순서)
- */
 function initializeGame() {
-    createBoardUI();      // 보드 UI(줄, 좌표)를 한 번만 그림
-    resetGame();          // 게임 상태(변수, 돌, 로그)를 먼저 초기화
-    setupEventListeners();  // 모든 이벤트 리스너를 나중에 설정
+    createBoardUI();
+    resetGame();
+    setupEventListeners();
 }
 
-/**
- * 게임 상태를 초기화하는 함수 (새 게임)
- */
 function resetGame() {
     for (let i = 0; i < 19; i++) {
         board[i].fill(0);
@@ -48,14 +42,10 @@ function resetGame() {
     dynamicElements.forEach(el => el.remove());
     const gameOverMessage = document.getElementById('game-over-message');
     if (gameOverMessage) {
-        gameOverMessage.classList.add('hidden');
-        gameOverMessage.textContent = '';
+        gameOverMessage.classList.remove('visible');
     }
 }
 
-/**
- * 모든 UI 요소의 이벤트 리스너를 설정하는 함수
- */
 function setupEventListeners() {
     setupBoardClickListener();
     setupNewGameButton();
@@ -64,7 +54,6 @@ function setupEventListeners() {
     setupLanguageSwitcher();
     setupPopupOverlay();
 }
-
 
 // --- 언어 및 로깅 관련 함수 ---
 async function changeLanguage(lang) {
@@ -115,7 +104,6 @@ function logReason(sender, message) {
 function createBoardUI() {
   const boardElement = document.getElementById("game-board"); if (!boardElement) return;
   boardElement.innerHTML = '';
-  
   for (let i = 0; i < 19; i++) {
     const lineH = document.createElement("div"); lineH.classList.add("line", "horizontal-line"); lineH.style.top = `${i * gridSize + gridSize / 2}px`; boardElement.appendChild(lineH);
     const lineV = document.createElement("div"); lineV.classList.add("line", "vertical-line"); lineV.style.left = `${i * gridSize + gridSize / 2}px`; boardElement.appendChild(lineV);
@@ -132,7 +120,6 @@ function createBoardUI() {
 
 function setupBoardClickListener() {
   const boardElement = document.getElementById("game-board");
-  
   boardElement.addEventListener('click', (event) => {
     if (isAITurn || gameOver) return;
     const rect = boardElement.getBoundingClientRect();
@@ -140,56 +127,36 @@ function setupBoardClickListener() {
     const offsetY = event.clientY - rect.top;
     const closestX = Math.round((offsetX - gridSize / 2) / gridSize);
     const closestY = Math.round((offsetY - gridSize / 2) / gridSize);
-    
     if (closestX < 0 || closestX >= 19 || closestY < 0 || closestY >= 19) return;
-    
     if (board[closestY][closestX] === 3) {
-      logReason(getString('user_title'), getString('system_denied_spot'));
-      return;
+      logReason(getString('user_title'), getString('system_denied_spot')); return;
     }
-    
     if (board[closestY][closestX] === 0) {
         board[closestY][closestX] = 1;
         const isWinningMove = checkWin(board, 1);
         board[closestY][closestX] = 0;
-
         if (isWinningMove && !isDestinyDenialUsed && document.getElementById('toggle-destiny-denial').checked) {
-            isDestinyDenialUsed = true;
-            board[closestY][closestX] = 3; 
-
-            const deniedSpot = document.createElement("div");
-            deniedSpot.className = "denied-spot";
-            deniedSpot.style.left = `${closestX * gridSize + gridSize / 2}px`;
-            deniedSpot.style.top = `${closestY * gridSize + gridSize / 2}px`;
-            deniedSpot.setAttribute("data-col", closestX);
-            deniedSpot.setAttribute("data-row", closestY);
+            isDestinyDenialUsed = true; board[closestY][closestX] = 3; 
+            const deniedSpot = document.createElement("div"); deniedSpot.className = "denied-spot";
+            deniedSpot.style.left = `${closestX * gridSize + gridSize / 2}px`; deniedSpot.style.top = `${closestY * gridSize + gridSize / 2}px`;
+            deniedSpot.setAttribute("data-col", closestX); deniedSpot.setAttribute("data-row", closestY);
             boardElement.appendChild(deniedSpot);
-
             const deniedCoord = convertCoord(closestX, closestY);
             logMove(++moveCount, `${getString('ai_title')}: ${getString('cheat_veto')}!!`);
             logReason(getString('ai_title'), getString('ai_veto_reason', {coord: deniedCoord}));
-            
             return; 
         }
     }
-    
     if (board[closestY][closestX] !== 0) return;
     if (isForbiddenMove(closestX, closestY, 1)) { logReason(getString('user_title'), getString('system_forbidden')); return; }
-    
-    board[closestY][closestX] = 1;
-    placeStone(closestX, closestY, 'black');
-    playSound("Movement.mp3");
-    
+    board[closestY][closestX] = 1; placeStone(closestX, closestY, 'black'); playSound("Movement.mp3");
     const userCoord = convertCoord(closestX, closestY);
     logMove(++moveCount, `${getString('user_title')}: ${userCoord}??`);
-    
     if (checkWin(board, 1)) {
         endGame(getString('system_user_win'));
         return;
     }
-    
-    isAITurn = true;
-    setTimeout(aiMove, 1000);
+    isAITurn = true; setTimeout(aiMove, 1000);
   });
 }
 
@@ -222,7 +189,6 @@ function setupUpdatePopup() {
     const nextBtn = document.getElementById('next-version-btn');
     const versionContainer = document.getElementById('version-details-container');
     let currentVersionIndex = 0;
-
     const renderUpdateLogs = () => {
         const logs = currentStrings.update_logs || [];
         versionContainer.innerHTML = '';
@@ -235,7 +201,6 @@ function setupUpdatePopup() {
         });
         showVersion(0);
     };
-
     const showVersion = (index) => {
         const versionLogs = versionContainer.querySelectorAll('.version-log');
         if (!versionLogs.length) return;
@@ -246,7 +211,6 @@ function setupUpdatePopup() {
         nextBtn.classList.toggle('disabled', index === 0);
         prevBtn.classList.toggle('disabled', index === versionLogs.length - 1);
     };
-
     if (updateButton && updatePopup && closeButton && prevBtn && nextBtn) {
         updateButton.addEventListener('click', () => {
             renderUpdateLogs();
@@ -258,8 +222,7 @@ function setupUpdatePopup() {
             document.getElementById('popup-overlay').style.display = 'none';
         });
         prevBtn.addEventListener('click', () => {
-            const versionLogs = versionContainer.querySelectorAll('.version-log');
-            if (currentVersionIndex < versionLogs.length - 1) {
+            if (currentVersionIndex < versionContainer.querySelectorAll('.version-log').length - 1) {
                 showVersion(currentVersionIndex + 1);
             }
         });
@@ -284,10 +247,10 @@ function endGame(message) {
     const gameOverMessage = document.getElementById('game-over-message');
     gameOverMessage.textContent = message;
     gameOverMessage.classList.remove('hidden');
+    gameOverMessage.classList.add('visible');
     logReason("시스템", message);
 }
 
-// --- AI 로직 ---
 function aiMove() {
   if (bombState.isArmed) { detonateBomb(); return; }
   let moveAction;
