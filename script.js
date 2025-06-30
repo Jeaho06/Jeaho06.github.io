@@ -20,8 +20,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 function initializeGame() {
     createBoardUI();
-    resetGame();
     setupEventListeners();
+    resetGame();
 }
 
 function resetGame() {
@@ -43,6 +43,7 @@ function resetGame() {
     const gameOverMessage = document.getElementById('game-over-message');
     if (gameOverMessage) {
         gameOverMessage.classList.remove('visible');
+        gameOverMessage.classList.add('hidden');
     }
 }
 
@@ -70,9 +71,7 @@ async function changeLanguage(lang) {
     });
   } catch (error) {
     console.error("Could not load language file:", error);
-    if (lang !== 'ko') {
-      await changeLanguage('ko');
-    }
+    if (lang !== 'ko') { await changeLanguage('ko'); }
   }
 }
 
@@ -92,6 +91,7 @@ function logMove(count, message) {
   moveLog.appendChild(messageElem);
   moveLog.scrollTop = moveLog.scrollHeight;
 }
+
 function logReason(sender, message) {
   const reasonLog = document.getElementById("reasoning-log"); if (!reasonLog) return;
   const messageElem = document.createElement("p");
@@ -156,7 +156,8 @@ function setupBoardClickListener() {
         endGame(getString('system_user_win'));
         return;
     }
-    isAITurn = true; setTimeout(aiMove, 1000);
+    isAITurn = true;
+    setTimeout(aiMove, 1000);
   });
 }
 
@@ -205,9 +206,7 @@ function setupUpdatePopup() {
         const versionLogs = versionContainer.querySelectorAll('.version-log');
         if (!versionLogs.length) return;
         currentVersionIndex = index;
-        versionLogs.forEach((log, i) => {
-            log.classList.toggle('active-version', i === index);
-        });
+        versionLogs.forEach((log, i) => { log.classList.toggle('active-version', i === index); });
         nextBtn.classList.toggle('disabled', index === 0);
         prevBtn.classList.toggle('disabled', index === versionLogs.length - 1);
     };
@@ -251,6 +250,7 @@ function endGame(message) {
     logReason("시스템", message);
 }
 
+// --- AI 로직 ---
 function aiMove() {
   if (bombState.isArmed) { detonateBomb(); return; }
   let moveAction;
@@ -282,20 +282,49 @@ function aiMove() {
 function findBestMove() {
   let bestMove = null;
   let bestScore = -1;
-  for (let y = 0; y < 19; y++) {
-    for (let x = 0; x < 19; x++) {
-      if (board[y][x] === 0) {
-        const myScore = calculateScore(x, y, -1).totalScore;
-        const opponentScore = calculateScore(x, y, 1).totalScore;
+  const relevantMoves = getRelevantMoves();
+
+  for (const move of relevantMoves) {
+    const { col, row } = move;
+    if (board[row][col] === 0) {
+        const myScore = calculateScore(col, row, -1).totalScore;
+        const opponentScore = calculateScore(col, row, 1).totalScore;
         const totalScore = myScore + opponentScore;
         if (totalScore > bestScore) {
-          bestScore = totalScore;
-          bestMove = { col: x, row: y };
+            bestScore = totalScore;
+            bestMove = move;
         }
-      }
     }
   }
-  return bestMove;
+  return bestMove || findCenterMove(); // 후보가 없으면 중앙에 둠
+}
+
+function getRelevantMoves() {
+    const relevantMoves = new Set();
+    if (isFirstMove) {
+        relevantMoves.add("9,9");
+        return [{ col: 9, row: 9 }];
+    }
+    const range = 2;
+    for (let r = 0; r < 19; r++) {
+        for (let c = 0; c < 19; c++) {
+            if (board[r][c] !== 0) {
+                for (let i = -range; i <= range; i++) {
+                    for (let j = -range; j <= range; j++) {
+                        const nr = r + i;
+                        const nc = c + j;
+                        if (nr >= 0 && nr < 19 && nc >= 0 && nc < 19 && board[nr][nc] === 0) {
+                            relevantMoves.add(`${nr},${nc}`);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return Array.from(relevantMoves).map(s => {
+        const [row, col] = s.split(',');
+        return { col: parseInt(col), row: parseInt(row) };
+    });
 }
 
 function calculateScore(x, y, player) {
