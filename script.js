@@ -399,6 +399,7 @@ function performNormalMove(predefinedMove = null) {
         logMove(++moveCount, `${getString('ai_title')}: ${aiCoord}`);
         logReason(getString('ai_title'), getString('ai_reason_template', { reason: reason, coord: aiCoord }));
         isFirstMove = false;
+        lastMove = { col: move.col, row: move.row }; // <-- 이 줄 추가!
         return { isAsync: false };
     }
     logReason(getString('ai_title'), getString('system_no_move'));
