@@ -3,16 +3,17 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: 100vh;
+  justify-content: center;
+  min-height: 100vh;
   margin: 0;
   background-color: #f0f0f0;
-  padding-top: 80px; /* 상단 버튼과의 충돌을 피하기 위한 여백 */
+  padding: 20px 0;
   box-sizing: border-box;
 }
 
 .game-container {
   display: flex;
-  align-items: flex-start;
+  align-items: center; /* 자식 요소들을 수직 중앙에 배치 */
   justify-content: center;
   margin-bottom: 20px;
   width: 90%;
@@ -24,13 +25,15 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center; /* 내용을 컨테이너 중앙에 배치 */
   padding: 0 20px;
   box-sizing: border-box;
   text-align: center;
+  min-height: 570px; /* 오목판 높이와 맞춤 */
 }
 
 .board-container {
-  flex: 0 0 610px; /* 고정 너비를 주어 오목판이 줄어들지 않도록 함 */
+  flex: 0 0 610px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -53,26 +56,27 @@ body {
 
 #cheat-controls {
   margin-top: 20px;
-  padding: 15px;
+  padding: 20px;
   border: 1px solid #ddd;
   border-radius: 8px;
   background-color: #f9f9f9;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  width: auto; /* 내용에 맞게 너비 조절 */
-  min-width: 180px;
+  width: auto;
+  min-width: 200px; /* 최소 너비 조정 */
 }
 
 #cheat-controls h3 {
   margin-top: 0;
   margin-bottom: 15px;
   text-align: center;
-  font-size: 16px;
+  font-size: 18px;
   color: #333;
 }
 
 .control-group {
   display: flex;
   align-items: center;
+  justify-content: flex-start; /* 왼쪽 정렬 */
   margin-bottom: 12px;
 }
 
@@ -83,9 +87,9 @@ body {
 .switch {
   position: relative;
   display: inline-block;
-  width: 44px;
-  height: 24px;
-  flex-shrink: 0; /* 스위치가 찌그러지지 않도록 함 */
+  width: 50px;
+  height: 28px;
+  flex-shrink: 0;
 }
 
 .switch input {
@@ -103,16 +107,16 @@ body {
   bottom: 0;
   background-color: #ccc;
   transition: .4s;
-  border-radius: 24px;
+  border-radius: 28px;
 }
 
 .slider:before {
   position: absolute;
   content: "";
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  bottom: 3px;
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
   background-color: white;
   transition: .4s;
   border-radius: 50%;
@@ -127,18 +131,13 @@ input:focus + .slider {
 }
 
 input:checked + .slider:before {
-  transform: translateX(20px);
+  transform: translateX(22px);
 }
 
 .control-group span {
-  margin-left: 10px;
-  font-size: 15px;
+  margin-left: 12px;
+  font-size: 16px;
   white-space: nowrap;
-}
-
-.ai-container > .info-wrapper > h2, 
-.user-container > h2 {
-  margin-bottom: 10px;
 }
 
 .chat-container {
@@ -146,7 +145,7 @@ input:checked + .slider:before {
   justify-content: center;
   gap: 20px;
   width: 90%;
-  max-width: 700px; /* 채팅창 최대 너비 수정 */
+  max-width: 700px;
   text-align: center;
 }
 
@@ -247,7 +246,7 @@ input:checked + .slider:before {
   z-index: 2000;
 }
 
-#update-button, #language-button {
+#new-game-button, #how-to-play-button, #update-button, #language-button {
   padding: 10px 15px;
   font-size: 14px;
   font-weight: bold;
@@ -259,7 +258,7 @@ input:checked + .slider:before {
   box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
 }
 
-#update-button:hover, #language-button:hover {
+#new-game-button:hover, #how-to-play-button:hover, #update-button:hover, #language-button:hover {
   background-color: #555;
 }
 
@@ -296,75 +295,37 @@ input:checked + .slider:before {
   display: block;
 }
 
-
-#game-over-message {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    color: white;
-    font-size: 48px;
-    font-weight: bold;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    z-index: 100;
-    border-radius: inherit;
-}
-
-.hidden {
-    display: none !important;
-}
-
-#how-to-play-popup .popup-content { margin-top: 15px; }
-#how-to-play-popup p { margin: 10px 0; }
-#how-to-play-popup ul { padding-left: 20px; margin-top: 5px; }
-#how-to-play-popup li { margin-bottom: 8px; }
-
-.site-footer {
-    margin-top: 20px;
-    padding: 10px;
-    text-align: center;
-    font-size: 14px;
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-}
-.site-footer a { color: #555; text-decoration: none; }
-.site-footer a:hover { text-decoration: underline; }
-
-
 #popup-overlay {
   display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
   background-color: rgba(0, 0, 0, 0.6); z-index: 2001;
 }
 .popup {
   display: none; position: fixed; top: 50%; left: 50%;
-  transform: translate(-50%, -50%); width: 400px; background-color: white;
+  transform: translate(-50%, -50%); width: 450px; background-color: white;
   border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
   padding: 25px; z-index: 2002; box-sizing: border-box;
 }
 .popup h2 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-.version-log {
-  display: none;
+.popup-close-button {
+  display: block; margin: 20px auto 0; padding: 8px 20px; cursor: pointer;
+  border-radius: 5px; border: 1px solid #ccc; background-color: #f0f0f0;
 }
-.version-log.active-version {
-  display: block;
-}
+.popup-close-button:hover { background-color: #e0e0e0; }
+
+#how-to-play-popup .popup-content { margin-top: 15px; }
+#how-to-play-popup p { margin: 10px 0; }
+#how-to-play-popup ul { padding-left: 20px; margin-top: 5px; }
+#how-to-play-popup li { margin-bottom: 8px; }
+
+#update-popup .popup-content { margin-top: 15px; }
+.version-log { display: none; }
+.version-log.active-version { display: block; }
 .version-log p { font-weight: bold; }
 .version-log ul { padding-left: 20px; }
 .version-log li { margin-bottom: 8px; }
 .popup-nav {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 40px;
-  margin-top: 20px;
-  border-top: 1px solid #eee;
-  padding-top: 15px;
+  display: flex; justify-content: center; align-items: center;
+  gap: 40px; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;
 }
 .popup-nav button {
   font-size: 20px; font-weight: bold; padding: 0 15px; background: none;
@@ -374,25 +335,43 @@ input:checked + .slider:before {
 .popup-nav button.disabled {
   color: #ccc; border-color: #eee; cursor: not-allowed; background: none;
 }
-#popup-close-button {
-  display: block; margin: 20px auto 0; padding: 8px 20px; cursor: pointer;
-  border-radius: 5px; border: 1px solid #ccc; background-color: #f0f0f0;
-}
-
-/* --- 사이트 하단 푸터 스타일 --- */
 .site-footer {
   margin-top: 20px;
   padding: 10px;
   text-align: center;
   font-size: 14px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+.site-footer a { color: #555; text-decoration: none; }
+.site-footer a:hover { text-decoration: underline; }
+
+#game-over-message {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.65);
+    color: white;
+    font-size: 48px;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    z-index: 100;
+    border-radius: inherit;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
 }
 
-.site-footer a {
-  color: #555;
-  text-decoration: none;
+#game-over-message:not(.hidden) {
+    opacity: 1;
 }
 
-.site-footer a:hover {
-  text-decoration: underline;
+.hidden {
+    display: none !important;
 }
-
