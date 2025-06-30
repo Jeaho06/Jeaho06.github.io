@@ -19,22 +19,21 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 /**
- * 게임의 모든 상태와 이벤트를 초기화하는 메인 함수
+ * 게임의 모든 상태와 이벤트를 초기화하는 메인 함수 (수정된 순서)
  */
 function initializeGame() {
-    createBoardUI();
-    setupEventListeners();
-    resetGame();
+    createBoardUI();      // 보드 UI(줄, 좌표)를 한 번만 그림
+    resetGame();          // 게임 상태(변수, 돌, 로그)를 먼저 초기화
+    setupEventListeners();  // 모든 이벤트 리스너를 나중에 설정
 }
 
 /**
- * 게임 상태를 초기화하는 함수 (새 게임 버튼 클릭 시 호출)
+ * 게임 상태를 초기화하는 함수 (새 게임)
  */
 function resetGame() {
     for (let i = 0; i < 19; i++) {
         board[i].fill(0);
     }
-    
     isAITurn = false;
     lastMove = null;
     isFirstMove = true;
@@ -42,15 +41,11 @@ function resetGame() {
     isDestinyDenialUsed = false;
     bombState = { isArmed: false, col: null, row: null };
     gameOver = false;
-
     document.getElementById('move-log').innerHTML = '';
     document.getElementById('reasoning-log').innerHTML = '';
-    
     const boardElement = document.getElementById('game-board');
-    // 게임 보드 내의 돌과 표시만 제거
     const dynamicElements = boardElement.querySelectorAll('.stone, .denied-spot');
     dynamicElements.forEach(el => el.remove());
-
     const gameOverMessage = document.getElementById('game-over-message');
     if (gameOverMessage) {
         gameOverMessage.classList.add('hidden');
@@ -70,6 +65,7 @@ function setupEventListeners() {
     setupPopupOverlay();
 }
 
+
 // --- 언어 및 로깅 관련 함수 ---
 async function changeLanguage(lang) {
   try {
@@ -79,7 +75,6 @@ async function changeLanguage(lang) {
     currentLanguage = lang;
     document.documentElement.lang = lang;
     localStorage.setItem('omokLanguage', lang);
-    
     document.querySelectorAll('[data-i18n-key]').forEach(el => {
       const key = el.dataset.i18nKey;
       if (currentStrings[key]) { el.textContent = currentStrings[key]; }
@@ -307,6 +302,7 @@ function aiMove() {
       moveAction = chosenCheat;
     } else { moveAction = () => performNormalMove(); }
   } else { moveAction = () => performNormalMove(); }
+  
   const actionResult = moveAction();
   if (actionResult && actionResult.isAsync === false) {
     if (checkWin(board, -1)) { endGame(getString('system_ai_win')); } 
@@ -400,7 +396,6 @@ function performNormalMove(predefinedMove = null) {
     return { isAsync: true };
 }
 
-// --- 나머지 함수들 ---
 function checkWin(board, player) {
     const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
     for (let y = 0; y < 19; y++) { for (let x = 0; x < 19; x++) { if (board[y][x] === player) { for (const [dx, dy] of directions) { let count = 1; for (let i = 1; i < 5; i++) { const nx = x + i * dx; const ny = y + i * dy; if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === player) count++; else break; } if (count >= 5) return true; } } } } return false;
@@ -412,6 +407,7 @@ function isForbiddenMove(x, y, player) {
     for (const [dx, dy] of directions) { if (calculateScoreForLine(x, y, dx, dy, player) === 5000) openThrees++; }
     board[y][x] = 0; return openThrees >= 2;
 }
+
 function placeBomb() {
     const move = findBestBombLocation();
     if (move) {
@@ -441,7 +437,7 @@ function detonateBomb() {
 function performDoubleMove() {
     const firstMoveResult = performNormalMove();
     if (firstMoveResult && firstMoveResult.isAsync === false) {
-        if (gameOver) return {isAsync: true}; // 첫 수로 게임이 끝나면 두 번째 수 두지 않음
+        if (gameOver) return {isAsync: true};
         const move2 = findBestMove();
         if (move2 && board[move2.row][move2.col] === 0) {
             setTimeout(() => {
@@ -518,9 +514,10 @@ function isCriticalStone(x, y, player) {
 }
 function convertCoord(col, row) { const letter = String.fromCharCode(65 + col); const number = row + 1; return letter + number; }
 function playSound(soundFile) { const audio = new Audio(soundFile); audio.play(); }
+
 function setupPopupWindow() {
     const updateButton = document.getElementById('update-button');
-    const updatePopup = document.getElementById('update-popup');
+    const popup = document.getElementById('update-popup');
     const closeButton = document.getElementById('popup-close-button');
     const prevBtn = document.getElementById('prev-version-btn');
     const nextBtn = document.getElementById('next-version-btn');
@@ -546,14 +543,14 @@ function setupPopupWindow() {
         nextBtn.classList.toggle('disabled', index === 0);
         prevBtn.classList.toggle('disabled', index === versionLogs.length - 1);
     };
-    if (updateButton && updatePopup && closeButton && prevBtn && nextBtn) {
+    if (updateButton && popup && closeButton && prevBtn && nextBtn) {
         updateButton.addEventListener('click', () => {
             renderUpdateLogs();
-            updatePopup.style.display = 'block';
+            popup.style.display = 'block';
             document.getElementById('popup-overlay').style.display = 'block';
         });
         closeButton.addEventListener('click', () => {
-            updatePopup.style.display = 'none';
+            popup.style.display = 'none';
             document.getElementById('popup-overlay').style.display = 'none';
         });
         prevBtn.addEventListener('click', () => {
