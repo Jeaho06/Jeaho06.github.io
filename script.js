@@ -250,35 +250,58 @@ function endGame(message) {
     logReason("시스템", message);
 }
 
-// --- AI 로직 ---
+/**
+ * AI의 턴을 관리하는 메인 함수 (오류 수정된 최종 버전)
+ */
 function aiMove() {
-  if (bombState.isArmed) { detonateBomb(); return; }
+  if (bombState.isArmed) { 
+    detonateBomb();
+    return;
+  }
+  
   let moveAction;
   const willCheat = Math.random() < cheatProbability && !isFirstMove && lastMove;
+
   if (willCheat) {
     const availableCheats = [];
     if (document.getElementById('toggle-bomb').checked) { availableCheats.push(() => placeBomb()); }
     if (document.getElementById('toggle-double-move').checked) { availableCheats.push(() => performDoubleMove()); }
     if (document.getElementById('toggle-swap').checked) { availableCheats.push(() => performStoneSwap()); }
+
     if (availableCheats.length > 0) {
       const chosenCheat = availableCheats[Math.floor(Math.random() * availableCheats.length)];
       moveAction = chosenCheat;
-    } else { moveAction = () => performNormalMove(); }
-  } else { moveAction = () => performNormalMove(); }
+    } else {
+      moveAction = () => performNormalMove();
+    }
+  } else {
+    moveAction = () => performNormalMove();
+  }
   
   const actionResult = moveAction();
+  
+  // 동기적 행동(일반 수)이 성공했을 때 턴 종료 처리
   if (actionResult && actionResult.isAsync === false) {
-    if (checkWin(board, -1)) { endGame(getString('system_ai_win')); } 
-    else { isAITurn = false; }
-  } else if (!actionResult) {
+    if (checkWin(board, -1)) { 
+      endGame(getString('system_ai_win')); 
+    } else { 
+      isAITurn = false; 
+    }
+  } 
+  // 반칙 행동이 실패(false 반환)했을 때의 처리
+  else if (!actionResult) {
     const normalMoveResult = performNormalMove();
-    if(normalMoveResult && normalMoveResult.isAsync === false){
-      if (checkWin(board, -1)) { endGame(getString('system_ai_win')); }
-      else { isAITurn = false; }
+    // [오타 수정] normalMove_Result -> normalMoveResult
+    if (normalMoveResult && normalMoveResult.isAsync === false) {
+      if (checkWin(board, -1)) { 
+        endGame(getString('system_ai_win'));
+      } else { 
+        isAITurn = false; 
+      }
     }
   }
+  // 비동기 행동(반칙 성공)의 경우, 각 반칙 함수 내부의 setTimeout에서 턴을 종료시키므로 여기서는 처리하지 않음
 }
-
 function findBestMove() {
   let bestMove = null;
   let bestScore = -1;
