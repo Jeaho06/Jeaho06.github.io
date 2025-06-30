@@ -164,6 +164,10 @@ function setupBoardClickListener() {
     board[closestY][closestX] = 1; placeStone(closestX, closestY, 'black'); playSound("Movement.mp3");
     const userCoord = convertCoord(closestX, closestY);
     logMove(++moveCount, `${getString('user_title')}: ${userCoord}??`);
+    // --- 아래 두 줄 추가 ---
+    isFirstMove = false;
+    lastMove = { col: closestX, row: closestY };
+    // ----------------------
     if (checkWin(board, 1)) {
         endGame(getString('system_user_win'));
         return;
