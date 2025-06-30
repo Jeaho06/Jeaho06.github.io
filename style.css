@@ -337,3 +337,20 @@ input:checked + .slider:before {
   display: block; margin: 20px auto 0; padding: 8px 20px; cursor: pointer;
   border-radius: 5px; border: 1px solid #ccc; background-color: #f0f0f0;
 }
+
+/* --- 사이트 하단 푸터 스타일 --- */
+.site-footer {
+  margin-top: 20px;
+  padding: 10px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.site-footer a {
+  color: #555;
+  text-decoration: none;
+}
+
+.site-footer a:hover {
+  text-decoration: underline;
+}
