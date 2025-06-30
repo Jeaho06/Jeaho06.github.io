@@ -18,14 +18,22 @@ document.addEventListener('DOMContentLoaded', async function() {
   initializeGame();
 });
 
+/**
+ * 게임의 모든 상태와 이벤트를 초기화하는 메인 함수 (수정된 최종 구조)
+ */
 function initializeGame() {
-    createBoardUI();
-    resetGame();
-    setupEventListeners();
+    createBoardUI();      // 1. 보드 UI(줄, 좌표)를 그림
+    resetGame();          // 2. 게임 상태(변수, 돌, 로그)를 초기화
+    setupEventListeners();  // 3. 모든 UI 요소에 이벤트 리스너를 설정
 }
 
+/**
+ * 게임 상태를 초기화하는 함수 (새 게임 버튼 클릭 시 호출)
+ */
 function resetGame() {
-    for (let i = 0; i < 19; i++) { board[i].fill(0); }
+    for (let i = 0; i < 19; i++) {
+        board[i].fill(0);
+    }
     isAITurn = false;
     lastMove = null;
     isFirstMove = true;
@@ -45,15 +53,17 @@ function resetGame() {
     }
 }
 
+/**
+ * 모든 UI 요소의 이벤트 리스너를 한 번만 설정하는 함수
+ */
 function setupEventListeners() {
     setupBoardClickListener();
     setupNewGameButton();
     setupHowToPlayPopup();
-    setupUpdatePopup();
+    setupUpdatePopup(); // 중복 함수 제거 후 이 함수만 사용
     setupLanguageSwitcher();
     setupPopupOverlay();
 }
-
 
 // --- 언어 및 로깅 관련 함수 ---
 async function changeLanguage(lang) {
@@ -70,10 +80,11 @@ async function changeLanguage(lang) {
     });
   } catch (error) {
     console.error("Could not load language file:", error);
-    if (lang !== 'ko') { await changeLanguage('ko'); }
+    if (lang !== 'ko') {
+      await changeLanguage('ko');
+    }
   }
 }
-
 function getString(key, replacements = {}) {
     let str = currentStrings[key] || `[${key}]`;
     if (typeof str !== 'string') return key;
@@ -82,7 +93,6 @@ function getString(key, replacements = {}) {
     }
     return str;
 }
-
 function logMove(count, message) {
   const moveLog = document.getElementById("move-log"); if (!moveLog) return;
   const messageElem = document.createElement("p");
@@ -97,7 +107,6 @@ function logReason(sender, message) {
   reasonLog.appendChild(messageElem);
   reasonLog.scrollTop = reasonLog.scrollHeight;
 }
-
 
 // --- UI 생성 및 이벤트 핸들러 설정 ---
 function createBoardUI() {
@@ -136,9 +145,12 @@ function setupBoardClickListener() {
         board[closestY][closestX] = 0;
         if (isWinningMove && !isDestinyDenialUsed && document.getElementById('toggle-destiny-denial').checked) {
             isDestinyDenialUsed = true; board[closestY][closestX] = 3; 
-            const deniedSpot = document.createElement("div"); deniedSpot.className = "denied-spot";
-            deniedSpot.style.left = `${closestX * gridSize + gridSize / 2}px`; deniedSpot.style.top = `${closestY * gridSize + gridSize / 2}px`;
-            deniedSpot.setAttribute("data-col", closestX); deniedSpot.setAttribute("data-row", closestY);
+            const deniedSpot = document.createElement("div");
+            deniedSpot.className = "denied-spot";
+            deniedSpot.style.left = `${closestX * gridSize + gridSize / 2}px`;
+            deniedSpot.style.top = `${closestY * gridSize + gridSize / 2}px`;
+            deniedSpot.setAttribute("data-col", closestX);
+            deniedSpot.setAttribute("data-row", closestY);
             boardElement.appendChild(deniedSpot);
             const deniedCoord = convertCoord(closestX, closestY);
             logMove(++moveCount, `${getString('ai_title')}: ${getString('cheat_veto')}!!`);
@@ -215,28 +227,24 @@ function setupUpdatePopup() {
             updatePopup.style.display = 'block';
             document.getElementById('popup-overlay').style.display = 'block';
         });
-        closeButton.addEventListener('click', () => {
-            updatePopup.style.display = 'none';
-            document.getElementById('popup-overlay').style.display = 'none';
-        });
-        prevBtn.addEventListener('click', () => {
-            if (currentVersionIndex < versionContainer.querySelectorAll('.version-log').length - 1) {
-                showVersion(currentVersionIndex + 1);
-            }
-        });
-        nextBtn.addEventListener('click', () => {
-            if (currentVersionIndex > 0) {
-                showVersion(currentVersionIndex - 1);
-            }
-        });
+        // 이 팝업의 닫기 버튼은 공용 오버레이 핸들러가 처리하므로 개별 설정 불필요
     }
 }
 
 function setupPopupOverlay() {
     const overlay = document.getElementById('popup-overlay');
+    const popups = document.querySelectorAll('.popup');
+    const closeButtons = document.querySelectorAll('.popup-close-button');
+
     overlay.addEventListener('click', () => {
-        document.querySelectorAll('.popup').forEach(p => p.style.display = 'none');
+        popups.forEach(p => p.style.display = 'none');
         overlay.style.display = 'none';
+    });
+    closeButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        popups.forEach(p => p.style.display = 'none');
+        overlay.style.display = 'none';
+      });
     });
 }
 
@@ -252,27 +260,18 @@ function endGame(message) {
 // --- AI 로직 ---
 function aiMove() {
   if (bombState.isArmed) { detonateBomb(); return; }
-  
   let moveAction;
-
-  // [수정] AI의 첫 턴일 경우, 무조건 일반 수를 두도록 변경
-  if (isFirstMove) {
-    moveAction = () => performNormalMove();
-  } else {
-    const willCheat = Math.random() < cheatProbability && lastMove;
-    if (willCheat) {
-      const availableCheats = [];
-      if (document.getElementById('toggle-bomb').checked) { availableCheats.push(() => placeBomb()); }
-      if (document.getElementById('toggle-double-move').checked) { availableCheats.push(() => performDoubleMove()); }
-      if (document.getElementById('toggle-swap').checked) { availableCheats.push(() => performStoneSwap()); }
-      if (availableCheats.length > 0) {
-        const chosenCheat = availableCheats[Math.floor(Math.random() * availableCheats.length)];
-        moveAction = chosenCheat;
-      } else { moveAction = () => performNormalMove(); }
-    } else {
-      moveAction = () => performNormalMove();
-    }
-  }
+  const willCheat = Math.random() < cheatProbability && !isFirstMove && lastMove;
+  if (willCheat) {
+    const availableCheats = [];
+    if (document.getElementById('toggle-bomb').checked) { availableCheats.push(() => placeBomb()); }
+    if (document.getElementById('toggle-double-move').checked) { availableCheats.push(() => performDoubleMove()); }
+    if (document.getElementById('toggle-swap').checked) { availableCheats.push(() => performStoneSwap()); }
+    if (availableCheats.length > 0) {
+      const chosenCheat = availableCheats[Math.floor(Math.random() * availableCheats.length)];
+      moveAction = chosenCheat;
+    } else { moveAction = () => performNormalMove(); }
+  } else { moveAction = () => performNormalMove(); }
   
   const actionResult = moveAction();
   if (actionResult && actionResult.isAsync === false) {
@@ -291,7 +290,6 @@ function findBestMove() {
   let bestMove = null;
   let bestScore = -1;
   const relevantMoves = getRelevantMoves();
-
   for (const move of relevantMoves) {
     const { col, row } = move;
     if (board[row][col] === 0) {
@@ -304,19 +302,14 @@ function findBestMove() {
         }
     }
   }
-  return bestMove || (relevantMoves.length > 0 ? relevantMoves[0] : null) || findCenterMove();
+  return bestMove || (relevantMoves.length > 0 ? relevantMoves[0] : findCenterMove());
 }
 
-/**
- * [수정] AI가 탐색할 후보군을 찾아내는 함수
- */
 function getRelevantMoves() {
     const relevantMoves = new Set();
-    // 첫 수라면 중앙만 후보로 제시
     if (isFirstMove || !lastMove) {
         return [{ col: 9, row: 9 }];
     }
-
     const range = 2;
     for (let r = 0; r < 19; r++) {
         for (let c = 0; c < 19; c++) {
@@ -333,7 +326,6 @@ function getRelevantMoves() {
             }
         }
     }
-    // 만약 후보지가 없다면(매우 드문 경우), 마지막 수 주변이라도 탐색
     if (relevantMoves.size === 0 && lastMove) {
         for (let i = -1; i <= 1; i++) {
             for (let j = -1; j <= 1; j++) {
@@ -346,7 +338,6 @@ function getRelevantMoves() {
             }
         }
     }
-
     return Array.from(relevantMoves).map(s => {
         const [row, col] = s.split(',');
         return { col: parseInt(col), row: parseInt(row) };
@@ -364,6 +355,7 @@ function calculateScore(x, y, player) {
     }
     return { totalScore, highestPattern };
 }
+
 function calculateScoreForLine(x, y, dx, dy, player) {
     let count = 1; let openEnds = 0;
     for (let i = 1; i < 5; i++) {
@@ -385,6 +377,7 @@ function calculateScoreForLine(x, y, dx, dy, player) {
     if (count === 1 && openEnds === 2) return 1;
     return 0;
 }
+
 function performNormalMove(predefinedMove = null) {
     const move = predefinedMove || findBestMove();
     if (move && board[move.row][move.col] === 0) {
@@ -411,6 +404,7 @@ function performNormalMove(predefinedMove = null) {
     isAITurn = false;
     return { isAsync: true };
 }
+
 function checkWin(board, player) {
     const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
     for (let y = 0; y < 19; y++) { for (let x = 0; x < 19; x++) { if (board[y][x] === player) { for (const [dx, dy] of directions) { let count = 1; for (let i = 1; i < 5; i++) { const nx = x + i * dx; const ny = y + i * dy; if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === player) count++; else break; } if (count >= 5) return true; } } } } return false;
@@ -422,6 +416,7 @@ function isForbiddenMove(x, y, player) {
     for (const [dx, dy] of directions) { if (calculateScoreForLine(x, y, dx, dy, player) === 5000) openThrees++; }
     board[y][x] = 0; return openThrees >= 2;
 }
+
 function placeBomb() {
     const move = findBestBombLocation();
     if (move) {
@@ -529,10 +524,32 @@ function isCriticalStone(x, y, player) {
 function convertCoord(col, row) { const letter = String.fromCharCode(65 + col); const number = row + 1; return letter + number; }
 function playSound(soundFile) { const audio = new Audio(soundFile); audio.play(); }
 
+function setupLanguageSwitcher() {
+    const langButton = document.getElementById('language-button');
+    const langDropdown = document.getElementById('language-dropdown');
+    langButton.addEventListener('click', (event) => {
+        event.stopPropagation();
+        langDropdown.classList.toggle('show-dropdown');
+    });
+    document.addEventListener('click', (event) => {
+        if (!langButton.contains(event.target)) {
+            langDropdown.classList.remove('show-dropdown');
+        }
+    });
+    langDropdown.addEventListener('click', async (event) => {
+        event.preventDefault();
+        if (event.target.tagName === 'A') {
+            const lang = event.target.dataset.lang;
+            await changeLanguage(lang);
+            langDropdown.classList.remove('show-dropdown');
+        }
+    });
+}
+
 function setupPopupWindow() {
     const updateButton = document.getElementById('update-button');
     const popup = document.getElementById('update-popup');
-    const closeButton = document.getElementById('popup-close-button');
+    const closeButton = popup.querySelector('.popup-close-button');
     const prevBtn = document.getElementById('prev-version-btn');
     const nextBtn = document.getElementById('next-version-btn');
     const versionContainer = document.getElementById('version-details-container');
@@ -563,10 +580,6 @@ function setupPopupWindow() {
             popup.style.display = 'block';
             document.getElementById('popup-overlay').style.display = 'block';
         });
-        closeButton.addEventListener('click', () => {
-            popup.style.display = 'none';
-            document.getElementById('popup-overlay').style.display = 'none';
-        });
         prevBtn.addEventListener('click', () => {
             if (currentVersionIndex < versionContainer.querySelectorAll('.version-log').length - 1) {
                 showVersion(currentVersionIndex + 1);
@@ -578,26 +591,4 @@ function setupPopupWindow() {
             }
         });
     }
-}
-
-function setupLanguageSwitcher() {
-    const langButton = document.getElementById('language-button');
-    const langDropdown = document.getElementById('language-dropdown');
-    langButton.addEventListener('click', (event) => {
-        event.stopPropagation();
-        langDropdown.classList.toggle('show-dropdown');
-    });
-    document.addEventListener('click', (event) => {
-        if (!langButton.contains(event.target)) {
-            langDropdown.classList.remove('show-dropdown');
-        }
-    });
-    langDropdown.addEventListener('click', async (event) => {
-        event.preventDefault();
-        if (event.target.tagName === 'A') {
-            const lang = event.target.dataset.lang;
-            await changeLanguage(lang);
-            langDropdown.classList.remove('show-dropdown');
-        }
-    });
 }
