@@ -10,6 +10,7 @@ let bombState = { isArmed: false, col: null, row: null };
 let currentLanguage = 'ko';
 let currentStrings = {};
 let gameOver = false;
+let cheatProbability = 0.4; // AI가 치트 행동을 시도할 확률(0~1 사이, 예: 0.4는 40%)
 
 // --- 페이지 로드 및 초기화 ---
 document.addEventListener('DOMContentLoaded', async function() {
@@ -545,6 +546,7 @@ function setupLanguageSwitcher() {
         }
     });
 }
+
 
 function setupPopupWindow() {
     const updateButton = document.getElementById('update-button');
