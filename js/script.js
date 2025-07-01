@@ -66,6 +66,8 @@ function setupEventListeners() {
 }
 
 // --- 언어 및 로깅 관련 함수 ---
+// js/script.js
+
 async function changeLanguage(lang) {
   try {
     const response = await fetch(`./lang/${lang}.json`);
@@ -80,11 +82,11 @@ async function changeLanguage(lang) {
       if (currentStrings[key]) { el.textContent = currentStrings[key]; }
     });
 
-    // [추가] 페이지별 링크를 언어에 맞게 동적으로 변경
-    const aboutLink = document.querySelector('a[href^="about_"]');
+    // [수정] 링크를 찾는 선택자를 더 명확하게 변경
+    const aboutLink = document.querySelector('a[data-i18n-key="about_page"]');
     if (aboutLink) aboutLink.href = `pages/about_${lang}.html`;
 
-    const privacyLink = document.querySelector('a[href^="privacy_"]');
+    const privacyLink = document.querySelector('a[data-i18n-key="privacy_policy"]');
     if (privacyLink) privacyLink.href = `pages/privacy_${lang}.html`;
 
   } catch (error) {
