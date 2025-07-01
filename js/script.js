@@ -60,7 +60,6 @@ function resetGame() {
 function setupEventListeners() {
     setupBoardClickListener();
     setupNewGameButton();
-    setupHowToPlayPopup();
     setupUpdatePopup(); // 중복 함수 제거 후 이 함수만 사용
     setupLanguageSwitcher();
     setupPopupOverlay();
@@ -75,10 +74,19 @@ async function changeLanguage(lang) {
     currentLanguage = lang;
     document.documentElement.lang = lang;
     localStorage.setItem('omokLanguage', lang);
+
     document.querySelectorAll('[data-i18n-key]').forEach(el => {
       const key = el.dataset.i18nKey;
       if (currentStrings[key]) { el.textContent = currentStrings[key]; }
     });
+
+    // [추가] 페이지별 링크를 언어에 맞게 동적으로 변경
+    const aboutLink = document.querySelector('a[href^="about_"]');
+    if (aboutLink) aboutLink.href = `pages/about_${lang}.html`;
+
+    const privacyLink = document.querySelector('a[href^="privacy_"]');
+    if (privacyLink) privacyLink.href = `pages/privacy_${lang}.html`;
+
   } catch (error) {
     console.error("Could not load language file:", error);
     if (lang !== 'ko') {
@@ -182,21 +190,6 @@ function setupNewGameButton() {
     if(newGameButton) newGameButton.addEventListener('click', resetGame);
 }
 
-function setupHowToPlayPopup() {
-    const button = document.getElementById('how-to-play-button');
-    const popup = document.getElementById('how-to-play-popup');
-    const closeButton = document.getElementById('how-to-play-close-button');
-    if(button && popup && closeButton) {
-        button.addEventListener('click', () => {
-            popup.style.display = 'block';
-            document.getElementById('popup-overlay').style.display = 'block';
-        });
-        closeButton.addEventListener('click', () => {
-            popup.style.display = 'none';
-            document.getElementById('popup-overlay').style.display = 'none';
-        });
-    }
-}
 
 function setupUpdatePopup() {
     const updateButton = document.getElementById('update-button');
@@ -547,8 +540,11 @@ function isCriticalStone(x, y, player) {
     for (const [dx, dy] of directions) { let count = 1; let nx = x + dx, ny = y + dy; while (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === player) { count++; nx += dx; ny += dy; } nx = x - dx; ny = y - dy; while (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === player) { count++; nx -= dx; ny -= dy; } if (count >= 3) return true; } return false;
 }
 function convertCoord(col, row) { const letter = String.fromCharCode(65 + col); const number = row + 1; return letter + number; }
-function playSound(soundFile) { const audio = new Audio(soundFile); audio.play(); }
-
+function playSound(soundFile) {
+    // [수정] 사운드 파일 경로를 자동으로 추가
+    const audio = new Audio(`sounds/${soundFile}`);
+    audio.play();
+}
 function setupLanguageSwitcher() {
     const langButton = document.getElementById('language-button');
     const langDropdown = document.getElementById('language-dropdown');
