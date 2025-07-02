@@ -34,6 +34,10 @@
   "reason_attack_3": "強力な「開き三」を作るため",
   "reason_block_3": "あなたの「開き三」を阻止するため",
   "reason_default": "戦略的に最善だと判断したため",
+  "feedback_title": "バグ・フィードバック報告",
+  "feedback_desc": "AIの弱点、バグ、または新しいアイデアを教えてください！",
+  "feedback_placeholder": "ここに内容を入力してください...",
+  "feedback_submit_btn": "送信",
   "update_logs": [
     { "version": "1.3", "date": "2025-06-29", "notes": ["AIの理由説明ロジックを改善"] },
     { "version": "1.2", "date": "2025-06-30", "notes": ["新規反則「運命の拒否」追加", "多言語サポートシステムの導入"] },

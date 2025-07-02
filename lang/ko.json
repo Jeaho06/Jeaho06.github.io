@@ -34,6 +34,11 @@
   "reason_attack_3": "강력한 열린 3 공격을 하기 위해",
   "reason_block_3": "당신의 열린 3 공격을 막기 위해",
   "reason_default": "전략적으로 최선이라 판단하여",
+  "feedback_title": "버그 및 피드백 제보",
+  "feedback_desc": "AI의 허점, 버그, 또는 새로운 아이디어를 알려주세요!",
+  "feedback_placeholder": "여기에 내용을 입력하세요...",
+  "feedback_submit_btn": "보내기",
+
   "update_logs": [
     {
       "version": "1.3",

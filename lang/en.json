@@ -34,6 +34,10 @@
   "reason_attack_3": "to create a strong Live Three attack",
   "reason_block_3": "to block your Live Three attack",
   "reason_default": "based on a strategic judgment",
+  "feedback_title": "Bug & Feedback Report",
+  "feedback_desc": "Let us know about AI loopholes, bugs, or new ideas!",
+  "feedback_placeholder": "Enter your feedback here...",
+  "feedback_submit_btn": "Submit",
   "update_logs": [
     { "version": "1.3", "date": "2025-06-29", "notes": ["Improved AI reasoning and explanation logic"] },
     { "version": "1.2", "date": "2025-06-30", "notes": ["Added new cheat 'Destiny's Denial'", "Introduced multi-language support"] },
