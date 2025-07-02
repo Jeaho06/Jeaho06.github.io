@@ -21,6 +21,28 @@
 </head>
 <body>
 
+    <div id="feedback-widget">
+        <button id="feedback-toggle-btn" data-i18n-key="feedback_toggle_btn">피드백</button>
+        <div id="feedback-form-container">
+            <h3 data-i18n-key="feedback_title">버그 및 피드백 제보</h3>
+            <p data-i18n-key="feedback_desc">AI의 허점, 버그, 또는 새로운 아이디어를 알려주세요!</p>
+
+            <form id="feedback-form" action="https://formspree.io/f/xanjknly" method="POST">
+                <textarea id="feedback-input" name="message" rows="4" data-i18n-placeholder="feedback_placeholder" required></textarea>
+                <button type="submit" data-i18n-key="feedback_submit_btn">보내기</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="top-right-controls">
+
+            <form id="feedback-form" action="https://formspree.io/f/xxxxxxxx" method="POST">
+                <textarea id="feedback-input" name="message" rows="4" data-i18n-placeholder="feedback_placeholder" required></textarea>
+                <button type="submit" data-i18n-key="feedback_submit_btn">보내기</button>
+            </form>
+        </div>
+    </div>
+
     <div class="top-right-controls">
         <button id="new-game-button" data-i18n-key="new_game_btn">새 게임</button>
         <button id="update-button" data-i18n-key="update_history_btn">업데이트 내역</button>
@@ -100,15 +122,7 @@
         <a href="pages/privacy_ko.html" data-i18n-key="privacy_policy">개인정보 처리방침</a>
     </footer>
 
-    <div class="feedback-container">
-        <h3 data-i18n-key="feedback_title">버그 및 피드백 제보</h3>
-        <p data-i18n-key="feedback_desc">AI의 허점, 버그, 또는 새로운 아이디어를 알려주세요!</p>
-        
-        <form id="feedback-form" action="https://formspree.io/f/xanjknly" method="POST">
-            <textarea id="feedback-input" name="message" rows="4" data-i18n-placeholder="feedback_placeholder" required></textarea>
-            <button type="submit" data-i18n-key="feedback_submit_btn">보내기</button>
-        </form>
-    </div>
+
 
     <script src="js/script.js"></script>
 </body>

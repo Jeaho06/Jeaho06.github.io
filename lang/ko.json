@@ -38,6 +38,7 @@
   "feedback_desc": "AI의 허점, 버그, 또는 새로운 아이디어를 알려주세요!",
   "feedback_placeholder": "여기에 내용을 입력하세요...",
   "feedback_submit_btn": "보내기",
+  "feedback_toggle_btn": "피드백",
 
   "update_logs": [
     {

@@ -63,8 +63,19 @@ function setupEventListeners() {
     setupUpdatePopup(); // 중복 함수 제거 후 이 함수만 사용
     setupLanguageSwitcher();
     setupPopupOverlay();
+    setupFeedbackWidget();
 }
 
+function setupFeedbackWidget() { // 피드백 위젯을 설정하는 함수
+    const widget = document.getElementById('feedback-widget');
+    const toggleBtn = document.getElementById('feedback-toggle-btn');
+
+    if (widget && toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            widget.classList.toggle('open');
+        });
+    }
+}
 // --- 언어 및 로깅 관련 함수 ---
 // js/script.js
 
