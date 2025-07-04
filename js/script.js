@@ -494,24 +494,88 @@ function performDoubleMove() {
     }
     return false;
 }
+/**
+ * AI가 사용자 돌과 자신의 돌을 바꾸는 '돌 바꾸기' 반칙을 수행합니다.
+ * 이득/손실 분석을 통해 AI에게 가장 유리한 교환을 선택하도록 수정되었습니다.
+ */
 function performStoneSwap() {
-    if (!lastMove) return false;
-    let aiStone;
-    for (let r = 18; r >= 0; r--) { for (let c = 0; c < 19; c++) { if (board[r][c] === -1 && !isCriticalStone(c, r, -1)) { aiStone = { col: c, row: r }; break; } } if (aiStone) break; }
-    if (aiStone) {
-        const userStone = lastMove;
-        const userCoord = convertCoord(userStone.col, userStone.row); const aiCoord = convertCoord(aiStone.col, aiStone.row);
+    if (!lastMove) {
+        return false; // 사용자의 마지막 수가 없으면 실행 불가
+    }
+
+    const userStone = lastMove;
+    let bestSwap = {
+        stoneToSwap: null,
+        netAdvantage: -Infinity // AI가 얻는 순이익 (이득 - 손실)
+    };
+
+    // 1. AI의 모든 돌을 순회하며 최적의 교환 대상을 찾습니다.
+    for (let r = 0; r < 19; r++) {
+        for (let c = 0; c < 19; c++) {
+            if (board[r][c] === -1) { // AI의 돌(-1)을 찾으면
+                const aiStone = { col: c, row: r };
+
+                // 2. 이득/손실 계산
+                // AI의 이득: 사용자의 마지막 위치를 빼앗았을 때의 가치
+                // (상대방의 4를 막거나, 나의 4를 만드는 등 높은 점수를 얻을 수 있는 곳)
+                const aiGain = calculateScore(userStone.col, userStone.row, -1).totalScore;
+
+                // AI의 손실: 나의 현재 위치를 상대에게 내주었을 때의 가치
+                // (상대에게 좋은 자리를 내주면 손실이 커짐)
+                const userGain = calculateScore(aiStone.col, aiStone.row, 1).totalScore;
+                
+                // 순이익 계산
+                const netAdvantage = aiGain - userGain;
+
+                // 3. 가장 순이익이 높은 수를 'bestSwap'으로 기록
+                if (netAdvantage > bestSwap.netAdvantage) {
+                    bestSwap = {
+                        stoneToSwap: aiStone,
+                        netAdvantage: netAdvantage
+                    };
+                }
+            }
+        }
+    }
+
+    // 4. 최소 이득 기준을 통과하고, 교환할 돌이 있을 경우에만 반칙 실행
+    // netAdvantage가 5000점 이상이라는 것은, 최소한 '열린 3'을 만들거나 막는 수준의 이득이 보장된다는 의미
+    if (bestSwap.stoneToSwap && bestSwap.netAdvantage > 5000) {
+        const aiStoneToSwap = bestSwap.stoneToSwap;
+        const userCoord = convertCoord(userStone.col, userStone.row);
+        const aiCoord = convertCoord(aiStoneToSwap.col, aiStoneToSwap.row);
+
         logMove(++moveCount, `${getString('ai_title')}: ${userCoord}↔${aiCoord}!!`);
         logReason(getString('ai_title'), getString('ai_swap_reason', { userCoord: userCoord, aiCoord: aiCoord }));
-        removeStone(userStone.col, userStone.row); removeStone(aiStone.col, aiStone.row);
+
+        // 기존 돌 제거 (보드와 UI)
+        removeStone(userStone.col, userStone.row);
+        removeStone(aiStoneToSwap.col, aiStoneToSwap.row);
+        
+        // 0.5초 후 돌을 교환하여 배치
         setTimeout(() => {
-            board[userStone.row][userStone.col] = -1; placeStone(userStone.col, userStone.row, 'white');
-            board[aiStone.row][aiStone.col] = 1; placeStone(aiStone.col, aiStone.row, 'black');
+            // 사용자의 마지막 위치에 AI 돌(백돌) 놓기
+            board[userStone.row][userStone.col] = -1;
+            placeStone(userStone.col, userStone.row, 'white');
+
+            // AI의 원래 위치에 사용자 돌(흑돌) 놓기
+            board[aiStoneToSwap.row][aiStoneToSwap.col] = 1;
+            placeStone(aiStoneToSwap.col, aiStoneToSwap.row, 'black');
+            
             playSound("Movement.mp3");
-            if (checkWin(board, -1)) { endGame(getString('system_ai_win')); } else { isAITurn = false; }
+
+            // 승리 조건 확인 후 턴 종료
+            if (checkWin(board, -1)) {
+                endGame(getString('system_ai_win'));
+            } else {
+                isAITurn = false;
+            }
         }, 500);
-        return { isAsync: true };
+
+        return { isAsync: true }; // 비동기 작업이므로 true 반환
     }
+
+    // 마땅한 교환 대상을 찾지 못하면 false를 반환하여 다른 행동(일반 수)을 하도록 함
     return false;
 }
 function placeStone(col, row, color) {
