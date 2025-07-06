@@ -15,7 +15,7 @@ const firebaseConfig = {
   appId: "APP_ID",
   measurementId: "MEASUREMENT_ID"
 };
-// Firebase 앱 초기화
+// Firebase 앱 초기화 ㅁㄴㅇㄹ
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
