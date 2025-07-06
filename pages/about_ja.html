@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ゲーム紹介 - 反則AI五目並べ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.8;
+            margin: 0 auto;
+            max-width: 800px;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background-color: white;
+            padding: 20px 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        h2 {
+            margin-top: 40px;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+        strong {
+            color: #d9534f;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #337ab7;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>反則AI五目並べ：ゲーム紹介</h1>
+
+        <h2>ゲームコンセプト</h2>
+        <p>
+            「反則AI五目並べ」は、普通の五目並べに飽きてしまった方々のために作られました。このゲームのAIは、単に最善手を打つだけでなく、敗北が予想される危機の瞬間に、人間のように狡猾で予測不可能な<strong>反則</strong>を使います。AIの不公平な特権に立ち向かい、あなたの純粋な実力で勝利を掴んでください！
+        </p>
+
+        <h2>基本ルール</h2>
+        <p>
+            縦、横、斜めのいずれかの方向に先に自分の石を<strong>5つ</strong>並べた方が勝利します。これは一般的な五目並べのルールと同じです。
+        </p>
+
+        <h2>AIの反則 詳細説明</h2>
+        <ul>
+            <li><strong>拒否権 (Veto):</strong> ゲームに一度だけ、あなたが五目並べを完成させて勝利する決定的な手を打とうとするとき、その行動自体を無効にし、そのマスを永久に封鎖します。AIに与えられた最後のチャンスです。</li>
+            <li><strong>爆弾設置 (Place Bomb):</strong> AIが自分のターンに石の代わりに爆弾を設置します。爆弾は次のAIのターンに爆発し, 中心にある3x3の範囲のすべての石を取り除きます。</li>
+            <li><strong>二手指し (Double Move):</strong> AIが1ターンに2回連続で石を置きます。一瞬で攻撃ラインを形成したり、あなたの攻撃を防ぐために使用されます。</li>
+            <li><strong>石交換 (Swap Stone):</strong> 形勢を逆転させるため、AIが自分の石の一つと、あなたが最後に置いた石の位置を交換します。</li>
+        </ul>
+
+        <h2>簡単な攻略法</h2>
+        <ul>
+            <li><strong>説明ログに注目してください:</strong> AIはなぜそこに石を置いたのか理由を説明します。「開いた三連攻撃を防ぐため」といったメッセージを通じて、AIが何を脅威と感じているのか把握することができます。</li>
+            <li><strong>反則を逆利用してください:</strong> AIが「石交換」を使うと予想される場合、重要でない場所に石を置いてAIの反則効果を減少させることができます。</li>
+            <li><strong>四三攻撃は依然として必勝戦略です:</strong> AIがどんなに反則を使っても、一度に二つ以上の攻撃ルート（四三攻撃など）を作れば、AIはすべての脅威を防ぎきれず敗北します。</li>
+        </ul>
+
+        <div class="footer">
+            <p><strong>開発者:</strong> JeahoGames</p>
+            <a href="https://omok.ai.kr">ゲームに戻る</a> | 
+            <a href="https://github.com/Jeaho06/Jeaho06.github.io" target="_blank">GitHubプロフィール</a>
+        </div>
+    </div>
+</body>
+</html>
