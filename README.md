@@ -27,7 +27,7 @@ An online Omok (Gomoku/Five-in-a-Row) game with a new concept where the AI oppon
 * **Detailed Logs**: Provides separate, clear logs for game moves (with turn counters) and the AI's reasoning behind each move.
 
 
-## 🚀 Getting Started
+## 🚀 Getting Started.
 
 This project requires a web server environment to fetch language files (`/lang/*.json`).
 
