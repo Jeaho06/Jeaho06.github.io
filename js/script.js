@@ -5,7 +5,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, deleteUser } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Firebase 설정 객체 (프로젝트 설정에서 복사)ㅇㄴㄹ
+// Firebase 설정 객체 (프로젝트 설정에서 복사)ㅁㄴㅇㄹ
 const firebaseConfig = {
   apiKey: "AIzaSyCFAlNRMCbexE3GT2SWb8_0JhVTqNB3cc8",
   authDomain: "omokgame-ac6f9.firebaseapp.com",
@@ -13,7 +13,7 @@ const firebaseConfig = {
   storageBucket: "omokgame-ac6f9.firebasestorage.app",
   messagingSenderId: "290956016935",
   appId: "1:290956016935:web:c03e81420d0d96b834fd02",
-  measurementId: "G-5G7VHX8CYN"
+  measurementId: "G-9CEL2CNWD8"
 };
 // Firebase 앱 초기화
 const app = initializeApp(firebaseConfig);
