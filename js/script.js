@@ -1,4 +1,32 @@
 // --- 전역 변수 ---
+
+// Firebase SDK import
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, deleteUser } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// Firebase 설정 객체 (프로젝트 설정에서 복사)
+const firebaseConfig = {
+  apiKey: "API_KEY",
+  authDomain: "AUTH_DOMAIN",
+  projectId: "PROJECT_ID",
+  storageBucket: "STORAGE_BUCKET",
+  messagingSenderId: "MESSAGING_SENDER_ID",
+  appId: "APP_ID",
+  measurementId: "MEASUREMENT_ID"
+};
+// Firebase 앱 초기화
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// 사용자 정보 및 상태 관련 전역 변수
+let currentUser = null; // 로그인된 Firebase 사용자 객체
+let userData = null;    // Firestore에서 불러온 사용자 데이터 (닉네임, 전적 등)
+let guestData = { stats: { wins: 0, losses: 0 }, achievements: [] }; // 게스트용 임시 데이터
+
+// ... (기존 전역 변수들) ...
+
 const board = Array(19).fill().map(() => Array(19).fill(0));
 const gridSize = 30;
 let isAITurn = false;
