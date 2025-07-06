@@ -15,12 +15,12 @@ const firebaseConfig = {
   appId: "1:290956016935:web:74872c9c005e976834fd02",
   measurementId: "G-9CEL2CNWD8"
 };
-// Firebase 앱 초기화 ㅁㄴㅇㄹ
+// Firebase 앱 초기화
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// 사용자 정보 및 상태 관련 전역 변수
+// 사용자 정보 및 상태 관련 전역 변수 
 let currentUser = null; // 로그인된 Firebase 사용자 객체
 let userData = null;    // Firestore에서 불러온 사용자 데이터 (닉네임, 전적 등)
 let guestData = { stats: { wins: 0, losses: 0 }, achievements: [] }; // 게스트용 임시 데이터
