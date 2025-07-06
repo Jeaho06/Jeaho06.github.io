@@ -5,7 +5,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, deleteUser } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Firebase 설정 객체 (프로젝트 설정에서 복사)
+// Firebase 설정 객체 (프로젝트 설정에서 복사)ㅣ
 const firebaseConfig = {
   apiKey: "API_KEY",
   authDomain: "AUTH_DOMAIN",
@@ -54,6 +54,7 @@ function initializeGame() {
     createBoardUI();      // 1. 보드 UI(줄, 좌표)를 그림
     resetGame();          // 2. 게임 상태(변수, 돌, 로그)를 초기화
     setupEventListeners();  // 3. 모든 UI 요소에 이벤트 리스너를 설정
+    setupAuthEventListeners(); // 인증 이벤트 리스너 호출 추가
 }
 
 /**
@@ -80,6 +81,121 @@ function resetGame() {
         gameOverMessage.classList.remove('visible');
         gameOverMessage.classList.add('hidden');
     }
+}
+
+
+
+// --- 인증 및 UI 관리 함수 ---
+
+// 회원가입
+async function signUp(nickname, password) {
+    const nicknameRegex = /^[a-zA-Z0-9]{2,10}$/;
+    if (!nicknameRegex.test(nickname)) {
+        alert(getString('nickname_rule_alert'));
+        return;
+    }
+    const fakeEmail = `${nickname.trim().toLowerCase()}@omok.game`;
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, fakeEmail, password);
+        const user = userCredential.user;
+        const initialData = JSON.parse(localStorage.getItem('omok_guestData')) || {
+            nickname: nickname.trim(),
+            stats: { wins: 0, losses: 0 },
+            achievements: []
+        };
+        initialData.nickname = nickname.trim();
+        await setDoc(doc(db, "users", user.uid), initialData);
+        localStorage.removeItem('omok_guestData');
+        alert(getString('signup_success_alert'));
+        document.getElementById('auth-modal').style.display = 'none';
+        document.getElementById('popup-overlay').style.display = 'none';
+    } catch (error) {
+        if (error.code === 'auth/email-already-in-use') {
+            alert(getString('nickname_in_use_alert'));
+        } else {
+            alert(getString('signup_fail_alert', { error: error.message }));
+        }
+    }
+}
+
+// 로그인
+async function logIn(nickname, password) {
+    const fakeEmail = `${nickname.trim().toLowerCase()}@omok.game`;
+    try {
+        await signInWithEmailAndPassword(auth, fakeEmail, password);
+        alert(getString('login_success_alert'));
+        document.getElementById('auth-modal').style.display = 'none';
+        document.getElementById('popup-overlay').style.display = 'none';
+    } catch (error) {
+        if (error.code === 'auth/invalid-credential') {
+             alert(getString('invalid_credentials_alert'));
+        } else {
+            alert(getString('login_fail_alert', { error: error.message }));
+        }
+    }
+}
+
+// 로그아웃
+function logOut() {
+    signOut(auth);
+    alert(getString('logout_success_alert'));
+}
+
+// 로그인 상태 감지 및 UI 업데이트
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        currentUser = user;
+        const docRef = doc(db, "users", user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            userData = docSnap.data();
+            updateUIForLogin();
+        }
+    } else {
+        currentUser = null;
+        userData = null;
+        const savedGuestData = localStorage.getItem('omok_guestData');
+        guestData = savedGuestData ? JSON.parse(savedGuestData) : { stats: { wins: 0, losses: 0 }, achievements: [] };
+        updateUIForLogout();
+    }
+});
+
+function updateUIForLogin() {
+    document.getElementById('guest-display').style.display = 'none';
+    document.getElementById('user-display').style.display = 'flex';
+    document.getElementById('nickname-display').textContent = getString('welcome_message', { nickname: userData.nickname });
+}
+
+function updateUIForLogout() {
+    document.getElementById('user-display').style.display = 'none';
+    document.getElementById('guest-display').style.display = 'flex';
+}
+
+function saveGuestData() {
+    localStorage.setItem('omok_guestData', JSON.stringify(guestData));
+}
+
+// 인증 관련 이벤트 리스너 설정
+function setupAuthEventListeners() {
+    const authModal = document.getElementById('auth-modal');
+    const loginForm = document.getElementById('login-form');
+    const signupForm = document.getElementById('signup-form');
+
+    document.getElementById('open-login-modal-btn').addEventListener('click', () => {
+        authModal.style.display = 'block';
+        document.getElementById('popup-overlay').style.display = 'block';
+    });
+    authModal.querySelector('.popup-close-button').addEventListener('click', () => {
+        authModal.style.display = 'none';
+        document.getElementById('popup-overlay').style.display = 'none';
+    });
+
+    document.getElementById('show-signup').addEventListener('click', (e) => { e.preventDefault(); loginForm.style.display = 'none'; signupForm.style.display = 'block'; });
+    document.getElementById('show-login').addEventListener('click', (e) => { e.preventDefault(); signupForm.style.display = 'none'; loginForm.style.display = 'block'; });
+
+    document.getElementById('signup-btn').addEventListener('click', () => signUp(document.getElementById('signup-nickname').value, document.getElementById('signup-password').value));
+    document.getElementById('login-btn').addEventListener('click', () => logIn(document.getElementById('login-nickname').value, document.getElementById('login-password').value));
+    document.getElementById('logout-button').addEventListener('click', logOut);
 }
 
 /**
@@ -119,6 +235,12 @@ async function changeLanguage(lang) {
     document.querySelectorAll('[data-i18n-key]').forEach(el => {
       const key = el.dataset.i18nKey;
       if (currentStrings[key]) { el.textContent = currentStrings[key]; }
+    });
+
+    // placeholder 텍스트 업데이트 로직 추가
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.dataset.i18nPlaceholder;
+      if (currentStrings[key]) { el.placeholder = currentStrings[key]; }
     });
 
     // [수정] 링크를 찾는 선택자를 더 명확하게 변경
@@ -306,13 +428,27 @@ function setupPopupOverlay() {
     });
 }
 
-function endGame(message) {
+async function endGame(message) {
     gameOver = true;
     const gameOverMessage = document.getElementById('game-over-message');
     gameOverMessage.textContent = message;
     gameOverMessage.classList.remove('hidden');
     gameOverMessage.classList.add('visible');
     logReason("시스템", message);
+
+    const isUserWin = message === getString('system_user_win');
+
+    if (currentUser && userData) { // 로그인 상태
+        if (isUserWin) userData.stats.wins++;
+        else userData.stats.losses++;
+        const userRef = doc(db, "users", currentUser.uid);
+        await updateDoc(userRef, { stats: userData.stats });
+    } else { // 게스트 상태
+        if (isUserWin) guestData.stats.wins++;
+        else guestData.stats.losses++;
+        saveGuestData();
+        alert(getString('guest_save_notice'));
+    }
 }
 
 // --- AI 로직 ---

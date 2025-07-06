@@ -43,10 +43,18 @@
     </div>
 
     <div class="top-right-controls">
+        <div id="user-display" style="display: none;">
+            <span id="nickname-display"></span>
+            <button id="logout-button" data-i18n-key="logout_btn">로그아웃</button>
+        </div>
+        <div id="guest-display">
+            <button id="open-login-modal-btn" data-i18n-key="login_signup_btn">로그인/회원가입</button>
+        </div>
+        
         <button id="new-game-button" data-i18n-key="new_game_btn">새 게임</button>
         <button id="update-button" data-i18n-key="update_history_btn">업데이트 내역</button>
         <div class="language-switcher">
-            <button id="language-button" data-i18n-key="language_btn">language</button>
+            <button id="language-button" data-i18n-key="language_btn">언어</button>
             <div id="language-dropdown" class="dropdown-content">
                 <a href="#" data-lang="ko">한국어</a>
                 <a href="#" data-lang="en">English</a>
@@ -121,8 +129,27 @@
         <a href="pages/privacy_ko.html" data-i18n-key="privacy_policy">개인정보 처리방침</a>
     </footer>
 
+    <div id="auth-modal" class="popup" style="display: none; width: 350px;">
+        <div id="login-form">
+            <h2 data-i18n-key="login_title">로그인</h2>
+            <input type="text" id="login-nickname" data-i18n-placeholder="nickname_placeholder">
+            <input type="password" id="login-password" data-i18n-placeholder="password_placeholder">
+            <button id="login-btn" data-i18n-key="login_btn">로그인</button>
+            <p><span data-i18n-key="no_account_q">계정이 없으신가요?</span> <a href="#" id="show-signup" data-i18n-key="signup_title">회원가입</a></p>
+        </div>
+        <div id="signup-form" style="display: none;">
+            <h2 data-i18n-key="signup_title">회원가입</h2>
+            <p style="font-size: 12px; color: red;" data-i18n-key="password_recovery_notice">※ 비밀번호는 복구가 불가능하니 꼭 기억해주세요!</p>
+            <input type="text" id="signup-nickname" data-i18n-placeholder="nickname_placeholder">
+            <input type="password" id="signup-password" data-i18n-placeholder="password_placeholder">
+            <button id="signup-btn" data-i18n-key="signup_btn">회원가입</button>
+            <p><span data-i18n-key="have_account_q">이미 계정이 있으신가요?</span> <a href="#" id="show-login" data-i18n-key="login_title">로그인</a></p>
+        </div>
+        <button class="popup-close-button" data-i18n-key="close_btn">닫기</button>
+    </div>
 
 
-    <script src="js/script.js"></script>
+
+    <script type="module" src="js/script.js"></script>
 </body>
 </html>
