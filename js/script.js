@@ -5,7 +5,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, deleteUser } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Firebase 설정 객체 asdf
+// Firebase 설정 객체
 const firebaseConfig = {
   apiKey: "AIzaSyCFAlNRMCbexE3GT2SWb8_0JhVTqNB3cc8",
   authDomain: "omokgame-ac6f9.firebaseapp.com",
