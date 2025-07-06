@@ -15,7 +15,7 @@ const firebaseConfig = {
   appId: "1:290956016935:web:74872c9c005e976834fd02",
   measurementId: "G-9CEL2CNWD8"
 };
-// Firebase 앱 초기화
+// Firebase 앱 초기화 ㅁㄴㅇㄹ
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
