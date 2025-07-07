@@ -2,7 +2,7 @@
 // --- 모듈 import ---
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { auth, logIn, logOut, signUp, getUserData } from './firebase.js';
-import { createBoardUI, setStrings, updateAuthUI, updateProfilePopup, setupUpdateHistory } from './ui.js';
+import { createBoardUI, setStrings, updateAuthUI, updateProfilePopup } from './ui.js';
 import { resetGame, setupBoardClickListener, initGameState } from './game.js';
 
 // --- 애플리케이션 상태 관리 (main.js가 중앙에서 관리) ---
