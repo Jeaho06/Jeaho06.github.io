@@ -2,7 +2,7 @@
 // --- 모듈 import ---
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { auth, logIn, logOut, signUp, getUserData } from './firebase.js';
-import { createBoardUI, setStrings, updateAuthUI, updateProfilePopup } from './ui.js';
+import { createBoardUI, setStrings, updateAuthUI, updateProfilePopup, setupUpdateHistory } from './ui.js';
 import { resetGame, setupBoardClickListener, initGameState } from './game.js';
 
 // --- 애플리케이션 상태 관리 (main.js가 중앙에서 관리) ---
@@ -33,6 +33,14 @@ async function loadLanguage(lang) {
 // --- 이벤트 리스너 설정 함수 ---
 // js/main.js 파일의 setupEventListeners 함수를 아래 코드로 교체하세요.
 
+// js/main.js 파일의 setupEventListeners 함수를 아래 코드로 교체하세요.
+
+// ui.js에서 setupUpdateHistory 함수를 import 해야 합니다.
+import { createBoardUI, setStrings, updateAuthUI, updateProfilePopup, setupUpdateHistory } from './ui.js';
+// (다른 import들도 여기에 있어야 합니다)
+
+// ...
+
 function setupEventListeners() {
     // 새 게임 버튼
     document.getElementById('new-game-button').addEventListener('click', resetGame);
@@ -56,21 +64,19 @@ function setupEventListeners() {
         overlay.style.display = 'block';
     };
 
-    // 개별 팝업 버튼
-    document.getElementById('open-login-modal-btn').addEventListener('click', () => showPopup('auth-modal'));
-    
-    // [수정] 업데이트 버튼 클릭 시 내용 렌더링 함수를 호출하도록 변경
+    // --- [수정] '업데이트 내역' 버튼 로직 ---
     document.getElementById('update-button').addEventListener('click', () => {
-        setupUpdateHistory(); // 내용을 채우는 함수 호출
-        showPopup('update-popup'); // 팝업 보이기
+        setupUpdateHistory();      // ui.js의 함수를 호출하여 내용을 준비시킴
+        showPopup('update-popup'); // 팝업을 화면에 표시
     });
-
+    
+    // --- 나머지 버튼 로직 (수정 없음) ---
+    document.getElementById('open-login-modal-btn').addEventListener('click', () => showPopup('auth-modal'));
     document.getElementById('profile-button').addEventListener('click', () => {
         updateProfilePopup(currentUser ? userData : guestData);
         showPopup('profile-popup');
     });
-
-    // 인증 폼
+    
     document.getElementById('show-signup').addEventListener('click', e => { e.preventDefault(); document.getElementById('login-form').style.display = 'none'; document.getElementById('signup-form').style.display = 'block'; });
     document.getElementById('show-login').addEventListener('click', e => { e.preventDefault(); document.getElementById('signup-form').style.display = 'none'; document.getElementById('login-form').style.display = 'block'; });
     document.getElementById('signup-btn').addEventListener('click', async () => {
@@ -84,7 +90,6 @@ function setupEventListeners() {
     });
     document.getElementById('logout-button').addEventListener('click', () => { logOut(); alert("로그아웃 되었습니다."); });
     
-    // 언어 변경
     const langButton = document.getElementById('language-button');
     const langDropdown = document.getElementById('language-dropdown');
     langButton.addEventListener('click', e => { e.stopPropagation(); langDropdown.classList.toggle('show-dropdown'); });
@@ -96,7 +101,6 @@ function setupEventListeners() {
         }
     });
     
-    // 피드백 위젯
     document.getElementById('feedback-toggle-btn').addEventListener('click', () => {
         document.getElementById('feedback-widget').classList.toggle('open');
     });

@@ -150,3 +150,51 @@ export function setupUpdateHistory() {
         }
     };
 }
+
+// js/ui.js 파일의 맨 아래에 이 함수 전체를 추가하세요.
+
+export function setupUpdateHistory() {
+    const versionContainer = document.getElementById('version-details-container');
+    const prevBtn = document.getElementById('prev-version-btn');
+    const nextBtn = document.getElementById('next-version-btn');
+    let currentVersionIndex = 0;
+    let versionLogsElements = [];
+
+    // 버전별 내용을 보여주는 내부 함수
+    const showVersion = (index) => {
+        if (!versionLogsElements.length) return;
+        currentVersionIndex = index;
+        versionLogsElements.forEach((log, i) => {
+            log.style.display = (i === index) ? 'block' : 'none';
+        });
+        // 버튼 활성화/비활성화
+        nextBtn.classList.toggle('disabled', index === 0);
+        prevBtn.classList.toggle('disabled', index === versionLogs.length - 1);
+    };
+
+    // 언어 파일(currentStrings)을 기반으로 HTML 내용을 생성
+    versionContainer.innerHTML = '';
+    const logs = currentStrings.update_logs || [];
+    logs.forEach(log => {
+        const logDiv = document.createElement('div');
+        logDiv.classList.add('version-log');
+        const notesHtml = log.notes.map(note => `<li>${note}</li>`).join('');
+        logDiv.innerHTML = `<p><strong>Version ${log.version}</strong> (${log.date})</p><ul>${notesHtml}</ul>`;
+        versionContainer.appendChild(logDiv);
+    });
+    
+    versionLogsElements = versionContainer.querySelectorAll('.version-log');
+    showVersion(0);
+
+    // 이전/다음 버튼 리스너 설정 (중복을 피하기 위해 .onclick 사용)
+    prevBtn.onclick = () => {
+        if (currentVersionIndex < versionLogsElements.length - 1) {
+            showVersion(currentVersionIndex + 1);
+        }
+    };
+    nextBtn.onclick = () => {
+        if (currentVersionIndex > 0) {
+            showVersion(currentVersionIndex - 1);
+        }
+    };
+}

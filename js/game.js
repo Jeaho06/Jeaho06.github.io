@@ -148,21 +148,49 @@ function aiMove() {
   }
   performNormalMove();
 }
+// js/game.js 파일의 performNormalMove 함수를 아래 코드로 교체하세요.
+
 function performNormalMove() {
     const move = findBestMove();
     if (move && board[move.row][move.col] === 0) {
+        // [수정] 점수 계산 및 이유 생성 로직 전체 복구
+        const myContext = calculateScore(move.col, move.row, -1);
+        const opponentContext = calculateScore(move.col, move.row, 1);
+        let reasonKey = 'reason_default';
+
+        if (myContext.highestPattern >= 1000000) reasonKey = 'reason_win';
+        else if (opponentContext.highestPattern >= 1000000) reasonKey = 'reason_block_win';
+        else if (myContext.highestPattern >= 100000) reasonKey = 'reason_attack_4';
+        else if (opponentContext.highestPattern >= 100000) reasonKey = 'reason_block_4';
+        else if (opponentContext.highestPattern >= 5000) reasonKey = 'reason_block_3';
+        else if (myContext.highestPattern >= 5000) reasonKey = 'reason_attack_3';
+        
+        const reason = getString(reasonKey);
         const aiCoord = convertCoord(move.col, move.row);
+
+        // --- 이하 로직은 동일 ---
         board[move.row][move.col] = -1;
         placeStone(move.col, move.row, 'white');
         playSound("Movement.mp3");
-        moveCount++;
-        logMove(moveCount, `${getString('ai_title')}: ${aiCoord}`);
-        logReason(getString('ai_title'), `AI가 ${aiCoord}에 돌을 놓았습니다.`);
-        isFirstMove = false; lastMove = { col: move.col, row: move.row };
-        if (checkWin(board, -1)) { endGame(getString('system_ai_win')); }
-        else if (checkDraw()) { endGame(getString('system_draw')); }
-        else { isAITurn = false; }
-    } else { isAITurn = false; }
+        logMove(++moveCount, `${getString('ai_title')}: ${aiCoord}`);
+        
+        // [수정] 구체적인 이유를 로그에 기록하도록 복구
+        logReason(getString('ai_title'), getString('ai_reason_template', { reason: reason, coord: aiCoord }));
+        
+        isFirstMove = false; 
+        lastMove = { col: move.col, row: move.row };
+        
+        if (checkWin(board, -1)) { 
+            endGame(getString('system_ai_win')); 
+        } else if (checkDraw()) { 
+            endGame(getString('system_draw')); 
+        } else { 
+            isAITurn = false; 
+        }
+    } else {
+        logReason(getString('ai_title'), getString('system_no_move'));
+        isAITurn = false;
+    }
 }
 
 function detonateBomb() {
