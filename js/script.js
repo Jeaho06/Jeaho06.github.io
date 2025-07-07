@@ -15,7 +15,8 @@ const firebaseConfig = {
   messagingSenderId: "MESSAGING_SENDER_ID",
   appId: "APP_ID",
   measurementId: "MEASUREMENT_ID"
-};ㄴ
+};
+
 // Firebase 앱 초기화
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
