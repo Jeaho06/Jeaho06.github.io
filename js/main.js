@@ -1,0 +1,116 @@
+// js/main.js
+import { auth, logIn, logOut, signUp, getUserData } from './firebase.js';
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { createBoardUI, setStrings, updateAuthUI, updateProfilePopup } from './ui.js';
+import { resetGame, handleBoardClick } from './game.js';
+
+// 애플리케이션 상태 관리
+let currentUser = null;
+let userData = null;
+let guestData = { nickname: "Guest", stats: { wins: 0, losses: 0, draws: 0 } };
+
+async function loadLanguage(lang) {
+    try {
+        const response = await fetch(`./lang/${lang}.json`);
+        const strings = await response.json();
+        setStrings(strings);
+        document.documentElement.lang = lang;
+        localStorage.setItem('omokLanguage', lang);
+        document.querySelectorAll('[data-i18n-key]').forEach(el => {
+            const key = el.dataset.i18nKey;
+            if (strings[key]) el.textContent = strings[key];
+        });
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            const key = el.dataset.i18nPlaceholder;
+            if (strings[key]) el.placeholder = strings[key];
+        });
+    } catch (error) {
+        console.error("Language Error:", error);
+    }
+}
+
+function setupEventListeners() {
+    // 새 게임 버튼
+    document.getElementById('new-game-button').addEventListener('click', () => {
+        resetGame();
+        createBoardUI();
+    });
+    
+    // 보드 클릭
+    document.getElementById('game-board').addEventListener('click', (event) => {
+        handleBoardClick(event, { currentUser, userData, guestData });
+    });
+
+    // 팝업 관련
+    const overlay = document.getElementById('popup-overlay');
+    const popups = document.querySelectorAll('.popup');
+    const closeButtons = document.querySelectorAll('.popup-close-button');
+    const closeAllPopups = () => {
+        popups.forEach(p => p.style.display = 'none');
+        overlay.style.display = 'none';
+    };
+    overlay.addEventListener('click', closeAllPopups);
+    closeButtons.forEach(btn => btn.addEventListener('click', closeAllPopups));
+    
+    const showPopup = (id) => {
+        document.getElementById(id).style.display = 'block';
+        overlay.style.display = 'block';
+    };
+
+    document.getElementById('open-login-modal-btn').addEventListener('click', () => showPopup('auth-modal'));
+    document.getElementById('update-button').addEventListener('click', () => showPopup('update-popup'));
+    document.getElementById('profile-button').addEventListener('click', () => {
+        updateProfilePopup(currentUser ? userData : guestData);
+        showPopup('profile-popup');
+    });
+
+    // 인증 폼
+    document.getElementById('show-signup').addEventListener('click', e => { e.preventDefault(); document.getElementById('login-form').style.display = 'none'; document.getElementById('signup-form').style.display = 'block'; });
+    document.getElementById('show-login').addEventListener('click', e => { e.preventDefault(); document.getElementById('signup-form').style.display = 'none'; document.getElementById('login-form').style.display = 'block'; });
+    document.getElementById('signup-btn').addEventListener('click', async () => {
+        const result = await signUp(document.getElementById('signup-nickname').value, document.getElementById('signup-password').value);
+        alert(result.message);
+        if (result.success) closeAllPopups();
+    });
+    document.getElementById('login-btn').addEventListener('click', async () => {
+        const result = await logIn(document.getElementById('login-nickname').value, document.getElementById('login-password').value);
+        if (result.success) closeAllPopups();
+        else alert(result.message);
+    });
+    document.getElementById('logout-button').addEventListener('click', logOut);
+
+    // 언어 변경
+    const langButton = document.getElementById('language-button');
+    const langDropdown = document.getElementById('language-dropdown');
+    langButton.addEventListener('click', e => { e.stopPropagation(); langDropdown.classList.toggle('show-dropdown'); });
+    document.addEventListener('click', e => { if (!langButton.contains(e.target)) langDropdown.classList.remove('show-dropdown'); });
+    langDropdown.addEventListener('click', async e => {
+        if (e.target.tagName === 'A') {
+            e.preventDefault();
+            await loadLanguage(e.target.dataset.lang);
+        }
+    });
+}
+
+// --- 프로그램 시작 ---
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadLanguage(localStorage.getItem('omokLanguage') || 'ko');
+    
+    onAuthStateChanged(auth, async (user) => {
+        if(user){
+            currentUser = user;
+            userData = await getUserData(user.uid);
+            updateAuthUI(userData);
+        } else {
+            currentUser = null;
+            userData = null;
+            const savedGuest = localStorage.getItem('omok_guestData');
+            guestData = savedGuest ? JSON.parse(savedGuest) : { nickname: "Guest", stats: { wins: 0, losses: 0, draws: 0 } };
+            updateAuthUI(null);
+        }
+    });
+
+    resetGame();
+    createBoardUI();
+    setupEventListeners();
+});

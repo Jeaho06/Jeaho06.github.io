@@ -69,6 +69,8 @@
   "achievements_empty": "No achievements yet.",
   "profile_title_user": "{nickname}'s Profile",
   "profile_title_guest": "Guest Profile",
+  "stats_draws": "Draws",
+  "system_draw": "Draw",
   "update_logs": [
     { "version": "1.3", "date": "2025-06-29", "notes": ["Improved AI reasoning and explanation logic"] },
     { "version": "1.2", "date": "2025-06-30", "notes": ["Added new cheat 'Destiny's Denial'", "Introduced multi-language support"] },

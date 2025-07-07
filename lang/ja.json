@@ -69,6 +69,8 @@
   "profile_title_user": "{nickname}さんのプロフィール",
   "profile_title_guest": "ゲストプロフィール",
   "guest_save_notice": "ゲスト状態では、ゲーム記録はこのブラウザに一時的に保存されます。記録を保存するには会員登録をしてください。",
+  "stats_draws": "引き分け",
+  "system_draw": "引き分け",
   "update_logs": [
     { "version": "1.3", "date": "2025-06-29", "notes": ["AIの理由説明ロジックを改善"] },
     { "version": "1.2", "date": "2025-06-30", "notes": ["新規反則「運命の拒否」追加", "多言語サポートシステムの導入"] },
