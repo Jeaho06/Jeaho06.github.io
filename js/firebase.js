@@ -7,13 +7,13 @@ import { getFirestore, doc, setDoc, getDoc, updateDoc } from "https://www.gstati
 
 // [중요] YOUR... 부분들을 실제 본인의 Firebase 프로젝트 값으로 반드시 교체해야 합니다.
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID",
-  measurementId: "YOUR_MEASUREMENT_ID"
+  apiKey: "API_KEY",
+  authDomain: "AUTH_DOMAIN",
+  projectId: "PROJECT_ID",
+  storageBucket: "STORAGE_BUCKET",
+  messagingSenderId: "MESSAGING_SENDER_ID",
+  appId: "APP_ID",
+  measurementId: "MEASUREMENT_ID"
 };
 
 // 다른 파일에서 사용할 수 있도록 export 합니다.
