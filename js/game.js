@@ -1,8 +1,8 @@
 // js/game.js
-// --- 'ui.js'와 'firebase.js'에서 필요한 함수들을 import ---
+
+// --- 필요한 함수들을 다른 모듈에서 import ---
 import { createBoardUI, placeStone, removeStone, logMove, logReason, showEndGameMessage, getString } from './ui.js';
 import { db, updateUserStats } from './firebase.js';
-import { doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // --- 원본 script.js의 전역 변수들을 모듈의 최상위 스코프로 이동 ---
 let board;
@@ -19,11 +19,16 @@ const gridSize = 30;
 // main.js에서 현재 유저 상태를 받아오기 위한 변수
 let currentUser, userData, guestData;
 
+/**
+ * main.js가 유저의 로그인 상태를 game.js에 알려주기 위한 함수
+ */
 export function initGameState(user, uData, gData) {
     currentUser = user;
     userData = uData;
     guestData = gData;
 }
+
+// --- 이하 원본 script.js의 모든 게임 관련 함수 (버그 수정 포함) ---
 
 export function resetGame() {
     board = Array(19).fill(null).map(() => Array(19).fill(0));
@@ -41,55 +46,53 @@ export function resetGame() {
 
 export function setupBoardClickListener() {
   const boardElement = document.getElementById("game-board");
-  // 이벤트 리스너 중복 등록 방지를 위한 안전 장치
+  // 이벤트 리스너 중복 방지를 위한 안전 장치
   const newBoardElement = boardElement.cloneNode(true);
   boardElement.parentNode.replaceChild(newBoardElement, boardElement);
 
   newBoardElement.addEventListener('click', (event) => {
     if (isAITurn || gameOver) return;
     const rect = newBoardElement.getBoundingClientRect();
-    const closestX = Math.round((event.clientX - rect.left - gridSize / 2) / gridSize);
-    const closestY = Math.round((event.clientY - rect.top - gridSize / 2) / gridSize);
+    const col = Math.round((event.clientX - rect.left - gridSize / 2) / gridSize);
+    const row = Math.round((event.clientY - rect.top - gridSize / 2) / gridSize);
 
-    if (closestX < 0 || closestX >= 19 || closestY < 0 || closestY >= 19) return;
+    if (col < 0 || col >= 19 || row < 0 || row >= 19) return;
     
-    if (bombState.isArmed && bombState.col === closestX && bombState.row === closestY) {
+    if (bombState.isArmed && bombState.col === col && bombState.row === row) {
         detonateBomb();
         return;
     }
-
-    if (board[closestY][closestX] === 3) {
-      logReason(getString('user_title'), getString('system_denied_spot')); return;
+    
+    // [수정] 중복 착수 버그 해결
+    if (board[row][col] !== 0) {
+        logReason(getString('user_title'), `[${convertCoord(col, row)}] ${getString('system_already_placed')}`);
+        return; 
     }
     
-    board[closestY][closestX] = 1;
+    // 거부권 로직
+    board[row][col] = 1;
     const isWinningMove = checkWin(board, 1);
-    board[closestY][closestX] = 0;
+    board[row][col] = 0;
     
     if (isWinningMove && !isDestinyDenialUsed && document.getElementById('toggle-destiny-denial').checked) {
-        isDestinyDenialUsed = true; board[closestY][closestX] = 3; 
+        isDestinyDenialUsed = true; board[row][col] = 3; 
         const deniedSpot = document.createElement("div"); deniedSpot.className = "denied-spot";
-        deniedSpot.style.left = `${closestX * gridSize + gridSize / 2}px`; deniedSpot.style.top = `${closestY * gridSize + gridSize / 2}px`;
+        deniedSpot.style.left = `${col * gridSize + gridSize / 2}px`; deniedSpot.style.top = `${row * gridSize + gridSize / 2}px`;
         newBoardElement.appendChild(deniedSpot);
-        const deniedCoord = convertCoord(closestX, closestY);
+        const deniedCoord = convertCoord(col, row);
         logMove(++moveCount, `${getString('ai_title')}: ${getString('cheat_veto')}!!`);
         logReason(getString('ai_title'), getString('ai_veto_reason', {coord: deniedCoord}));
         return; 
     }
     
-    if (board[closestY][closestX] !== 0) {
-        logReason(getString('user_title'), `[${convertCoord(closestX, closestY)}] ${getString('system_already_placed')}`);
-        return;
-    }
-
-    if (isForbiddenMove(closestX, closestY, 1)) { logReason(getString('user_title'), getString('system_forbidden')); return; }
+    if (isForbiddenMove(col, row, 1)) { logReason(getString('user_title'), getString('system_forbidden')); return; }
     
-    board[closestY][closestX] = 1; 
-    placeStone(closestX, closestY, 'black'); 
+    board[row][col] = 1; 
+    placeStone(col, row, 'black'); 
     playSound("Movement.mp3");
-    logMove(++moveCount, `${getString('user_title')}: ${convertCoord(closestX, closestY)}??`);
+    logMove(++moveCount, `${getString('user_title')}: ${convertCoord(col, row)}??`);
     isFirstMove = false; 
-    lastMove = { col: closestX, row: closestY };
+    lastMove = { col, row };
     
     if (checkWin(board, 1)) { endGame(getString('system_user_win')); return; }
     if (checkDraw()) { endGame(getString('system_draw')); return; }
@@ -122,7 +125,6 @@ async function endGame(message) {
 
 function aiMove() {
   if (gameOver) return;
-
   const willCheat = Math.random() < cheatProbability && !isFirstMove && lastMove;
   if (willCheat) {
     const availableCheats = [];
@@ -141,31 +143,18 @@ function aiMove() {
 function performNormalMove() {
     const move = findBestMove();
     if (move && board[move.row][move.col] === 0) {
-        const myContext = calculateScore(move.col, move.row, -1);
-        const opponentContext = calculateScore(move.col, move.row, 1);
-        let reasonKey = 'reason_default';
-        if (myContext.highestPattern >= 1000000) reasonKey = 'reason_win';
-        else if (opponentContext.highestPattern >= 1000000) reasonKey = 'reason_block_win';
-        else if (myContext.highestPattern >= 100000) reasonKey = 'reason_attack_4';
-        else if (opponentContext.highestPattern >= 100000) reasonKey = 'reason_block_4';
-        else if (opponentContext.highestPattern >= 5000) reasonKey = 'reason_block_3';
-        else if (myContext.highestPattern >= 5000) reasonKey = 'reason_attack_3';
-        const reason = getString(reasonKey);
         const aiCoord = convertCoord(move.col, move.row);
         board[move.row][move.col] = -1;
         placeStone(move.col, move.row, 'white');
         playSound("Movement.mp3");
-        logMove(++moveCount, `${getString('ai_title')}: ${aiCoord}`);
-        logReason(getString('ai_title'), getString('ai_reason_template', { reason: reason, coord: aiCoord }));
+        moveCount++;
+        logMove(moveCount, `${getString('ai_title')}: ${aiCoord}`);
+        logReason(getString('ai_title'), `AI가 ${aiCoord}에 돌을 놓았습니다.`);
         isFirstMove = false; lastMove = { col: move.col, row: move.row };
-        
         if (checkWin(board, -1)) { endGame(getString('system_ai_win')); }
         else if (checkDraw()) { endGame(getString('system_draw')); }
         else { isAITurn = false; }
-    } else {
-        logReason(getString('ai_title'), getString('system_no_move'));
-        isAITurn = false;
-    }
+    } else { isAITurn = false; }
 }
 
 function detonateBomb() {
@@ -180,7 +169,6 @@ function detonateBomb() {
     bombEffect.style.left = `${center.col * gridSize + gridSize / 2}px`;
     bombEffect.style.top = `${center.row * gridSize + gridSize / 2}px`;
     boardElement.appendChild(bombEffect);
-
     setTimeout(() => {
         for (let r = center.row - 1; r <= center.row + 1; r++) {
             for (let c = center.col - 1; c <= center.col + 1; c++) {
@@ -192,13 +180,9 @@ function detonateBomb() {
         }
         bombEffect.remove();
         bombState = { isArmed: false, col: null, row: null };
-        if (checkWin(board, 1)) {
-            endGame(getString('system_user_win'));
-        } else if (checkWin(board, -1)) {
-            endGame(getString('system_ai_win'));
-        } else {
-            isAITurn = false;
-        }
+        if (checkWin(board, 1)) { endGame(getString('system_user_win')); } 
+        else if (checkWin(board, -1)) { endGame(getString('system_ai_win')); }
+        else { isAITurn = false; }
     }, 500);
 }
 
@@ -215,7 +199,6 @@ function placeBomb() {
         isAITurn = false;
         return true;
     }
-    logReason(getString('ai_title'), getString('system_bomb_fail'));
     return false;
 }
 
@@ -246,11 +229,8 @@ function performStoneSwap() {
             board[aiStoneToSwap.row][aiStoneToSwap.col] = 1;
             placeStone(aiStoneToSwap.col, aiStoneToSwap.row, 'black');
             playSound("Movement.mp3");
-            if (checkWin(board, -1)) {
-                endGame(getString('system_ai_win'));
-            } else {
-                isAITurn = false;
-            }
+            if (checkWin(board, -1)) { endGame(getString('system_ai_win')); }
+            else { isAITurn = false; }
         }, 500);
         return true;
     }
@@ -258,28 +238,18 @@ function performStoneSwap() {
 }
 
 function findBestBombLocation() {
-    let bestLocation = null;
-    let maxScore = -Infinity;
+    let bestLocation = null; let maxScore = -Infinity;
     for (let r = 0; r < 19; r++) {
         for (let c = 0; c < 19; c++) {
             if (board[r][c] === 0) {
                 let currentScore = 0;
-                for (let y = r - 1; y <= r + 1; y++) {
-                    for (let x = c - 1; x <= c + 1; x++) {
-                        if (y >= 0 && y < 19 && x >= 0 && x < 19) {
-                            if (board[y][x] === 1) {
-                                currentScore += 3;
-                                if (isCriticalStone(x, y, 1)) currentScore += 5;
-                            } else if (board[y][x] === -1) {
-                                currentScore -= 1;
-                            }
-                        }
+                for (let y = r - 1; y <= r + 1; y++) for (let x = c - 1; x <= c + 1; x++) {
+                    if (y >= 0 && y < 19 && x >= 0 && x < 19) {
+                        if (board[y][x] === 1) { currentScore += 3; if (isCriticalStone(x, y, 1)) currentScore += 5; }
+                        else if (board[y][x] === -1) currentScore -= 1;
                     }
                 }
-                if (currentScore > maxScore) {
-                    maxScore = currentScore;
-                    bestLocation = { col: c, row: r };
-                }
+                if (currentScore > maxScore) { maxScore = currentScore; bestLocation = { col: c, row: r }; }
             }
         }
     }
@@ -288,17 +258,14 @@ function findBestBombLocation() {
 
 function findBestSwapTarget() {
     let bestSwap = { stoneToSwap: null, netAdvantage: -Infinity };
-    for (let r = 0; r < 19; r++) {
-        for (let c = 0; c < 19; c++) {
-            if (board[r][c] === -1) {
-                const aiStone = { col: c, row: r };
-                const aiGain = calculateScore(lastMove.col, lastMove.row, -1).totalScore;
-                const userGain = calculateScore(aiStone.col, aiStone.row, 1).totalScore;
-                const netAdvantage = aiGain - userGain;
-                if (netAdvantage > bestSwap.netAdvantage) {
-                    bestSwap = { stoneToSwap: aiStone, netAdvantage };
-                }
-            }
+    if (!lastMove) return null;
+    for (let r = 0; r < 19; r++) for (let c = 0; c < 19; c++) {
+        if (board[r][c] === -1) {
+            const aiStone = { col: c, row: r };
+            const aiGain = calculateScore(lastMove.col, lastMove.row, -1).totalScore;
+            const userGain = calculateScore(aiStone.col, aiStone.row, 1).totalScore;
+            const netAdvantage = aiGain - userGain;
+            if (netAdvantage > bestSwap.netAdvantage) bestSwap = { stoneToSwap: aiStone, netAdvantage };
         }
     }
     return bestSwap.stoneToSwap;
@@ -308,16 +275,8 @@ function isCriticalStone(x, y, player) {
     const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
     for (const [dx, dy] of directions) {
         let count = 1;
-        for (let i = 1; i < 4; i++) {
-            const nx = x + i * dx, ny = y + i * dy;
-            if (nx < 0 || nx >= 19 || ny < 0 || ny >= 19 || board[ny][nx] !== player) break;
-            count++;
-        }
-        for (let i = 1; i < 4; i++) {
-            const nx = x - i * dx, ny = y - i * dy;
-            if (nx < 0 || nx >= 19 || ny < 0 || ny >= 19 || board[ny][nx] !== player) break;
-            count++;
-        }
+        for(let i=1; i<4; i++){ const nx = x + i * dx, ny = y + i * dy; if(nx<0||nx>=19||ny<0||ny>=19||board[ny][nx] !== player) break; count++;}
+        for(let i=1; i<4; i++){ const nx = x - i * dx, ny = y - i * dy; if(nx<0||nx>=19||ny<0||ny>=19||board[ny][nx] !== player) break; count++;}
         if (count >= 3) return true;
     }
     return false;
@@ -341,15 +300,13 @@ function getRelevantMoves() {
     const relevantMoves = new Set();
     if (isFirstMove || !lastMove) return [{ col: 9, row: 9 }];
     const range = 2;
-    for (let r = 0; r < 19; r++) {
-        for (let c = 0; c < 19; c++) {
-            if (board[r][c] !== 0) {
-                for (let i = -range; i <= range; i++) {
-                    for (let j = -range; j <= range; j++) {
-                        const nr = r + i, nc = c + j;
-                        if (nr >= 0 && nr < 19 && nc >= 0 && nc < 19 && board[nr][nc] === 0) {
-                            relevantMoves.add(`${nr},${nc}`);
-                        }
+    for (let r = 0; r < 19; r++) for (let c = 0; c < 19; c++) {
+        if (board[r][c] !== 0) {
+            for (let i = -range; i <= range; i++) {
+                for (let j = -range; j <= range; j++) {
+                    const nr = r + i, nc = c + j;
+                    if (nr >= 0 && nr < 19 && nc >= 0 && nc < 19 && board[nr][nc] === 0) {
+                        relevantMoves.add(`${nr},${nc}`);
                     }
                 }
             }
