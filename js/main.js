@@ -31,11 +31,13 @@ async function loadLanguage(lang) {
 }
 
 // --- 이벤트 리스너 설정 함수 ---
+// js/main.js 파일의 setupEventListeners 함수를 아래 코드로 교체하세요.
+
 function setupEventListeners() {
     // 새 게임 버튼
     document.getElementById('new-game-button').addEventListener('click', resetGame);
     
-    // 보드 클릭 리스너는 game.js에서 직접 설정하므로 여기서는 호출만 함
+    // 보드 클릭 리스너
     setupBoardClickListener();
 
     // 팝업 공통 로직
@@ -56,7 +58,13 @@ function setupEventListeners() {
 
     // 개별 팝업 버튼
     document.getElementById('open-login-modal-btn').addEventListener('click', () => showPopup('auth-modal'));
-    document.getElementById('update-button').addEventListener('click', () => showPopup('update-popup'));
+    
+    // [수정] 업데이트 버튼 클릭 시 내용 렌더링 함수를 호출하도록 변경
+    document.getElementById('update-button').addEventListener('click', () => {
+        setupUpdateHistory(); // 내용을 채우는 함수 호출
+        showPopup('update-popup'); // 팝업 보이기
+    });
+
     document.getElementById('profile-button').addEventListener('click', () => {
         updateProfilePopup(currentUser ? userData : guestData);
         showPopup('profile-popup');
@@ -72,12 +80,10 @@ function setupEventListeners() {
     });
     document.getElementById('login-btn').addEventListener('click', async () => {
         const result = await logIn(document.getElementById('login-nickname').value, document.getElementById('login-password').value);
-        if (!result.success) alert(result.message);
-        // 로그인 성공 시 onAuthStateChanged가 처리하므로 여기선 팝업만 닫음
-        else closeAllPopups();
+        if (result.success) closeAllPopups(); else alert(result.message);
     });
-    document.getElementById('logout-button').addEventListener('click', logOut);
-
+    document.getElementById('logout-button').addEventListener('click', () => { logOut(); alert("로그아웃 되었습니다."); });
+    
     // 언어 변경
     const langButton = document.getElementById('language-button');
     const langDropdown = document.getElementById('language-dropdown');

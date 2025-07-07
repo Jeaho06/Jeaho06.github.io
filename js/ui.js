@@ -103,3 +103,50 @@ export function updateProfilePopup(data) {
     winRateEl.textContent = `${winRate}%`;
     titleEl.textContent = data.nickname ? getString('profile_title_user', { nickname: data.nickname }) : getString('profile_title_guest');
 }
+
+// js/ui.js 파일의 맨 아래에 이 함수 전체를 추가하세요.
+
+export function setupUpdateHistory() {
+    const versionContainer = document.getElementById('version-details-container');
+    const prevBtn = document.getElementById('prev-version-btn');
+    const nextBtn = document.getElementById('next-version-btn');
+    let currentVersionIndex = 0;
+    let versionLogs = [];
+
+    const showVersion = (index) => {
+        if (!versionLogs.length) return;
+        currentVersionIndex = index;
+        versionLogs.forEach((log, i) => {
+            log.style.display = (i === index) ? 'block' : 'none';
+        });
+        // 최신 버전일 때 NEXT 비활성화, 가장 오래된 버전일 때 PREV 비활성화
+        nextBtn.classList.toggle('disabled', index === 0);
+        prevBtn.classList.toggle('disabled', index === versionLogs.length - 1);
+    };
+
+    // 내용을 렌더링하는 부분
+    versionContainer.innerHTML = '';
+    const logs = currentStrings.update_logs || [];
+    logs.forEach(log => {
+        const logDiv = document.createElement('div');
+        logDiv.classList.add('version-log');
+        const notesHtml = log.notes.map(note => `<li>${note}</li>`).join('');
+        logDiv.innerHTML = `<p><strong>Version ${log.version}</strong> (${log.date})</p><ul>${notesHtml}</ul>`;
+        versionContainer.appendChild(logDiv);
+    });
+    
+    versionLogs = versionContainer.querySelectorAll('.version-log');
+    showVersion(0);
+
+    // 버튼 이벤트 리스너 설정
+    prevBtn.onclick = () => {
+        if (currentVersionIndex < versionLogs.length - 1) {
+            showVersion(currentVersionIndex + 1);
+        }
+    };
+    nextBtn.onclick = () => {
+        if (currentVersionIndex > 0) {
+            showVersion(currentVersionIndex - 1);
+        }
+    };
+}

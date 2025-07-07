@@ -44,9 +44,10 @@ export function resetGame() {
     createBoardUI();
 }
 
+// js/game.js 파일의 setupBoardClickListener 함수를 아래 코드로 교체하세요.
+
 export function setupBoardClickListener() {
   const boardElement = document.getElementById("game-board");
-  // 이벤트 리스너 중복 방지를 위한 안전 장치
   const newBoardElement = boardElement.cloneNode(true);
   boardElement.parentNode.replaceChild(newBoardElement, boardElement);
 
@@ -58,18 +59,17 @@ export function setupBoardClickListener() {
 
     if (col < 0 || col >= 19 || row < 0 || row >= 19) return;
     
-    if (bombState.isArmed && bombState.col === col && bombState.row === row) {
-        detonateBomb();
-        return;
-    }
-    
-    // [수정] 중복 착수 버그 해결
+    // [수정] 사용자가 폭탄을 클릭하는 로직을 제거합니다.
+    // if (bombState.isArmed && bombState.col === col && bombState.row === row) {
+    //     detonateBomb();
+    //     return;
+    // }
+
     if (board[row][col] !== 0) {
         logReason(getString('user_title'), `[${convertCoord(col, row)}] ${getString('system_already_placed')}`);
         return; 
     }
     
-    // 거부권 로직
     board[row][col] = 1;
     const isWinningMove = checkWin(board, 1);
     board[row][col] = 0;
@@ -123,8 +123,17 @@ async function endGame(message) {
     }
 }
 
+// js/game.js 파일의 aiMove 함수를 아래 코드로 교체하세요.
+
 function aiMove() {
   if (gameOver) return;
+  
+  // [수정] AI 턴이 시작될 때 폭탄이 설치되어 있으면 즉시 기폭시키는 로직을 복구합니다.
+  if (bombState.isArmed) {
+    detonateBomb();
+    return;
+  }
+
   const willCheat = Math.random() < cheatProbability && !isFirstMove && lastMove;
   if (willCheat) {
     const availableCheats = [];
@@ -139,7 +148,6 @@ function aiMove() {
   }
   performNormalMove();
 }
-
 function performNormalMove() {
     const move = findBestMove();
     if (move && board[move.row][move.col] === 0) {
