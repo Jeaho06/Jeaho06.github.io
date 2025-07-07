@@ -60,7 +60,15 @@
   "logout_btn": "Logout",
   "logout_success_alert": "You have been logged out.",
   "guest_save_notice": "As a guest, game records are saved temporarily in this browser. To preserve your records, please sign up.",
-
+  "profile_btn": "Profile",
+  "stats_title": "Stats",
+  "achievements_title": "Achievements",
+  "stats_wins": "Wins",
+  "stats_losses": "Losses",
+  "stats_win_rate": "Win Rate",
+  "achievements_empty": "No achievements yet.",
+  "profile_title_user": "{nickname}'s Profile",
+  "profile_title_guest": "Guest Profile",
   "update_logs": [
     { "version": "1.3", "date": "2025-06-29", "notes": ["Improved AI reasoning and explanation logic"] },
     { "version": "1.2", "date": "2025-06-30", "notes": ["Added new cheat 'Destiny's Denial'", "Introduced multi-language support"] },

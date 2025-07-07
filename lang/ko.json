@@ -60,7 +60,15 @@
   "logout_btn": "로그아웃",
   "logout_success_alert": "로그아웃 되었습니다.",
   "guest_save_notice": "게스트 상태에서는 게임 기록이 브라우저에만 임시 저장됩니다. 기록을 보존하려면 회원가입해주세요.",
-
+  "profile_btn": "프로필",
+  "stats_title": "전적",
+  "achievements_title": "업적",
+  "stats_wins": "승리",
+  "stats_losses": "패배",
+  "stats_win_rate": "승률",
+  "achievements_empty": "아직 달성한 업적이 없습니다.",
+  "profile_title_user": "{nickname}님의 프로필",
+  "profile_title_guest": "게스트 프로필",
   "update_logs": [
     {
       "version": "1.3",

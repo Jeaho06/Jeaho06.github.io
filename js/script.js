@@ -208,6 +208,7 @@ function setupEventListeners() {
     setupLanguageSwitcher();
     setupPopupOverlay();
     setupFeedbackWidget();
+    setupProfilePopup();
 }
 
 function setupFeedbackWidget() { // 피드백 위젯을 설정하는 함수
@@ -786,6 +787,81 @@ function playSound(soundFile) {
     const audio = new Audio(`sounds/${soundFile}`);
     audio.play();
 }
+
+// js/script.js
+
+/**
+ * 프로필 팝업의 내용을 업데이트하고 표시하는 함수
+ */
+function setupProfilePopup() {
+    const profileButton = document.getElementById('profile-button');
+    const profilePopup = document.getElementById('profile-popup');
+    const overlay = document.getElementById('popup-overlay');
+
+    if (!profileButton || !profilePopup) return;
+
+    profileButton.addEventListener('click', () => {
+        // 현재 상태의 데이터를 가져옴 (로그인 시 userData, 게스트 시 guestData)
+        const data = currentUser ? userData : guestData;
+        updateProfilePopupContent(data);
+        profilePopup.style.display = 'block';
+        overlay.style.display = 'block';
+    });
+}
+
+/**
+ * 프로필 팝업의 내용을 실제 데이터로 채우는 함수
+ * @param {object} data - 표시할 사용자 또는 게스트 데이터
+ */
+function updateProfilePopupContent(data) {
+    const winsEl = document.getElementById('profile-wins');
+    const lossesEl = document.getElementById('profile-losses');
+    const winRateEl = document.getElementById('profile-win-rate');
+    const titleEl = document.getElementById('profile-popup-title');
+
+    if (!data || !data.stats) {
+        console.error("프로필 데이터를 불러올 수 없습니다.");
+        return;
+    }
+
+    const wins = data.stats.wins || 0;
+    const losses = data.stats.losses || 0;
+    const totalGames = wins + losses;
+    const winRate = totalGames > 0 ? Math.round((wins / totalGames) * 100) : 0;
+
+    winsEl.textContent = wins;
+    lossesEl.textContent = losses;
+    winRateEl.textContent = `${winRate}%`;
+
+    // 팝업 제목 설정
+    if (data.nickname) {
+        titleEl.textContent = getString('profile_title_user', { nickname: data.nickname });
+    } else {
+        titleEl.textContent = getString('profile_title_guest');
+    }
+
+    // TODO: 업적 시스템 구현 시 아래 부분 채우기
+    const achievementsList = document.getElementById('achievements-list');
+    // 예시: achievementsList.innerHTML = '<li>첫 승리!</li>';
+}
+
+
+function setupProfilePopup() {
+    const profileButton = document.getElementById('profile-button');
+    const profilePopup = document.getElementById('profile-popup');
+    const closeButton = profilePopup.querySelector('.popup-close-button');
+
+    profileButton.addEventListener('click', () => {
+        profilePopup.style.display = 'block';
+        document.getElementById('popup-overlay').style.display = 'block';
+    });
+
+    closeButton.addEventListener('click', () => {
+        profilePopup.style.display = 'none';
+        document.getElementById('popup-overlay').style.display = 'none';
+    });
+}
+
 function setupLanguageSwitcher() {
     const langButton = document.getElementById('language-button');
     const langDropdown = document.getElementById('language-dropdown');

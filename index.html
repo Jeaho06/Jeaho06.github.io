@@ -52,6 +52,7 @@
         </div>
         
         <button id="new-game-button" data-i18n-key="new_game_btn">새 게임</button>
+        <button id="profile-button" data-i18n-key="profile_btn">프로필</button>
         <button id="update-button" data-i18n-key="update_history_btn">업데이트 내역</button>
         <div class="language-switcher">
             <button id="language-button" data-i18n-key="language_btn">언어</button>
@@ -76,6 +77,35 @@
         <p style="text-align: center; margin: 20px 0 0; font-size: 14px; color: #555;">JeahoGames</p>
         <button id="popup-close-button" class="popup-close-button" data-i18n-key="close_btn">닫기</button>
     </div>
+
+    <div id="profile-popup" class="popup">
+        <h2 id="profile-popup-title"></h2>
+        <div class="profile-section">
+            <h3 data-i18n-key="stats_title">전적</h3>
+            <div class="stats-grid">
+                <div>
+                    <span data-i18n-key="stats_wins">승리</span>
+                    <p id="profile-wins">0</p>
+                </div>
+                <div>
+                    <span data-i18n-key="stats_losses">패배</span>
+                    <p id="profile-losses">0</p>
+                </div>
+                <div>
+                    <span data-i18n-key="stats_win_rate">승률</span>
+                    <p id="profile-win-rate">0%</p>
+                </div>
+            </div>
+        </div>
+        <div class="profile-section">
+            <h3 data-i18n-key="achievements_title">업적</h3>
+            <div id="achievements-list">
+                <p data-i18n-key="achievements_empty">아직 달성한 업적이 없습니다.</p>
+            </div>
+        </div>
+        <button class="popup-close-button" data-i18n-key="close_btn">닫기</button>
+    </div>
+    <div class="game-container">
 
     <div class="game-container">
         <div class="ai-container">
