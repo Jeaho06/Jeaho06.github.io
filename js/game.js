@@ -407,16 +407,90 @@ function checkWin(board, player) {
     return false;
 }
 
+// js/game.js 파일의 isForbiddenMove 함수를 아래 코드로 교체하세요.
+
 function isForbiddenMove(x, y, player) {
-    if (player !== 1) return false;
-    board[y][x] = player;
-    let openThrees = 0;
-    const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
-    for (const [dx, dy] of directions) {
-        if (calculateScoreForLine(x, y, dx, dy, player) === 5000) openThrees++;
+    // 3-3 금수는 흑에게만 적용됩니다.
+    if (player !== 1) {
+        return false;
     }
+
+    // 해당 위치에 돌을 놓았다고 가정합니다.
+    board[y][x] = player;
+
+    // 이 수로 인해 5목 이상이 만들어지면 금수가 아닙니다 (게임 승리).
+    if (checkWin(board, player)) {
+        board[y][x] = 0; // 보드 원상복구
+        return false;
+    }
+    
+    let openThreeCount = 0;
+    const directions = [[1, 0], [0, 1], [1, 1], [1, -1]]; // 가로, 세로, 대각선2
+
+    // 4방향에 대해 열린 3(Live Three)이 몇 개 만들어지는지 확인합니다.
+    for (const [dx, dy] of directions) {
+        if (checkOpenThree(x, y, dx, dy)) {
+            openThreeCount++;
+        }
+    }
+
+    // 보드를 원래 상태로 되돌립니다.
     board[y][x] = 0;
-    return openThrees >= 2;
+
+    // 열린 3이 2개 이상 만들어지면 3-3 금수입니다.
+    return openThreeCount >= 2;
+}
+
+
+/**
+ * 특정 위치에 돌을 놓았을 때, 특정 방향으로 '열린 3'이 만들어지는지 확인하는 헬퍼 함수
+ * @param {number} x - 현재 돌의 x 좌표
+ * @param {number} y - 현재 돌의 y 좌표
+ * @param {number} dx - 확인할 방향의 x 증분
+ * @param {number} dy - 확인할 방향의 y 증분
+ * @returns {boolean} '열린 3'이 맞으면 true
+ */
+function checkOpenThree(x, y, dx, dy) {
+    const player = board[y][x];
+
+    // 한 방향으로 연속된 아군 돌의 개수 세기
+    let count = 1;
+    let openEnds = 0;
+
+    // 정방향(+) 탐색
+    let i = 1;
+    while (true) {
+        const nx = x + i * dx;
+        const ny = y + i * dy;
+        if (nx < 0 || nx >= 19 || ny < 0 || ny >= 19 || board[ny][nx] !== player) {
+            // 빈 칸이면 열린 것으로 간주
+            if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === 0) {
+                openEnds++;
+            }
+            break;
+        }
+        count++;
+        i++;
+    }
+
+    // 역방향(-) 탐색
+    i = 1;
+    while (true) {
+        const nx = x - i * dx;
+        const ny = y - i * dy;
+        if (nx < 0 || nx >= 19 || ny < 0 || ny >= 19 || board[ny][nx] !== player) {
+            // 빈 칸이면 열린 것으로 간주
+            if (nx >= 0 && nx < 19 && ny >= 0 && ny < 19 && board[ny][nx] === 0) {
+                openEnds++;
+            }
+            break;
+        }
+        count++;
+        i++;
+    }
+    
+    // 정확히 3개의 돌이 있고, 양쪽이 모두 막혀있지 않아야 '열린 3' 입니다.
+    return count === 3 && openEnds === 2;
 }
 
 function convertCoord(col, row) { return String.fromCharCode(65 + col) + (row + 1); }
