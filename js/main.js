@@ -30,14 +30,7 @@ async function loadLanguage(lang) {
     } catch (error) { console.error("Language Error:", error); }
 }
 
-// --- 이벤트 리스너 설정 함수 ---
-// js/main.js 파일의 setupEventListeners 함수를 아래 코드로 교체하세요.
-
-// js/main.js 파일의 setupEventListeners 함수를 아래 코드로 교체하세요.
-
-// ui.js에서 setupUpdateHistory 함수를 import 해야 합니다.
-import { createBoardUI, setStrings, updateAuthUI, updateProfilePopup, setupUpdateHistory } from './ui.js';
-// (다른 import들도 여기에 있어야 합니다)
+// --- 이벤트 리스너 설정 함수 --
 
 // ...
 
