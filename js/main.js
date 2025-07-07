@@ -34,6 +34,8 @@ async function loadLanguage(lang) {
 
 // ...
 
+// js/main.js 파일의 setupEventListeners 함수를 아래 코드로 교체하세요.
+
 function setupEventListeners() {
     // 새 게임 버튼
     document.getElementById('new-game-button').addEventListener('click', resetGame);
@@ -41,7 +43,7 @@ function setupEventListeners() {
     // 보드 클릭 리스너
     setupBoardClickListener();
 
-    // 팝업 공통 로직
+    // --- 팝업 공통 로직 ---
     const overlay = document.getElementById('popup-overlay');
     const popups = document.querySelectorAll('.popup');
     const closeButtons = document.querySelectorAll('.popup-close-button');
@@ -57,19 +59,68 @@ function setupEventListeners() {
         overlay.style.display = 'block';
     };
 
-    // --- [수정] '업데이트 내역' 버튼 로직 ---
-    document.getElementById('update-button').addEventListener('click', () => {
-        setupUpdateHistory();      // ui.js의 함수를 호출하여 내용을 준비시킴
-        showPopup('update-popup'); // 팝업을 화면에 표시
-    });
+    // --- 개별 팝업 버튼 설정 ---
     
-    // --- 나머지 버튼 로직 (수정 없음) ---
+    // 1. 업데이트 내역 팝업
+    const updateButton = document.getElementById('update-button');
+    const versionContainer = document.getElementById('version-details-container');
+    const prevBtn = document.getElementById('prev-version-btn');
+    const nextBtn = document.getElementById('next-version-btn');
+    let currentVersionIndex = 0;
+    
+    // 내용을 그리는 함수
+    const renderUpdateHistory = () => {
+        versionContainer.innerHTML = '';
+        const logs = currentStrings.update_logs || [];
+        logs.forEach(log => {
+            const logDiv = document.createElement('div');
+            logDiv.classList.add('version-log');
+            const notesHtml = log.notes.map(note => `<li>${note}</li>`).join('');
+            logDiv.innerHTML = `<p><strong>Version ${log.version}</strong> (${log.date})</p><ul>${notesHtml}</ul>`;
+            versionContainer.appendChild(logDiv);
+        });
+        showVersion(0);
+    };
+
+    // 특정 버전을 보여주는 함수
+    const showVersion = (index) => {
+        const versionLogs = versionContainer.querySelectorAll('.version-log');
+        if (!versionLogs.length) return;
+        currentVersionIndex = index;
+        versionLogs.forEach((log, i) => {
+            log.style.display = (i === index) ? 'block' : 'none';
+        });
+        nextBtn.classList.toggle('disabled', index === 0);
+        prevBtn.classList.toggle('disabled', index === versionLogs.length - 1);
+    };
+    
+    // 이전/다음 버튼 이벤트 리스너 (페이지 로드 시 한 번만 설정)
+    prevBtn.addEventListener('click', () => {
+        const totalVersions = versionContainer.querySelectorAll('.version-log').length;
+        if (currentVersionIndex < totalVersions - 1) {
+            showVersion(currentVersionIndex + 1);
+        }
+    });
+    nextBtn.addEventListener('click', () => {
+        if (currentVersionIndex > 0) {
+            showVersion(currentVersionIndex - 1);
+        }
+    });
+
+    // 최종적으로 '업데이트 내역' 버튼에 클릭 이벤트 할당
+    updateButton.addEventListener('click', () => {
+        renderUpdateHistory();     // 클릭 시 내용만 다시 그림
+        showPopup('update-popup'); // 팝업 표시
+    });
+
+    // 2. 나머지 팝업 버튼들
     document.getElementById('open-login-modal-btn').addEventListener('click', () => showPopup('auth-modal'));
     document.getElementById('profile-button').addEventListener('click', () => {
         updateProfilePopup(currentUser ? userData : guestData);
         showPopup('profile-popup');
     });
     
+    // --- 나머지 컨트롤러 로직 (수정 없음) ---
     document.getElementById('show-signup').addEventListener('click', e => { e.preventDefault(); document.getElementById('login-form').style.display = 'none'; document.getElementById('signup-form').style.display = 'block'; });
     document.getElementById('show-login').addEventListener('click', e => { e.preventDefault(); document.getElementById('signup-form').style.display = 'none'; document.getElementById('login-form').style.display = 'block'; });
     document.getElementById('signup-btn').addEventListener('click', async () => {
