@@ -104,4 +104,8 @@ export function updateProfilePopup(data) {
     titleEl.textContent = data.nickname ? getString('profile_title_user', { nickname: data.nickname }) : getString('profile_title_guest');
 }
 
+// js/ui.js 파일의 맨 아래에 이 함수를 추가하세요.
 
+export function getCurrentStrings() {
+    return currentStrings;
+}

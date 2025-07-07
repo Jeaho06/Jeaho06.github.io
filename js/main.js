@@ -2,7 +2,7 @@
 // --- 모듈 import ---
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { auth, logIn, logOut, signUp, getUserData } from './firebase.js';
-import { createBoardUI, setStrings, updateAuthUI, updateProfilePopup } from './ui.js';
+import { createBoardUI, setStrings, updateAuthUI, updateProfilePopup, getCurrentStrings } from './ui.js';
 import { resetGame, setupBoardClickListener, initGameState } from './game.js';
 
 // --- 애플리케이션 상태 관리 (main.js가 중앙에서 관리) ---
@@ -69,9 +69,15 @@ function setupEventListeners() {
     let currentVersionIndex = 0;
     
     // 내용을 그리는 함수
+// js/main.js 파일의 setupEventListeners 함수 내부를 찾아서 수정하세요.
+
+    // 내용을 그리는 함수
     const renderUpdateHistory = () => {
         versionContainer.innerHTML = '';
-        const logs = currentStrings.update_logs || [];
+        
+        // [수정] getCurrentStrings() 함수를 통해 안전하게 데이터를 가져옵니다.
+        const logs = getCurrentStrings().update_logs || [];
+
         logs.forEach(log => {
             const logDiv = document.createElement('div');
             logDiv.classList.add('version-log');
