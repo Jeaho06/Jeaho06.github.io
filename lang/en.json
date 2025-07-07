@@ -10,6 +10,7 @@
   "cheat_bomb": "Place Bomb",
   "about_page": "About this Game",
   "cheat_double_move": "Double Move",
+  "system_already_placed": "A stone is already there.",
   "cheat_swap": "Swap Stone",
   "log_move_title": "Moves (Coordinates)",
   "log_reason_title": "Description (Reason & System)",

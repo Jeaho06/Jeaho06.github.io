@@ -9,6 +9,7 @@
   "about_page": "게임 소개",
   "cheat_veto": "거부권",
   "cheat_bomb": "폭탄 설치",
+  "system_already_placed": "그곳에는 이미 돌이 있습니다.",
   "cheat_double_move": "2번 두기",
   "cheat_swap": "돌 바꾸기",
   "log_move_title": "기보 (좌표)",

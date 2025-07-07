@@ -48,47 +48,78 @@ export function resetGame() {
     createBoardUI();
 }
 
+// js/game.js 파일의 setupBoardClickListener 함수를 아래 코드로 교체하세요.
+
 export function setupBoardClickListener() {
   const boardElement = document.getElementById("game-board");
-  boardElement.addEventListener('click', (event) => {
+
+  // 기존에 리스너가 있었다면 중복 등록을 방지하기 위해 제거합니다. (안전장치)
+  const newBoardElement = boardElement.cloneNode(true);
+  boardElement.parentNode.replaceChild(newBoardElement, boardElement);
+
+  newBoardElement.addEventListener('click', (event) => {
     if (isAITurn || gameOver) return;
-    const rect = boardElement.getBoundingClientRect();
+
+    const rect = newBoardElement.getBoundingClientRect();
     const closestX = Math.round((event.clientX - rect.left - gridSize / 2) / gridSize);
     const closestY = Math.round((event.clientY - rect.top - gridSize / 2) / gridSize);
 
-    if (closestX < 0 || closestX >= 19 || closestY < 0 || closestY >= 19) return;
-    
-    if (board[closestY][closestX] === 3) {
-      logReason(getString('user_title'), getString('system_denied_spot')); return;
+    // 1. 보드 바깥을 클릭했는지 확인
+    if (closestX < 0 || closestX >= 19 || closestY < 0 || closestY >= 19) {
+        return;
     }
-    
-    board[closestY][closestX] = 1;
+
+    // 2. [가장 중요한 수정] 클릭한 곳에 이미 돌이 있는지(0이 아닌지) 확인
+    //    이 부분이 제대로 작동해야 중복 착수를 막을 수 있습니다.
+    if (board[closestY][closestX] !== 0) {
+        logReason(getString('user_title'), `[${convertCoord(closestX, closestY)}] ${getString('system_already_placed')}`);
+        return; 
+    }
+
+    // 3. AI의 '거부권' 반칙 로직 (원본 로직 유지)
+    board[closestY][closestX] = 1; // 임시로 돌을 놓아봄
     const isWinningMove = checkWin(board, 1);
-    board[closestY][closestX] = 0;
-    
+    board[closestY][closestX] = 0; // 즉시 원상복구
+
     if (isWinningMove && !isDestinyDenialUsed && document.getElementById('toggle-destiny-denial').checked) {
-        isDestinyDenialUsed = true; board[closestY][closestX] = 3; 
-        const deniedSpot = document.createElement("div"); deniedSpot.className = "denied-spot";
-        deniedSpot.style.left = `${closestX * gridSize + gridSize / 2}px`; deniedSpot.style.top = `${closestY * gridSize + gridSize / 2}px`;
-        boardElement.appendChild(deniedSpot);
+        isDestinyDenialUsed = true; 
+        board[closestY][closestX] = 3; // 3 = 금수점
+        
+        const deniedSpot = document.createElement("div"); 
+        deniedSpot.className = "denied-spot";
+        deniedSpot.style.left = `${closestX * gridSize + gridSize / 2}px`; 
+        deniedSpot.style.top = `${closestY * gridSize + gridSize / 2}px`;
+        newBoardElement.appendChild(deniedSpot);
+
         const deniedCoord = convertCoord(closestX, closestY);
         logMove(++moveCount, `${getString('ai_title')}: ${getString('cheat_veto')}!!`);
         logReason(getString('ai_title'), getString('ai_veto_reason', {coord: deniedCoord}));
         return; 
     }
     
-    if (board[closestY][closestX] !== 0) return;
-    if (isForbiddenMove(closestX, closestY, 1)) { logReason(getString('user_title'), getString('system_forbidden')); return; }
+    // 4. 흑돌 금수점 확인 (3-3 등)
+    if (isForbiddenMove(closestX, closestY, 1)) { 
+        logReason(getString('user_title'), getString('system_forbidden')); 
+        return; 
+    }
     
+    // 5. 모든 검사를 통과했으면, 정상적으로 돌을 둠
     board[closestY][closestX] = 1; 
     placeStone(closestX, closestY, 'black'); 
     playSound("Movement.mp3");
     logMove(++moveCount, `${getString('user_title')}: ${convertCoord(closestX, closestY)}??`);
+    
     isFirstMove = false; 
     lastMove = { col: closestX, row: closestY };
     
-    if (checkWin(board, 1)) { endGame(getString('system_user_win')); return; }
-    if (checkDraw()) { endGame(getString('system_draw')); return; }
+    if (checkWin(board, 1)) { 
+        endGame(getString('system_user_win')); 
+        return; 
+    }
+    if (checkDraw()) { 
+        endGame(getString('system_draw')); 
+        return; 
+    }
     
     isAITurn = true;
     setTimeout(aiMove, 1000);

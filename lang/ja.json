@@ -5,6 +5,7 @@
   "close_btn": "閉じる",
   "ai_title": "AI",
   "user_title": "ユーザー",
+  "system_already_placed": "そこにはすでに石があります。",
   "cheat_allow_title": "反則許可",
   "cheat_veto": "運命の拒否 (1回)",
   "cheat_bomb": "爆弾設置",
