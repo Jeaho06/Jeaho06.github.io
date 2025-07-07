@@ -73,16 +73,18 @@ function resetGame() {
     gameOver = false;
     document.getElementById('move-log').innerHTML = '';
     document.getElementById('reasoning-log').innerHTML = '';
-    const boardElement = document.getElementById('game-board');
-    const dynamicElements = boardElement.querySelectorAll('.stone, .denied-spot');
-    dynamicElements.forEach(el => el.remove());
-    const gameOverMessage = document.getElementById('game-over-message');
-    if (gameOverMessage) {
-        gameOverMessage.classList.remove('visible');
-        gameOverMessage.classList.add('hidden');
-    }
-}
 
+    const boardElement = document.getElementById('game-board');
+    // 돌, 금수점, 폭발 효과, 게임오버 메시지 등 동적으로 생성된 모든 요소를 제거
+    const dynamicElements = boardElement.querySelectorAll('.stone, .denied-spot, .bomb-effect, #game-over-message');
+    dynamicElements.forEach(el => el.remove());
+
+    // 다음 게임을 위해 게임오버 메시지 div를 다시 생성
+    const gameOverDiv = document.createElement('div');
+    gameOverDiv.id = 'game-over-message';
+    gameOverDiv.className = 'hidden';
+    boardElement.appendChild(gameOverDiv);
+}
 
 
 // --- 인증 및 UI 관리 함수 ---
@@ -204,7 +206,7 @@ function setupAuthEventListeners() {
 function setupEventListeners() {
     setupBoardClickListener();
     setupNewGameButton();
-    setupUpdatePopup(); // 중복 함수 제거 후 이 함수만 사용
+    setupUpdatePopup();
     setupLanguageSwitcher();
     setupPopupOverlay();
     setupFeedbackWidget();
@@ -383,9 +385,8 @@ function setupUpdatePopup() {
         versionLogs.forEach((log, i) => {
             log.classList.toggle('active-version', i === index);
         });
-        // [수정] 버튼 활성화/비활성화 로직 오류 수정
-        prevBtn.classList.toggle('disabled', index === versionLogs.length - 1); // 이전 버튼(<)은 가장 오래된 버전(마지막)일 때 비활성화
-        nextBtn.classList.toggle('disabled', index === 0); // 다음 버튼(>)은 가장 최신 버전(처음)일 때 비활성화
+        prevBtn.classList.toggle('disabled', index === versionLogs.length - 1);
+        nextBtn.classList.toggle('disabled', index === 0);
     };
 
     if (updateButton && updatePopup && prevBtn && nextBtn) {
@@ -395,7 +396,6 @@ function setupUpdatePopup() {
             document.getElementById('popup-overlay').style.display = 'block';
         });
 
-        // '>' 버튼 (더 예전 버전으로 이동)
         prevBtn.addEventListener('click', () => {
             const versionLogs = versionContainer.querySelectorAll('.version-log');
             if (currentVersionIndex < versionLogs.length - 1) {
@@ -403,7 +403,6 @@ function setupUpdatePopup() {
             }
         });
 
-        // '<' 버튼 (더 최신 버전으로 이동)
         nextBtn.addEventListener('click', () => {
             if (currentVersionIndex > 0) {
                 showVersion(currentVersionIndex - 1);
@@ -791,7 +790,7 @@ function playSound(soundFile) {
 // js/script.js
 
 /**
- * 프로필 팝업의 내용을 업데이트하고 표시하는 함수
+ * 프로필 팝업의 이벤트를 설정하는 함수
  */
 function setupProfilePopup() {
     const profileButton = document.getElementById('profile-button');
@@ -801,7 +800,6 @@ function setupProfilePopup() {
     if (!profileButton || !profilePopup) return;
 
     profileButton.addEventListener('click', () => {
-        // 현재 상태의 데이터를 가져옴 (로그인 시 userData, 게스트 시 guestData)
         const data = currentUser ? userData : guestData;
         updateProfilePopupContent(data);
         profilePopup.style.display = 'block';
@@ -811,7 +809,6 @@ function setupProfilePopup() {
 
 /**
  * 프로필 팝업의 내용을 실제 데이터로 채우는 함수
- * @param {object} data - 표시할 사용자 또는 게스트 데이터
  */
 function updateProfilePopupContent(data) {
     const winsEl = document.getElementById('profile-wins');
@@ -833,13 +830,12 @@ function updateProfilePopupContent(data) {
     lossesEl.textContent = losses;
     winRateEl.textContent = `${winRate}%`;
 
-    // 팝업 제목 설정
     if (data.nickname) {
         titleEl.textContent = getString('profile_title_user', { nickname: data.nickname });
     } else {
         titleEl.textContent = getString('profile_title_guest');
     }
-
+    
     // TODO: 업적 시스템 구현 시 아래 부분 채우기
     const achievementsList = document.getElementById('achievements-list');
     // 예시: achievementsList.innerHTML = '<li>첫 승리!</li>';
