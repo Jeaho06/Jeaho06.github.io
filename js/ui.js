@@ -171,9 +171,6 @@ export function getCurrentStrings() {
     return currentStrings;
 }
 
-// ui.js 파일 맨 아래에 추가
-
-import { getRequiredXpForLevel } from './firebase.js';
 
 /**
  * 사용자 데이터에 따라 레벨과 경험치 바 UI를 업데이트합니다.
