@@ -557,13 +557,13 @@ input:checked + .slider:before {
     text-align: center;
     color: white;
     text-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
-    animation: text-intro 2.5s ease-out forwards;
 }
 
 .level-up-text {
     font-size: 8vw; /* 화면 너비에 비례하는 폰트 크기 */
     font-weight: 900;
     letter-spacing: 5px;
+    animation: text-intro 2.5s ease-out forwards;
 }
 
 .level-transition-text {
@@ -577,8 +577,7 @@ input:checked + .slider:before {
 @keyframes text-intro {
     0% { transform: scale(3); opacity: 0; }
     20% { transform: scale(1); opacity: 1; }
-    80% { transform: scale(1); opacity: 1; }
-    100% { transform: scale(1.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
 }
 
 @keyframes fade-in-delay {
