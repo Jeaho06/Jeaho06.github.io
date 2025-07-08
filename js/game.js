@@ -107,11 +107,12 @@ export function setupBoardClickListener() {
 
 // ... (다른 부분은 그대로 유지) ...
 
+// game.js
+
 async function endGame(message) {
     if (gameOver) return;
     gameOver = true;
     
-    // [수정] UI 업데이트에 필요한 정보를 담을 변수
     let eventData = { message };
 
     const isUserWin = message === getString('system_user_win');
@@ -119,31 +120,48 @@ async function endGame(message) {
     const gameResult = isUserWin ? 'win' : (isDraw ? 'draw' : 'loss');
 
     if (currentUser) {
-        // [수정] 업데이트 전의 유저 데이터를 저장해 둡니다.
         const oldUserData = { ...userData }; 
         const result = await updateUserGameResult(currentUser.uid, gameResult, moveCount);
         
         if (result) {
-            // [수정] eventData에 결과 정보를 추가합니다.
             eventData.xpResult = result;
             eventData.oldUserData = oldUserData;
             
+            // ▼▼▼ 핵심 수정 부분 ▼▼▼
+
+            // 1. 게임 종료 메시지를 먼저 표시합니다.
+            showEndGameMessage(eventData);
+            logReason("시스템", message);
+            
+            // 2. 만약 레벨업을 했다면, 그 위로 레벨업 연출을 덮어씌웁니다.
             if (result.didLevelUp) {
                 console.log("레벨 업! 새로운 레벨:", result.newLevel);
+                // z-index가 높기 때문에, 이 연출이 게임 종료 메시지보다 위에 나타납니다.
                 showLevelUpAnimation(result.newLevel - 1, result.newLevel);
             }
+
+            // ▲▲▲ 여기까지 입니다 ▲▲▲
+        } else {
+            // result가 없는 경우 (DB 업데이트 실패 등)에도 기본 메시지는 표시
+            showEndGameMessage(eventData);
+            logReason("시스템", message);
         }
     } else {
+        // 게스트일 경우
         const guestData = JSON.parse(localStorage.getItem('omok_guestData')) || { stats: { wins: 0, losses: 0, draws: 0 } };
         if (gameResult === 'win') guestData.stats.wins++;
         else if (gameResult === 'draw') guestData.stats.draws++;
         else guestData.stats.losses++;
         localStorage.setItem('omok_guestData', JSON.stringify(guestData));
+        
+        // 게스트일 때도 게임 종료 메시지를 표시합니다.
+        showEndGameMessage(eventData);
+        logReason("시스템", message);
     }
 
-    // [수정] 최종적으로 eventData를 넘겨주도록 변경
-    showEndGameMessage(eventData);
-    logReason("시스템", message);
+    /* 기존에 이 위치에 있던 showEndGameMessage와 logReason 호출은 
+    if (currentUser) 블록 안으로 이동했으므로 여기서는 삭제합니다.
+    */
 }
 
 // js/game.js 파일의 aiMove 함수를 아래 코드로 교체하세요.

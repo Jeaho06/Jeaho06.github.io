@@ -66,7 +66,17 @@ export function createBoardUI() {
 
 // ... (다른 부분은 그대로 유지) ...
 
+// js/ui.js
+
 export function showEndGameMessage(eventData) {
+    // ▼▼▼ 바로 이 부분을 추가해야 합니다! ▼▼▼
+    // 함수가 호출될 때마다 기존 메시지가 있다면 먼저 삭제합니다.
+    const existingMsg = document.getElementById('game-over-message');
+    if (existingMsg) {
+        existingMsg.remove();
+    }
+    // ▲▲▲ 여기까지 입니다 ▲▲▲
+
     const boardElement = document.getElementById('game-board');
     const msgDiv = document.createElement('div');
     msgDiv.id = 'game-over-message';
@@ -88,8 +98,6 @@ export function showEndGameMessage(eventData) {
         const detailsContainer = document.createElement('div');
         detailsContainer.className = 'xp-details';
         
-        // --- [수정] 모든 텍스트를 getString()을 통해 가져오도록 변경 ---
-
         // 1. 획득 경험치
         let xpGainedText = getString('game_over_xp_gained', { xpGained: xpResult.xpGained });
         if (xpResult.didGetDailyBonus) {
