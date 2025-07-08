@@ -1,6 +1,7 @@
 // js/main.js
 // --- 모듈 import ---
-import { onAuthStateChanged, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // doc, onSnapshot을 firestore에서 가져옵니다.
 import { auth, logIn, logOut, signUp, getUserData, db } from './firebase.js';
 import { createBoardUI, setStrings, updateAuthUI, updateProfilePopup, getCurrentStrings, updateLevelUI } from './ui.js';
 import { resetGame, setupBoardClickListener, initGameState } from './game.js';
