@@ -200,14 +200,23 @@ export function updateLevelUI(userData) {
 
 /**
  * 레벨업 애니메이션과 사운드를 재생합니다.
+ * @param {number} oldLevel - 이전 레벨
  * @param {number} newLevel - 새로 도달한 레벨
  */
-export function showLevelUpAnimation(newLevel) {
+export function showLevelUpAnimation(oldLevel, newLevel) {
     const overlay = document.getElementById('level-up-overlay');
-    const newLevelText = overlay.querySelector('.new-level-text');
+    // [수정] 텍스트를 채워 넣을 요소를 모두 가져옵니다.
+    const titleText = overlay.querySelector('.level-up-text');
+    const transitionText = overlay.querySelector('.level-transition-text');
     const sound = document.getElementById('level-up-sound');
 
-    newLevelText.textContent = `LV. ${newLevel}`;
+    // [수정] 다국어 파일에서 텍스트를 가져와 채웁니다.
+    titleText.textContent = getString('level_up_title');
+    transitionText.textContent = getString('level_up_transition', {
+        oldLevel: oldLevel,
+        newLevel: newLevel
+    });
+
     overlay.classList.add('is-animating');
     sound.play();
 

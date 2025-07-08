@@ -566,7 +566,7 @@ input:checked + .slider:before {
     letter-spacing: 5px;
 }
 
-.new-level-text {
+.level-transition-text {
     font-size: 5vw;
     font-weight: 700;
     margin-top: 10px;

@@ -9,6 +9,8 @@
   "cheat_allow_title": "反則許可",
   "cheat_veto": "運命の拒否 (1回)",
   "cheat_bomb": "爆弾設置",
+  "level_up_title": "レベルアップ！",
+  "level_up_transition": "LV. {oldLevel} → LV. {newLevel}",
   "about_page": "ゲーム紹介",
   "cheat_double_move": "二手指し",
   "cheat_swap": "石交換",

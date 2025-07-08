@@ -6,6 +6,8 @@
   "ai_title": "AI",
   "user_title": "User",
   "cheat_allow_title": "Allow Cheats",
+  "level_up_title": "LEVEL UP!",
+  "level_up_transition": "LV. {oldLevel} → LV. {newLevel}",
   "cheat_veto": "Destiny's Denial (1 time)",
   "cheat_bomb": "Place Bomb",
   "about_page": "About this Game",

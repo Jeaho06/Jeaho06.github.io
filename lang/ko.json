@@ -10,6 +10,8 @@
   "cheat_veto": "거부권",
   "cheat_bomb": "폭탄 설치",
   "system_already_placed": "그곳에는 이미 돌이 있습니다.",
+  "level_up_title": "레벨 업!",
+  "level_up_transition": "LV. {oldLevel} → LV. {newLevel}",
   "cheat_double_move": "2번 두기",
   "cheat_swap": "돌 바꾸기",
   "log_move_title": "기보 (좌표)",

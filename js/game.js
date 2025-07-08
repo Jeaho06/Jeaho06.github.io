@@ -129,7 +129,8 @@ async function endGame(message) {
             eventData.oldUserData = oldUserData;
             
             if (result.didLevelUp) {
-                showLevelUpAnimation(result.newLevel);
+                console.log("레벨 업! 새로운 레벨:", result.newLevel);
+                showLevelUpAnimation(result.newLevel - 1, result.newLevel);
             }
         }
     } else {
