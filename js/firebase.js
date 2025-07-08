@@ -93,6 +93,11 @@ export function getRequiredXpForLevel(level) {
  * @param {number} moveCount - 이번 게임의 총 착수 횟수
  * @returns {Promise<object>} 업데이트 결과 (획득 경험치, 레벨업 여부 등)
  */
+
+// js/firebase.js
+
+// ... (다른 부분은 그대로) ...
+
 export async function updateUserGameResult(uid, gameResult, moveCount) {
     const XP_TABLE = { win: 50, loss: 10, draw: 20 };
     const XP_PER_MOVE_CAP = 15;
@@ -105,8 +110,15 @@ export async function updateUserGameResult(uid, gameResult, moveCount) {
             if (!userDoc.exists()) { throw "Document does not exist!"; }
 
             const oldData = userDoc.data();
-            let { stats, level, experience, lastWinTimestamp } = oldData;
             
+            // ▼▼▼ 바로 이 부분이 수정의 핵심입니다! ▼▼▼
+            // 기존 유저에게 level, experience 필드가 없을 경우 기본값을 1과 0으로 설정합니다.
+            const stats = oldData.stats || { wins: 0, losses: 0, draws: 0 };
+            let level = oldData.level || 1;
+            let experience = oldData.experience || 0;
+            const lastWinTimestamp = oldData.lastWinTimestamp || null;
+            // ▲▲▲ 여기까지 입니다 ▲▲▲
+
             // 1. 전적 업데이트
             if (gameResult === 'win') stats.wins++;
             else if (gameResult === 'loss') stats.losses++;
@@ -120,7 +132,6 @@ export async function updateUserGameResult(uid, gameResult, moveCount) {
             if (gameResult === 'win') {
                 const now = new Date();
                 const lastWinDate = lastWinTimestamp ? lastWinTimestamp.toDate() : null;
-                // 마지막 승리 날짜가 오늘과 다른 경우, 일일 보너스 지급
                 if (!lastWinDate || lastWinDate.toDateString() !== now.toDateString()) {
                     xpGained += DAILY_BONUS;
                     didGetDailyBonus = true;
@@ -144,7 +155,6 @@ export async function updateUserGameResult(uid, gameResult, moveCount) {
                 stats,
                 level,
                 experience,
-                // 승리했고, 일일 보너스를 받았다면 승리 시간을 현재로 기록
                 lastWinTimestamp: (gameResult === 'win' && didGetDailyBonus) ? serverTimestamp() : lastWinTimestamp
             };
             transaction.update(userRef, newData);
