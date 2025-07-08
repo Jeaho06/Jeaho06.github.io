@@ -109,3 +109,52 @@ export function updateProfilePopup(data) {
 export function getCurrentStrings() {
     return currentStrings;
 }
+
+// ui.js 파일 맨 아래에 추가
+
+import { getRequiredXpForLevel } from './firebase.js';
+
+/**
+ * 사용자 데이터에 따라 레벨과 경험치 바 UI를 업데이트합니다.
+ * @param {object | null} userData - 사용자 데이터 또는 null (로그아웃 시)
+ */
+export function updateLevelUI(userData) {
+    const container = document.getElementById('level-bar-container');
+    if (!userData || !userData.hasOwnProperty('level')) {
+        container.style.display = 'none';
+        return;
+    }
+
+    container.style.display = 'block';
+
+    const level = userData.level || 1;
+    const currentXp = userData.experience || 0;
+    const requiredXp = getRequiredXpForLevel(level);
+
+    const percentage = Math.min((currentXp / requiredXp) * 100, 100);
+
+    const fillEl = document.getElementById('level-bar-fill');
+    const textEl = document.getElementById('level-bar-text');
+
+    fillEl.style.width = `${percentage}%`;
+    textEl.textContent = `LV. ${level} (${currentXp} / ${requiredXp} XP)`;
+}
+
+/**
+ * 레벨업 애니메이션과 사운드를 재생합니다.
+ * @param {number} newLevel - 새로 도달한 레벨
+ */
+export function showLevelUpAnimation(newLevel) {
+    const overlay = document.getElementById('level-up-overlay');
+    const newLevelText = overlay.querySelector('.new-level-text');
+    const sound = document.getElementById('level-up-sound');
+
+    newLevelText.textContent = `LV. ${newLevel}`;
+    overlay.classList.add('is-animating');
+    sound.play();
+
+    // 2.5초 후 애니메이션 클래스를 제거하여 오버레이를 다시 숨깁니다.
+    setTimeout(() => {
+        overlay.classList.remove('is-animating');
+    }, 2500);
+}

@@ -1,8 +1,8 @@
 // js/main.js
 // --- 모듈 import ---
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { auth, logIn, logOut, signUp, getUserData } from './firebase.js';
-import { createBoardUI, setStrings, updateAuthUI, updateProfilePopup, getCurrentStrings } from './ui.js';
+import { onAuthStateChanged, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { auth, logIn, logOut, signUp, getUserData, db } from './firebase.js';
+import { createBoardUI, setStrings, updateAuthUI, updateProfilePopup, getCurrentStrings, updateLevelUI } from './ui.js';
 import { resetGame, setupBoardClickListener, initGameState } from './game.js';
 
 // --- 애플리케이션 상태 관리 (main.js가 중앙에서 관리) ---
@@ -160,22 +160,42 @@ function setupEventListeners() {
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. 언어 설정 먼저
     await loadLanguage(localStorage.getItem('omokLanguage') || 'ko');
-    
+
     // 2. 인증 상태 리스너 설정
-    onAuthStateChanged(auth, async (user) => {
+    onAuthStateChanged(auth, (user) => {
         if (user) {
-            currentUser = user;
-            userData = await getUserData(user.uid);
-            updateAuthUI(userData);
+            // [수정] 기존의 일회성 데이터 로드를 실시간 리스너(onSnapshot)로 변경
+            const userRef = doc(db, "users", user.uid);
+            onSnapshot(userRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    currentUser = user;
+                    userData = docSnap.data();
+                    userData.uid = user.uid; // 편의를 위해 uid 추가
+
+                    // UI 업데이트
+                    updateAuthUI(userData);
+                    updateLevelUI(userData); // [핵심] 레벨 바 UI 실시간 업데이트
+
+                    // game.js에 상태 전달
+                    initGameState(currentUser, userData, guestData);
+                } else {
+                    // 문서가 없는 예외적인 경우 (예: DB에서 직접 삭제)
+                    logOut();
+                }
+            });
         } else {
             currentUser = null;
             userData = null;
             const savedGuest = localStorage.getItem('omok_guestData');
             guestData = savedGuest ? JSON.parse(savedGuest) : { nickname: "Guest", stats: { wins: 0, losses: 0, draws: 0 } };
+
+            // 로그아웃 시 UI 업데이트
             updateAuthUI(null);
+            updateLevelUI(null); // 레벨 바 숨기기
+
+            // game.js에 상태 전달
+            initGameState(currentUser, userData, guestData);
         }
-        // game.js에 현재 상태 전달
-        initGameState(currentUser, userData, guestData);
     });
 
     // 3. 게임 시작

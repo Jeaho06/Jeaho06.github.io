@@ -21,6 +21,15 @@
 </head>
 <body>
 
+    <body>
+    <div id="level-up-overlay">
+        <div class="level-up-content">
+            <div class="level-up-text">LEVEL UP!</div>
+            <div class="new-level-text">LV. 2</div>
+        </div>
+        <audio id="level-up-sound" src="sounds/levelup.mp3"></audio>
+    </div>
+
     <div id="feedback-widget">
         <button id="feedback-toggle-btn" data-i18n-key="feedback_toggle_btn">피드백</button>
         <div id="feedback-form-container">
@@ -145,6 +154,13 @@
         <div class="chat-wrapper">
             <h3 data-i18n-key="log_reason_title">설명</h3>
             <div id="reasoning-log" class="chat-box"></div>
+        </div>
+    </div>
+
+    <div id="level-bar-container">
+        <div id="level-bar-background">
+            <div id="level-bar-fill"></div>
+            <span id="level-bar-text"></span>
         </div>
     </div>
 

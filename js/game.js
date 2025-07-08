@@ -1,8 +1,9 @@
-// js/game.js
+// game.js 파일의 endGame 함수를 찾아 아래 코드로 교체하세요.
 
 // --- 필요한 함수들을 다른 모듈에서 import ---
-import { createBoardUI, placeStone, removeStone, logMove, logReason, showEndGameMessage, getString } from './ui.js';
-import { db, updateUserStats } from './firebase.js';
+// [수정] updateUserStats 대신 updateUserGameResult를 import 합니다.
+import { createBoardUI, placeStone, removeStone, logMove, logReason, showEndGameMessage, getString, showLevelUpAnimation } from './ui.js';
+import { db, updateUserGameResult } from './firebase.js';
 
 // --- 원본 script.js의 전역 변수들을 모듈의 최상위 스코프로 이동 ---
 let board;
@@ -110,16 +111,31 @@ async function endGame(message) {
 
     const isUserWin = message === getString('system_user_win');
     const isDraw = message === getString('system_draw');
-    const currentData = currentUser ? userData : guestData;
+    const gameResult = isUserWin ? 'win' : (isDraw ? 'draw' : 'loss');
 
-    if (isUserWin) currentData.stats.wins++;
-    else if (isDraw) currentData.stats.draws++;
-    else currentData.stats.losses++;
-    
+    // 로그인 유저의 경우, 새로 만든 트랜잭션 함수를 호출
     if (currentUser) {
-        await updateUserStats(currentUser.uid, currentData.stats);
-    } else {
-        localStorage.setItem('omok_guestData', JSON.stringify(currentData));
+        // [수정] 새로운 함수를 호출하고, 착수 횟수(moveCount)를 함께 전달합니다.
+        const result = await updateUserGameResult(currentUser.uid, gameResult, moveCount);
+        
+        if (result) {
+            console.log("획득 경험치:", result.xpGained);
+            if(result.didGetDailyBonus) console.log("일일 첫 승리 보너스 획득!");
+
+            if(result.didLevelUp) {
+                console.log("레벨 업! 새로운 레벨:", result.newLevel);
+                // 실제 애니메이션을 재생시키는 함수를 호출합니다.
+                showLevelUpAnimation(result.newLevel);
+            }
+        }
+    }
+    // 게스트의 경우, 기존처럼 로컬 스토리지에만 저장 (수정 없음)
+    else {
+        const guestData = JSON.parse(localStorage.getItem('omok_guestData')) || { stats: { wins: 0, losses: 0, draws: 0 } };
+        if (gameResult === 'win') guestData.stats.wins++;
+        else if (gameResult === 'draw') guestData.stats.draws++;
+        else guestData.stats.losses++;
+        localStorage.setItem('omok_guestData', JSON.stringify(guestData));
     }
 }
 
