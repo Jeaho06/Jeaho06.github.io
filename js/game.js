@@ -103,40 +103,46 @@ export function setupBoardClickListener() {
   });
 }
 
+// js/game.js
+
+// ... (다른 부분은 그대로 유지) ...
+
 async function endGame(message) {
     if (gameOver) return;
     gameOver = true;
-    showEndGameMessage(message);
-    logReason("시스템", message);
+    
+    // [수정] UI 업데이트에 필요한 정보를 담을 변수
+    let eventData = { message };
 
     const isUserWin = message === getString('system_user_win');
     const isDraw = message === getString('system_draw');
     const gameResult = isUserWin ? 'win' : (isDraw ? 'draw' : 'loss');
 
-    // 로그인 유저의 경우, 새로 만든 트랜잭션 함수를 호출
     if (currentUser) {
-        // [수정] 새로운 함수를 호출하고, 착수 횟수(moveCount)를 함께 전달합니다.
+        // [수정] 업데이트 전의 유저 데이터를 저장해 둡니다.
+        const oldUserData = { ...userData }; 
         const result = await updateUserGameResult(currentUser.uid, gameResult, moveCount);
         
         if (result) {
-            console.log("획득 경험치:", result.xpGained);
-            if(result.didGetDailyBonus) console.log("일일 첫 승리 보너스 획득!");
-
-            if(result.didLevelUp) {
-                console.log("레벨 업! 새로운 레벨:", result.newLevel);
-                // 실제 애니메이션을 재생시키는 함수를 호출합니다.
+            // [수정] eventData에 결과 정보를 추가합니다.
+            eventData.xpResult = result;
+            eventData.oldUserData = oldUserData;
+            
+            if (result.didLevelUp) {
                 showLevelUpAnimation(result.newLevel);
             }
         }
-    }
-    // 게스트의 경우, 기존처럼 로컬 스토리지에만 저장 (수정 없음)
-    else {
+    } else {
         const guestData = JSON.parse(localStorage.getItem('omok_guestData')) || { stats: { wins: 0, losses: 0, draws: 0 } };
         if (gameResult === 'win') guestData.stats.wins++;
         else if (gameResult === 'draw') guestData.stats.draws++;
         else guestData.stats.losses++;
         localStorage.setItem('omok_guestData', JSON.stringify(guestData));
     }
+
+    // [수정] 최종적으로 eventData를 넘겨주도록 변경
+    showEndGameMessage(eventData);
+    logReason("시스템", message);
 }
 
 // js/game.js 파일의 aiMove 함수를 아래 코드로 교체하세요.

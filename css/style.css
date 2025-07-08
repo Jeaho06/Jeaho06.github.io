@@ -579,3 +579,24 @@ input:checked + .slider:before {
 @keyframes fade-in-delay {
     to { opacity: 1; }
 }
+/* style.css 파일 맨 아래에 추가 */
+
+/* --- 게임 종료 메시지 상세 스타일 --- */
+#game-over-message .main-message {
+    font-size: 48px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+#game-over-message .xp-details {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+#game-over-message .xp-details p {
+    font-size: 20px;
+    font-weight: 500;
+    margin: 8px 0;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+}

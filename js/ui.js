@@ -1,5 +1,5 @@
 // js/ui.js
-
+import { getRequiredXpForLevel } from './firebase.js'; // [추가]
 let currentStrings = {};
 
 export function setStrings(strings) {
@@ -62,11 +62,72 @@ export function createBoardUI() {
     }
 }
 
-export function showEndGameMessage(message) {
+// js/ui.js
+
+// ... (다른 부분은 그대로 유지) ...
+
+export function showEndGameMessage(eventData) {
     const boardElement = document.getElementById('game-board');
     const msgDiv = document.createElement('div');
     msgDiv.id = 'game-over-message';
-    msgDiv.textContent = message;
+
+    // 메인 메시지 생성
+    const mainMessage = document.createElement('div');
+    mainMessage.className = 'main-message';
+    mainMessage.textContent = eventData.message;
+    msgDiv.appendChild(mainMessage);
+
+    // 로그인 유저이고, 경험치 결과가 있을 경우 상세 정보 표시
+    if (eventData.xpResult && eventData.oldUserData) {
+        const xpResult = eventData.xpResult;
+        const oldData = eventData.oldUserData;
+        const oldXp = oldData.experience || 0;
+        const oldLevel = oldData.level || 1;
+        const totalNewXp = oldXp + xpResult.xpGained;
+
+        const detailsContainer = document.createElement('div');
+        detailsContainer.className = 'xp-details';
+        
+        // --- [수정] 모든 텍스트를 getString()을 통해 가져오도록 변경 ---
+
+        // 1. 획득 경험치
+        let xpGainedText = getString('game_over_xp_gained', { xpGained: xpResult.xpGained });
+        if (xpResult.didGetDailyBonus) {
+            xpGainedText += ` ${getString('game_over_daily_bonus')}`;
+        }
+        const xpGainedEl = document.createElement('p');
+        xpGainedEl.textContent = xpGainedText;
+        detailsContainer.appendChild(xpGainedEl);
+
+        // 2. 경험치 변화
+        const requiredXpForOldLevel = getRequiredXpForLevel(oldLevel);
+        const xpChangeEl = document.createElement('p');
+        let newXpForDisplay, requiredXpForNewLevel;
+
+        if (xpResult.didLevelUp) {
+            requiredXpForNewLevel = getRequiredXpForLevel(xpResult.newLevel);
+            newXpForDisplay = totalNewXp - requiredXpForOldLevel;
+        } else {
+            requiredXpForNewLevel = requiredXpForOldLevel;
+            newXpForDisplay = totalNewXp;
+        }
+        xpChangeEl.textContent = getString('game_over_xp_change', {
+            oldXp: oldXp,
+            reqOld: requiredXpForOldLevel,
+            newXp: newXpForDisplay,
+            reqNew: requiredXpForNewLevel
+        });
+        detailsContainer.appendChild(xpChangeEl);
+
+        // 3. 현재 레벨
+        const currentLevelEl = document.createElement('p');
+        const finalLevel = xpResult.didLevelUp ? xpResult.newLevel : oldLevel;
+        currentLevelEl.textContent = getString('game_over_current_level', { level: finalLevel });
+        detailsContainer.appendChild(currentLevelEl);
+
+        msgDiv.appendChild(detailsContainer);
+    }
+    
     boardElement.appendChild(msgDiv);
     requestAnimationFrame(() => msgDiv.classList.add('visible'));
 }
