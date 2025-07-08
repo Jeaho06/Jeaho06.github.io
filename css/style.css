@@ -339,6 +339,7 @@ input:checked + .slider:before {
 .site-footer a { color: #555; text-decoration: none; }
 .site-footer a:hover { text-decoration: underline; }
 
+
 #game-over-message {
     position: absolute;
     top: 0;
@@ -347,9 +348,11 @@ input:checked + .slider:before {
     height: 100%;
     background-color: rgba(0, 0, 0, 0.65);
     color: white;
-    font-size: 48px;
-    font-weight: bold;
+    /* font-size: 48px; <-- 이 줄은 자식 요소에서 개별적으로 제어하므로 삭제하거나 주석 처리합니다. */
+    /* font-weight: bold; <-- 이 줄도 마찬가지입니다. */
     display: flex;
+    /* ▼▼▼ 바로 이 두 줄을 추가/수정해야 합니다! ▼▼▼ */
+    flex-direction: column; /* 자식 요소들을 세로로 쌓도록 변경 */
     justify-content: center;
     align-items: center;
     text-align: center;
@@ -359,6 +362,8 @@ input:checked + .slider:before {
     pointer-events: none;
     transition: opacity 0.5s ease;
 }
+
+
 #game-over-message.visible {
     opacity: 1;
 }
@@ -589,10 +594,12 @@ input:checked + .slider:before {
 }
 
 #game-over-message .xp-details {
-    margin-top: 15px;
+    margin-top: 15px; /* [수정] 위쪽 여백 추가 */
     padding-top: 15px;
     border-top: 1px solid rgba(255, 255, 255, 0.3);
+    text-align: left; /* [수정] 왼쪽 정렬하여 더 깔끔하게 보이도록 */
 }
+
 
 #game-over-message .xp-details p {
     font-size: 20px;
