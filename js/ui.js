@@ -60,6 +60,19 @@ export function createBoardUI() {
         const colLabel = document.createElement("div"); colLabel.className = "coordinate-label top-label"; colLabel.style.left = `${i * 30 + 15}px`; colLabel.textContent = String.fromCharCode(65 + i); boardElement.appendChild(colLabel);
         const rowLabel = document.createElement("div"); rowLabel.className = "coordinate-label left-label"; rowLabel.style.top = `${i * 30 + 15}px`; rowLabel.textContent = i + 1; boardElement.appendChild(rowLabel);
     }
+    // 화점(Star points) 추가
+    const hwajeomCoords = [
+        [3, 3], [3, 9], [3, 15],
+        [9, 3], [9, 9], [9, 15],
+        [15, 3], [15, 9], [15, 15]
+    ];
+    hwajeomCoords.forEach(([row, col]) => {
+        const dot = document.createElement("div");
+        dot.className = "hwajeom-dot";
+        dot.style.left = `${col * 30 + 15}px`;
+        dot.style.top = `${row * 30 + 15}px`;
+        boardElement.appendChild(dot);
+    });
 }
 
 // js/ui.js

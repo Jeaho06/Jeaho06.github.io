@@ -192,6 +192,15 @@ input:checked + .slider:before {
   height: calc(100% - 30px);
   top: 15px;
 }
+.hwajeom-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background-color: #8b4513; /* 선과 같은 색상 */
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none; /* 클릭 방해 방지 */
+}
 .stone {
   position: absolute;
   width: 30px;
