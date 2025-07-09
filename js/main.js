@@ -157,6 +157,11 @@ function setupEventListeners() {
     });
 }
 
+// [추가] 효과음 재생 함수
+const playClickSound = () => {
+    new Audio('sounds/Click.mp3').play();
+};
+
 // --- 프로그램 시작점 ---
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. 언어 설정 먼저
@@ -202,4 +207,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 3. 게임 시작
     resetGame();
     setupEventListeners();
+
+    // [추가] 모든 버튼에 클릭 이벤트 추가 (토글 제외, footer 제외, 오목판 제외)
+    document.querySelectorAll('button:not(.slider):not(#game-board button)').forEach(button => {
+        button.addEventListener('mousedown', playClickSound);
+    });
 });
