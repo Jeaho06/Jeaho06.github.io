@@ -159,6 +159,7 @@ export function updateProfilePopup(data) {
     const lossesEl = document.getElementById('profile-losses');
     const drawsEl = document.getElementById('profile-draws');
     const winRateEl = document.getElementById('profile-win-rate');
+    const levelInfoEl = document.getElementById('profile-level-info'); // 추가
     const titleEl = document.getElementById('profile-popup-title');
 
     if (!data || !data.stats) return;
@@ -170,6 +171,15 @@ export function updateProfilePopup(data) {
     lossesEl.textContent = losses;
     drawsEl.textContent = draws;
     winRateEl.textContent = `${winRate}%`;
+
+    // ▼▼▼ 레벨 정보 업데이트 ▼▼▼
+    if (data.level !== undefined && data.experience !== undefined) {
+        const requiredXp = getRequiredXpForLevel(data.level);
+        levelInfoEl.textContent = getString('level_info_display', { level: data.level, currentXp: data.experience, requiredXp: requiredXp });
+    } else {
+        levelInfoEl.textContent = getString('level_info_display', { level: 1, currentXp: 0, requiredXp: getRequiredXpForLevel(1) });
+    }
+
     titleEl.textContent = data.nickname ? getString('profile_title_user', { nickname: data.nickname }) : getString('profile_title_guest');
 }
 

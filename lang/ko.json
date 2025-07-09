@@ -76,6 +76,8 @@
   "achievements_empty": "아직 달성한 업적이 없습니다.",
   "profile_title_user": "{nickname}님의 프로필",
   "profile_title_guest": "게스트 프로필",
+  "level_info_title": "레벨 정보",
+  "level_info_display": "LV. {level} ({currentXp} / {requiredXp} XP)",
   "stats_draws": "무승부",
   "system_draw": "무승부",
   "update_logs": [

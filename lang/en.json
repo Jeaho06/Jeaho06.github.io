@@ -76,6 +76,8 @@
   "achievements_empty": "No achievements yet.",
   "profile_title_user": "{nickname}'s Profile",
   "profile_title_guest": "Guest Profile",
+  "level_info_title": "Level Info",
+  "level_info_display": "LV. {level} ({currentXp} / {requiredXp} XP)",
   "stats_draws": "Draws",
   "system_draw": "Draw",
   "update_logs": [
