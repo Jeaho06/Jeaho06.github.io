@@ -53,7 +53,7 @@
 
         <button id="new-game-button" data-i18n-key="new_game_btn">새 게임</button>
         <button id="profile-button" data-i18n-key="profile_btn">프로필</button>
-        <button id="update-button" data-i18n-key="update_history_btn">업데이트 내역</button>
+        <button id="update-button" data-i18n-key="mail_btn">메일</button>  <!-- 버튼 텍스트 변경 -->
         <div class="language-switcher">
             <button id="language-button" data-i18n-key="language_btn">언어</button>
             <div id="language-dropdown" class="dropdown-content">
@@ -66,17 +66,28 @@
 
     <div id="popup-overlay"></div>
 
-
-    <div id="update-popup" class="popup">
-        <h2 data-i18n-key="update_history_title">업데이트 내역</h2>
-        <div id="version-details-container"></div>
-        <div class="popup-nav">
-            <button id="prev-version-btn">&lt;</button>
-            <button id="next-version-btn">&gt;</button>
+    <div id="update-popup" class="popup update-popup-redesign">  <!-- 팝업 제목 변경 -->
+        <div class="popup-header">
+            <button id="mail-button" class="tab-button active" data-i18n-key="mail_tab">메일</button>
+            <button id="news-button" class="tab-button" data-i18n-key="news_tab">뉴스</button>
         </div>
-        <p style="text-align: center; margin: 20px 0 0; font-size: 14px; color: #555;">JeahoGames</p>
+
+        <div id="mail-content" class="tab-content active">
+            <p data-i18n-key="no_new_mail">새 메일이 없습니다!</p>
+        </div>
+
+        <div id="news-content" class="tab-content">
+            <!-- 뉴스 항목은 js에서 동적으로 생성 -->
+        </div>
+
         <button id="popup-close-button" class="popup-close-button" data-i18n-key="close_btn">닫기</button>
     </div>
+
+    <!-- 3. 뉴스 팝업 추가 -->
+    <div id="news-popup" class="popup" style="display: none;">
+        <!-- 내용 js에서 채움 -->
+    </div>
+
 
     <div id="profile-popup" class="popup">
         <h2 id="profile-popup-title"></h2>

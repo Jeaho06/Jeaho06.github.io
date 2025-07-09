@@ -50,6 +50,7 @@ function setupEventListeners() {
     const closeButtons = document.querySelectorAll('.popup-close-button');
     const closeAllPopups = () => {
         popups.forEach(p => p.style.display = 'none');
+        document.getElementById('news-popup').style.display = 'none'; // [수정] 뉴스 팝업도 닫기
         overlay.style.display = 'none';
     };
     overlay.addEventListener('click', closeAllPopups);
@@ -60,73 +61,61 @@ function setupEventListeners() {
         overlay.style.display = 'block';
     };
 
-    // --- 개별 팝업 버튼 설정 ---
-    
-    // 1. 업데이트 내역 팝업
-    const updateButton = document.getElementById('update-button');
-    const versionContainer = document.getElementById('version-details-container');
-    const prevBtn = document.getElementById('prev-version-btn');
-    const nextBtn = document.getElementById('next-version-btn');
-    let currentVersionIndex = 0;
-    
-    // 내용을 그리는 함수
-// js/main.js 파일의 setupEventListeners 함수 내부를 찾아서 수정하세요.
+    // 1. 업데이트 팝업
+    const updateButton = document.getElementById('update-button');    
+    updateButton.addEventListener('click', () => { 
+        renderNewsContent(); 
+        showPopup('update-popup'); 
+    });
 
-    // 내용을 그리는 함수
-    const renderUpdateHistory = () => {
-        versionContainer.innerHTML = '';
-        
-        // [수정] getCurrentStrings() 함수를 통해 안전하게 데이터를 가져옵니다.
-        const logs = getCurrentStrings().update_logs || [];
+    // 2. 탭 기능
+    const mailButton = document.getElementById('mail-button'), newsButton = document.getElementById('news-button');
+    const mailContent = document.getElementById('mail-content'), newsContent = document.getElementById('news-content');
+    const showTab = (tabName) => { // [수정] 탭 내용 전환
+        mailButton.classList.toggle('active', tabName === 'mail'); // 버튼 활성/비활성 상태 변경
+        newsButton.classList.toggle('active', tabName === 'news');
+        mailContent.style.display = tabName === 'mail' ? 'block' : 'none'; // 내용 표시/숨김
+        newsContent.style.display = tabName === 'news' ? 'block' : 'none';
+    };
+    showTab('mail'); // 초기 탭 설정
+    mailButton.addEventListener('click', () => showTab('mail'));
+    newsButton.addEventListener('click', () => showTab('news'));
 
-        logs.forEach(log => {
-            const logDiv = document.createElement('div');
-            logDiv.classList.add('version-log');
-            const notesHtml = log.notes.map(note => `<li>${note}</li>`).join('');
-            logDiv.innerHTML = `<p><strong>Version ${log.version}</strong> (${log.date})</p><ul>${notesHtml}</ul>`;
-            versionContainer.appendChild(logDiv);
+    // 3. 팝업 외부 영역 클릭 시 팝업 닫힘 (news-popup 추가)
+    overlay.addEventListener('click', () => { closeAllPopups(); });
+
+    // 뉴스 탭 내용 동적 생성
+    const renderNewsContent = () => {
+        newsContent.innerHTML = ''; // 기존 내용 초기화
+        const updateLogs = getCurrentStrings().update_logs || [];
+        updateLogs.forEach(log => {
+            const newsItem = document.createElement('div');
+            newsItem.classList.add('news-item');
+            newsItem.textContent = `Version ${log.version}: ${log.date}`;
+            
+            // 3. 패치 노트 클릭 시 새 팝업 표시
+            newsItem.addEventListener('click', () => {
+                showNewsPopup(log); // [수정] showNewsPopup 호출
+            });
+            newsContent.appendChild(newsItem);
         });
-        showVersion(0);
     };
 
-    // 특정 버전을 보여주는 함수
-    const showVersion = (index) => {
-        const versionLogs = versionContainer.querySelectorAll('.version-log');
-        if (!versionLogs.length) return;
-        currentVersionIndex = index;
-        versionLogs.forEach((log, i) => {
-            log.style.display = (i === index) ? 'block' : 'none';
-        });
-        nextBtn.classList.toggle('disabled', index === 0);
-        prevBtn.classList.toggle('disabled', index === versionLogs.length - 1);
+    // [추가] 뉴스 팝업 표시 함수
+    const showNewsPopup = (log) => {
+        const newsPopup = document.getElementById('news-popup');
+        newsPopup.innerHTML = `<h2>Version ${log.version}: ${log.date}</h2><ul>${log.notes.map(note => `<li>${note}</li>`).join('')}</ul><button class="popup-close-button" onclick="document.getElementById('news-popup').style.display = 'none'; document.getElementById('update-popup').style.display = 'block';">닫기</button>`;
+        document.getElementById('update-popup').style.display = 'none'; // 기존 팝업 숨김
+        newsPopup.style.display = 'block'; // 새 팝업 표시
     };
-    
-    // 이전/다음 버튼 이벤트 리스너 (페이지 로드 시 한 번만 설정)
-    prevBtn.addEventListener('click', () => {
-        const totalVersions = versionContainer.querySelectorAll('.version-log').length;
-        if (currentVersionIndex < totalVersions - 1) {
-            showVersion(currentVersionIndex + 1);
-        }
-    });
-    nextBtn.addEventListener('click', () => {
-        if (currentVersionIndex > 0) {
-            showVersion(currentVersionIndex - 1);
-        }
-    });
 
-    // 최종적으로 '업데이트 내역' 버튼에 클릭 이벤트 할당
-    updateButton.addEventListener('click', () => {
-        renderUpdateHistory();     // 클릭 시 내용만 다시 그림
-        showPopup('update-popup'); // 팝업 표시
-    });
-
-    // 2. 나머지 팝업 버튼들
+    // 2. 나머지 팝업 버튼들 (변경 없음)
     document.getElementById('open-login-modal-btn').addEventListener('click', () => showPopup('auth-modal'));
     document.getElementById('profile-button').addEventListener('click', () => {
         updateProfilePopup(currentUser ? userData : guestData);
         showPopup('profile-popup');
     });
-    
+
     // --- 나머지 컨트롤러 로직 (수정 없음) ---
     document.getElementById('show-signup').addEventListener('click', e => { e.preventDefault(); document.getElementById('login-form').style.display = 'none'; document.getElementById('signup-form').style.display = 'block'; });
     document.getElementById('show-login').addEventListener('click', e => { e.preventDefault(); document.getElementById('signup-form').style.display = 'none'; document.getElementById('login-form').style.display = 'block'; });
@@ -140,7 +129,7 @@ function setupEventListeners() {
         if (result.success) closeAllPopups(); else alert(result.message);
     });
     document.getElementById('logout-button').addEventListener('click', () => { logOut(); alert("로그아웃 되었습니다."); });
-    
+
     const langButton = document.getElementById('language-button');
     const langDropdown = document.getElementById('language-dropdown');
     langButton.addEventListener('click', e => { e.stopPropagation(); langDropdown.classList.toggle('show-dropdown'); });
@@ -151,7 +140,7 @@ function setupEventListeners() {
             await loadLanguage(e.target.dataset.lang);
         }
     });
-    
+
     document.getElementById('feedback-toggle-btn').addEventListener('click', () => {
         document.getElementById('feedback-widget').classList.toggle('open');
     });

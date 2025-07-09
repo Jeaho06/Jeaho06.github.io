@@ -300,12 +300,22 @@ input:checked + .slider:before {
   display: none; position: fixed; top: 50%; left: 50%;
   transform: translate(-50%, -50%); width: 450px; background-color: white;
   border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-  padding: 25px; z-index: 2002; box-sizing: border-box;
+  padding: 25px 25px 80px; /* 아래쪽 여백을 확보하여 버튼 공간을 만듭니다. */ z-index: 2002; box-sizing: border-box; 
+  /* ▼ 아래 속성들을 추가/변경하여 팝업 스타일을 일관되게 유지합니다. ▼ */
+  width: 350px; /* 너비를 고정합니다. */
+  max-height: 80vh; /* 최대 높이를 설정하여 화면을 넘어가지 않도록 합니다. */
+  overflow-y: auto; /* 내용이 많을 경우 스크롤을 추가합니다. */
 }
 .popup h2 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; }
 .popup-close-button {
-  display: block; margin: 20px auto 0; padding: 8px 20px; cursor: pointer;
-  border-radius: 5px; border: 1px solid #ccc; background-color: #f0f0f0;
+  position: absolute; /* 팝업 하단에 고정 */
+  bottom: 25px;
+  left: 25px;
+  width: calc(100% - 50px); /* 팝업 너비에 맞춤 (좌우 여백 제외) */
+  box-sizing: border-box;
+  margin: 0; /* 기존 margin 제거 */
+  padding: 12px 20px; /* 버튼 크기 조정 */
+  cursor: pointer; border-radius: 5px; border: 1px solid #ccc; background-color: #f0f0f0;
 }
 .popup-close-button:hover { background-color: #e0e0e0; }
 #how-to-play-popup .popup-content, #update-popup .popup-content { margin-top: 15px; }
@@ -433,6 +443,47 @@ input:checked + .slider:before {
   margin-top: 20px;
   padding-top: 15px;
   border-top: 1px solid #eee;
+}
+
+.update-popup-redesign,
+#news-popup {
+    width: 350px;
+    height: 600px;
+}
+
+.update-popup-redesign .popup-header {
+    display: flex;
+    border-bottom: 1px solid #eee;
+}
+
+.update-popup-redesign .tab-button {
+    flex: 1;
+    padding: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    border: 1px solid black; /* 1. 테두리 추가 */
+}
+
+.update-popup-redesign .tab-button.active {
+    background-color: #f0f0f0;
+}
+
+.update-popup-redesign .tab-content {
+    padding: 15px;
+}
+
+.update-popup-redesign #news-content .news-item {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.update-popup-redesign #news-content .news-item.active {
+    background-color: #f0f0f0;
+    border-color: #888;
 }
 
 #profile-popup h3 {

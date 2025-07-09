@@ -1,5 +1,5 @@
 {
-  "update_history_btn": "Updates",
+  "mail_btn": "Mail",
   "language_btn": "Language",
   "update_history_title": "Update History",
   "close_btn": "Close",
@@ -68,6 +68,10 @@
   "logout_success_alert": "You have been logged out.",
   "guest_save_notice": "As a guest, game records are saved temporarily in this browser. To preserve your records, please sign up.",
   "profile_btn": "Profile",
+  "mail_tab": "Mail",
+  "news_tab": "News",
+  "no_new_mail": "No new mail!",
+  "privacy_policy": "Privacy Policy",
   "stats_title": "Stats",
   "achievements_title": "Achievements",
   "stats_wins": "Wins",
@@ -81,7 +85,25 @@
   "stats_draws": "Draws",
   "system_draw": "Draw",
   "update_logs": [
-    { "version": "1.3", "date": "2025-06-29", "notes": ["Improved AI reasoning and explanation logic"] },
+    {
+      "version": "1.5",
+      "date": "2025-07-09",
+      "notes": [
+        "Introduced Level & Experience (XP) system.",
+        "Added XP gain based on game results.",
+        "Added golden visual effect and sound for level-ups."
+      ]
+    },
+    {
+      "version": "1.4",
+      "date": "2025-07-02",
+      "notes": [
+        "Added level and experience display to the profile popup.",
+        "UI/UX Improvement: Redesigned the Mail/News popup for a consistent look and feel.",
+        "Added sound effects to button clicks."
+      ]
+    },
+    { "version": "1.3", "date": "2025-07-01", "notes": ["Added Login and Sign Up features"] },
     { "version": "1.2", "date": "2025-06-30", "notes": ["Added new cheat 'Destiny's Denial'", "Introduced multi-language support"] },
     { "version": "1.1", "date": "2025-06-29", "notes": ["Added UI for cheat control", "Added move counter to the log"] },
     { "version": "1.0", "date": "2025-06-28", "notes": ["Initial release of JeahoGames Omok"] }
