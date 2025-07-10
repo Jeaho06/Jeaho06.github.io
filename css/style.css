@@ -158,6 +158,28 @@ input:checked + .slider:before {
   white-space: nowrap;
 }
 
+/* 컨트롤 박스 내부의 구분선과 승률 표시 스타일 */
+#cheat-controls hr {
+    border: none;
+    border-top: 1px solid #e0e0e0;
+    margin: 15px 0;
+}
+
+#ai-win-rate-container h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #555;
+    font-weight: normal;
+}
+
+#ai-win-rate-display {
+    font-size: 28px;
+    font-weight: bold;
+    color: #337ab7;
+    margin: 0;
+}
+
 .chat-container {
   display: flex;
   justify-content: center;

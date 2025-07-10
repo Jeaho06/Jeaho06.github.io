@@ -4,6 +4,7 @@
 // [수정] updateUserStats 대신 updateUserGameResult를 import 합니다.
 import { createBoardUI, placeStone, removeStone, logMove, logReason, showEndGameMessage, getString, showLevelUpAnimation } from './ui.js';
 import { db, updateUserGameResult } from './firebase.js';
+import { openingBook } from './openings.js';
 
 // --- 원본 script.js의 전역 변수들을 모듈의 최상위 스코프로 이동 ---
 let board;
@@ -11,6 +12,7 @@ let isAITurn;
 let lastMove;
 let isFirstMove;
 let moveCount;
+let moveHistory;
 let gameOver;
 let isDestinyDenialUsed;
 let bombState;
@@ -37,12 +39,30 @@ export function resetGame() {
     lastMove = null;
     isFirstMove = true;
     moveCount = 0;
+    moveHistory = [];
     isDestinyDenialUsed = false;
     bombState = { isArmed: false, col: null, row: null };
     gameOver = false;
     document.getElementById('move-log').innerHTML = '';
     document.getElementById('reasoning-log').innerHTML = '';
     createBoardUI();
+    updateAIWinRateUI(0); // 승률 표시를 50%로 초기화
+}
+
+/**
+ * AI의 판세 분석 점수를 기반으로 예상 승률 UI를 업데이트합니다.
+ * @param {number} score - AI가 판단한 현재 판의 점수
+ */
+function updateAIWinRateUI(score) {
+    if (gameOver) return;
+
+    // 점수를 0-100% 범위의 확률로 변환 (Sigmoid 함수 활용)
+    // 점수 0점 = 50%, 점수가 높을수록 100%에, 낮을수록 0%에 가까워집니다.
+    const winProbability = 1 / (1 + Math.exp(-score / 5000));
+    const winRate = Math.round(winProbability * 100);
+
+    const displayElement = document.getElementById('ai-win-rate-display');
+    if (displayElement) displayElement.textContent = `${winRate}%`;
 }
 
 // js/game.js 파일의 setupBoardClickListener 함수를 아래 코드로 교체하세요.
@@ -89,6 +109,7 @@ export function setupBoardClickListener() {
     if (isForbiddenMove(col, row, 1)) { logReason(getString('user_title'), getString('system_forbidden')); return; }
     
     board[row][col] = 1; 
+    moveHistory.push({ col, row });
     placeStone(col, row, 'black'); 
     playSound("Movement.mp3");
     logMove(++moveCount, `${getString('user_title')}: ${convertCoord(col, row)}??`);
@@ -98,6 +119,10 @@ export function setupBoardClickListener() {
     if (checkWin(board, 1)) { endGame(getString('system_user_win')); return; }
     if (checkDraw()) { endGame(getString('system_draw')); return; }
     
+    // 사용자가 수를 둔 후, AI가 생각하는 판세 점수를 계산하여 승률 UI 업데이트
+    const { score: currentScore } = findBestMove();
+    updateAIWinRateUI(currentScore);
+
     isAITurn = true;
     setTimeout(aiMove, 500);
   });
@@ -192,7 +217,7 @@ function aiMove() {
 // js/game.js 파일의 performNormalMove 함수를 아래 코드로 교체하세요.
 
 function performNormalMove() {
-    const move = findBestMove();
+    const { move, score } = findBestMove();
     if (move && board[move.row][move.col] === 0) {
         // [수정] 점수 계산 및 이유 생성 로직 전체 복구
         const myContext = calculateScore(move.col, move.row, -1);
@@ -211,6 +236,7 @@ function performNormalMove() {
 
         // --- 이하 로직은 동일 ---
         board[move.row][move.col] = -1;
+        moveHistory.push({ col: move.col, row: move.row });
         placeStone(move.col, move.row, 'white');
         playSound("Movement.mp3");
         logMove(++moveCount, `${getString('ai_title')}: ${aiCoord}`);
@@ -224,7 +250,7 @@ function performNormalMove() {
         if (checkWin(board, -1)) { 
             endGame(getString('system_ai_win')); 
         } else if (checkDraw()) { 
-            endGame(getString('system_draw')); 
+
         } else { 
             isAITurn = false; 
         }
@@ -257,9 +283,18 @@ function detonateBomb() {
         }
         bombEffect.remove();
         bombState = { isArmed: false, col: null, row: null };
-        if (checkWin(board, 1)) { endGame(getString('system_user_win')); } 
-        else if (checkWin(board, -1)) { endGame(getString('system_ai_win')); }
-        else { isAITurn = false; }
+        if (checkWin(board, 1)) { 
+            endGame(getString('system_user_win')); 
+        } else if (checkWin(board, -1)) { 
+            endGame(getString('system_ai_win')); 
+        } else {
+            isAITurn = false;
+            // 폭발 후 게임이 끝나지 않았다면, 변경된 판세를 기반으로 승률을 업데이트합니다.
+            if (!gameOver) {
+                const { score } = findBestMove();
+                updateAIWinRateUI(score);
+            }
+        }
     }, 500);
 }
 
@@ -274,6 +309,8 @@ function placeBomb() {
         logMove(++moveCount, `${getString('ai_title')}: ${bombCoord}!!`);
         logReason(getString('ai_title'), getString('ai_bomb_place_reason', { coord: bombCoord }));
         isAITurn = false;
+        const { score } = findBestMove();
+        updateAIWinRateUI(score);
         return true;
     }
     return false;
@@ -305,6 +342,8 @@ function performStoneSwap() {
             placeStone(userStone.col, userStone.row, 'white');
             board[aiStoneToSwap.row][aiStoneToSwap.col] = 1;
             placeStone(aiStoneToSwap.col, aiStoneToSwap.row, 'black');
+            const { score } = findBestMove();
+            updateAIWinRateUI(score);
             playSound("Movement.mp3");
             if (checkWin(board, -1)) { endGame(getString('system_ai_win')); }
             else { isAITurn = false; }
@@ -359,18 +398,63 @@ function isCriticalStone(x, y, player) {
     return false;
 }
 
+/**
+ * 오프닝 북에서 현재 수순에 맞는 다음 수를 찾습니다.
+ * @returns {object|null} 찾은 경우 좌표 객체, 못 찾은 경우 null
+ */
+function findMoveInOpeningBook() {
+    if (moveHistory.length === 0) return null;
+
+    // 현재까지의 수순으로 키를 생성합니다. (e.g., "9,9_9,10")
+    const key = moveHistory.map(m => `${m.col},${m.row}`).join('_');
+    const possibleMoves = openingBook[key];
+
+    if (possibleMoves && possibleMoves.length > 0) {
+        // 오프닝 북에 정의된 수들 중, 현재 비어있는 칸을 찾습니다.
+        const validMoves = possibleMoves.filter(move => board[move.row][move.col] === 0);
+        if (validMoves.length > 0) {
+            // 여러 개의 유효한 수가 있다면 그중 하나를 무작위로 선택합니다.
+            return validMoves[Math.floor(Math.random() * validMoves.length)];
+        }
+    }
+    // 일치하는 수순이 없는 경우
+    return null;
+}
+
 function findBestMove() {
-    let bestMove = null; let bestScore = -Infinity;
+    let bestMove = null;
+    let bestScore = -Infinity;
     const relevantMoves = getRelevantMoves();
+
+    if (relevantMoves.length === 0) {
+        // 둘 곳이 없는 비상 상황 (이론상 발생하지 않음)
+        return { move: { col: 9, row: 9 }, score: 0 };
+    }
+
+    // [핵심] 오프닝 북 로직: 게임 초반(7수 미만)에만 작동합니다.
+    if (moveCount < 7) {
+        const openingMove = findMoveInOpeningBook();
+        if (openingMove) {
+            // 오프닝 북에서 찾은 수를 높은 점수와 함께 반환하여 즉시 선택하도록 합니다.
+            // 사유 로깅은 performNormalMove에서 일괄 처리하여 더 그럴듯하게 보입니다.
+            return { move: openingMove, score: 50000 };
+        }
+    }
+
+    // 오프닝 북에서 수를 찾지 못하면 기존의 계산 로직을 수행합니다.
     for (const move of relevantMoves) {
         if (board[move.row][move.col] === 0) {
             const myScore = calculateScore(move.col, move.row, -1).totalScore;
             const opponentScore = calculateScore(move.col, move.row, 1).totalScore;
             const totalScore = myScore + opponentScore;
-            if (totalScore > bestScore) { bestScore = totalScore; bestMove = move; }
+            if (totalScore > bestScore) {
+                bestScore = totalScore;
+                bestMove = move;
+            }
         }
     }
-    return bestMove || (relevantMoves.length > 0 ? relevantMoves[0] : { col: 9, row: 9 });
+    // 만약 유효한 수를 찾지 못했다면(예: 모든 관련 위치가 이미 채워짐), 첫 번째 관련 수나 중앙을 반환합니다.
+    return { move: bestMove || relevantMoves[0], score: bestScore };
 }
 
 function getRelevantMoves() {
@@ -410,18 +494,46 @@ function calculateScore(x, y, player) {
     return { totalScore, highestPattern };
 }
 
+// [수정] AI가 바둑판의 가장자리를 올바르게 인식하도록 점수 계산 로직을 개선합니다.
 function calculateScoreForLine(x, y, dx, dy, player) {
-    let count = 1, openEnds = 0;
+    let count = 1;
+    let openEnds = 0;
+
+    // 정방향(+) 탐색
     for (let i = 1; i < 5; i++) {
         const nx = x + i * dx, ny = y + i * dy;
-        if (nx < 0 || ny < 0 || nx >= 19 || ny >= 19 || board[ny][nx] === -player) { openEnds++; break; }
-        if (board[ny][nx] === player) count++; else { openEnds++; break; }
+        // 보드 밖이거나 상대방 돌을 만나면 라인이 막힘 (닫힌 끝)
+        if (nx < 0 || ny < 0 || nx >= 19 || ny >= 19 || board[ny][nx] === -player) {
+            break;
+        }
+        // 빈 칸을 만나면 라인이 열려있음 (열린 끝)
+        if (board[ny][nx] === 0) {
+            openEnds++;
+            break;
+        }
+        // 우리 편 돌이면 계속 카운트
+        count++;
     }
+
+    // 역방향(-) 탐색
     for (let i = 1; i < 5; i++) {
         const nx = x - i * dx, ny = y - i * dy;
-        if (nx < 0 || ny < 0 || nx >= 19 || ny >= 19 || board[ny][nx] === -player) { openEnds++; break; }
-        if (board[ny][nx] === player) count++; else { openEnds++; break; }
+        if (nx < 0 || ny < 0 || nx >= 19 || ny >= 19 || board[ny][nx] === -player) {
+            break;
+        }
+        if (board[ny][nx] === 0) {
+            openEnds++;
+            break;
+        }
+        count++;
     }
+
+    // [핵심 수정] 양쪽이 막혀 더 이상 5목으로 발전할 수 없는 '죽은 라인'의 점수를 0으로 처리합니다.
+    // 예를 들어, 상대방 돌에 의해 ●OOO● 와 같이 양쪽이 막힌 3, 4는 위협이 되지 않습니다.
+    if (count < 5 && openEnds === 0) {
+        return 0;
+    }
+
     if (count >= 5) return 1000000;
     if (count === 4) return openEnds === 2 ? 100000 : 10000;
     if (count === 3) return openEnds === 2 ? 5000 : 500;

@@ -65,6 +65,7 @@
   "signup_success_alert": "Sign up successful! You will be logged in automatically.",
   "welcome_message": "Welcome, {nickname}",
   "logout_btn": "Logout",
+  "ai_win_rate_title": "AI Win Rate",
   "logout_success_alert": "You have been logged out.",
   "guest_save_notice": "As a guest, game records are saved temporarily in this browser. To preserve your records, please sign up.",
   "profile_btn": "Profile",
@@ -85,6 +86,14 @@
   "stats_draws": "Draws",
   "system_draw": "Draw",
   "update_logs": [
+    {
+      "version": "1.6",
+      "date": "2025-07-10",
+      "notes": [
+        "Added AI Win Rate display feature.",
+        "Enhanced AI's early-game response logic and performance."
+      ]
+    },
     {
       "version": "1.5",
       "date": "2025-07-09",

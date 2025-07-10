@@ -15,6 +15,7 @@
   "cheat_double_move": "2번 두기",
   "cheat_swap": "돌 바꾸기",
   "log_move_title": "기보 (좌표)",
+  "ai_win_rate_title": "AI 예상 승률",
   "game_over_xp_gained": "획득 경험치: +{xpGained} XP",
   "game_over_daily_bonus": "(일일 첫 승리 보너스!)",
   "game_over_xp_change": "경험치: {oldXp} / {reqOld} → {newXp} / {reqNew}",
@@ -85,6 +86,14 @@
   "stats_draws": "무승부",
   "system_draw": "무승부",
   "update_logs": [
+    {
+      "version": "1.6",
+      "date": "2025-07-10",
+      "notes": [
+        "AI 예상 승률 표시 기능 추가",
+        "AI 초반 대응 로직 강화 및 성능 개선"
+      ]
+    },
     {
       "version": "1.5",
       "date": "2025-07-09",

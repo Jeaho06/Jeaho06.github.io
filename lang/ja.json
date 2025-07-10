@@ -74,6 +74,7 @@
   "stats_win_rate": "勝率",
   "achievements_empty": "まだ達成した実績はありません。",
   "profile_title_user": "{nickname}さんのプロフィール",
+  "ai_win_rate_title": "AI予想勝率",
   "profile_title_guest": "ゲストプロフィール",
   "level_info_title": "レベル情報",
   "level_info_display": "LV. {level} ({currentXp} / {requiredXp} XP)",
@@ -85,6 +86,14 @@
   "no_new_mail": "新しいメールはありません！",
   "privacy_policy": "プライバシーポリシー",
   "update_logs": [
+    {
+      "version": "1.6",
+      "date": "2025-07-10",
+      "notes": [
+        "AIの予想勝率表示機能を追加",
+        "AIの序盤対応ロジックを強化し、性能を改善"
+      ]
+    },
     {
       "version": "1.5",
       "date": "2025-07-09",
