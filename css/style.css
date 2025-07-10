@@ -6,7 +6,8 @@ body {
   justify-content: center;
   min-height: 100vh;
   margin: 0;
-  background-color: #f0f0f0;
+  background-color: #e9ecef; /* 그라데이션 미지원 브라우저를 위한 대비책 */
+  background: linear-gradient(to bottom, #f8f9fa, #e9ecef); /* 차분한 회색 계열 그라데이션 */
   padding: 20px 0;
   box-sizing: border-box;
 }
@@ -18,6 +19,23 @@ body {
   margin-bottom: 20px;
   width: 90%;
   max-width: 1200px;
+}
+
+/* --- 1. 요청하신 전체 게임 UI를 감싸는 컨테이너 --- */
+.main-content-wrapper {
+  width: 95%;
+  max-width: 1250px; /* 내부 요소들을 모두 포함하도록 너비 조정 */
+  padding: 25px;
+  margin-bottom: 20px; /* 푸터와의 간격 */
+  background-color: #ffffff;
+  border: 1px solid #d1d1d1;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px; /* 내부 요소들(게임, 채팅, 레벨바) 사이의 간격 */
+  box-sizing: border-box;
 }
 
 .ai-container, .user-container {
@@ -347,7 +365,7 @@ input:checked + .slider:before {
   color: #ccc; border-color: #eee; cursor: not-allowed; background: none;
 }
 .site-footer {
-  margin-top: 20px;
+  margin-top: 30px; /* 3. 위쪽 여백을 늘려 새로운 컨테이너와 공간을 확보합니다. */
   padding: 10px;
   text-align: center;
   font-size: 14px;
@@ -547,15 +565,12 @@ input:checked + .slider:before {
 }
 
 /* --- 레벨 및 경험치 바 스타일 --- */
+/* 2. 레벨 바를 화면 하단 고정에서 일반 요소로 변경 */
 #level-bar-container {
-    position: fixed;
-    bottom: 0;
-    left: 0;
     width: 100%;
-    padding: 10px 20px;
+    padding: 0; /* 부모인 .main-content-wrapper에 padding이 있으므로 제거 */
     box-sizing: border-box;
-    z-index: 1500;
-    pointer-events: none;
+    /* position: fixed가 아니므로 z-index, pointer-events 등은 불필요합니다. */
     display: none; /* 로그아웃 상태에서는 숨김 */
 }
 #level-bar-background {

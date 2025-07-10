@@ -125,58 +125,63 @@
         <button class="popup-close-button" data-i18n-key="close_btn">닫기</button>
     </div>
     
-    <div class="game-container">
-        <div class="ai-container">
-            <div class="info-wrapper">
-                <h2 data-i18n-key="ai_title">인공지능</h2>
-                <div id="cheat-controls">
-                    <h3 data-i18n-key="cheat_allow_title">반칙 허용</h3>
-                    <div class="control-group">
-                        <label class="switch"><input type="checkbox" id="toggle-destiny-denial" checked><span class="slider"></span></label>
-                        <span data-i18n-key="cheat_veto">거부권</span>
-                    </div>
-                    <hr>
-                    <div class="control-group">
-                        <label class="switch"><input type="checkbox" id="toggle-bomb" checked><span class="slider"></span></label>
-                        <span data-i18n-key="cheat_bomb">폭탄 설치</span>
-                    </div>
-                    <div class="control-group">
-                        <label class="switch"><input type="checkbox" id="toggle-double-move" checked><span class="slider"></span></label>
-                        <span data-i18n-key="cheat_double_move">2번 두기</span>
-                    </div>
-                    <div class="control-group">
-                        <label class="switch"><input type="checkbox" id="toggle-swap" checked><span class="slider"></span></label>
-                        <span data-i18n-key="cheat_swap">돌 바꾸기</span>
+    <!-- ▼▼▼ 여기에 새로운 wrapper를 추가합니다 ▼▼▼ -->
+    <div class="main-content-wrapper">
+        <div class="game-container">
+            <div class="ai-container">
+                <div class="info-wrapper">
+                    <h2 data-i18n-key="ai_title">인공지능</h2>
+                    <div id="cheat-controls">
+                        <h3 data-i18n-key="cheat_allow_title">반칙 허용</h3>
+                        <div class="control-group">
+                            <label class="switch"><input type="checkbox" id="toggle-destiny-denial" checked><span class="slider"></span></label>
+                            <span data-i18n-key="cheat_veto">거부권</span>
+                        </div>
+                        <hr>
+                        <div class="control-group">
+                            <label class="switch"><input type="checkbox" id="toggle-bomb" checked><span class="slider"></span></label>
+                            <span data-i18n-key="cheat_bomb">폭탄 설치</span>
+                        </div>
+                        <div class="control-group">
+                            <label class="switch"><input type="checkbox" id="toggle-double-move" checked><span class="slider"></span></label>
+                            <span data-i18n-key="cheat_double_move">2번 두기</span>
+                        </div>
+                        <div class="control-group">
+                            <label class="switch"><input type="checkbox" id="toggle-swap" checked><span class="slider"></span></label>
+                            <span data-i18n-key="cheat_swap">돌 바꾸기</span>
+                        </div>
                     </div>
                 </div>
             </div>
+            <div class="board-container">
+                <div id="game-board">
+                    </div>
+            </div>
+            <div class="user-container">
+                <h2 data-i18n-key="user_title">사용자</h2>
+            </div>
         </div>
-        <div class="board-container">
-            <div id="game-board">
-                </div>
+    
+        <div class="chat-container">
+            <div class="chat-wrapper">
+                <h3 data-i18n-key="log_move_title">기보 (좌표)</h3>
+                <div id="move-log" class="chat-box"></div>
+            </div>
+            <div class="chat-wrapper">
+                <h3 data-i18n-key="log_reason_title">설명</h3>
+                <div id="reasoning-log" class="chat-box"></div>
+            </div>
         </div>
-        <div class="user-container">
-            <h2 data-i18n-key="user_title">사용자</h2>
+    
+        <div id="level-bar-container">
+            <div id="level-bar-background">
+                <div id="level-bar-fill"></div>
+                <span id="level-bar-text"></span>
+            </div>
         </div>
     </div>
 
-    <div class="chat-container">
-        <div class="chat-wrapper">
-            <h3 data-i18n-key="log_move_title">기보 (좌표)</h3>
-            <div id="move-log" class="chat-box"></div>
-        </div>
-        <div class="chat-wrapper">
-            <h3 data-i18n-key="log_reason_title">설명</h3>
-            <div id="reasoning-log" class="chat-box"></div>
-        </div>
-    </div>
-
-    <div id="level-bar-container">
-        <div id="level-bar-background">
-            <div id="level-bar-fill"></div>
-            <span id="level-bar-text"></span>
-        </div>
-    </div>
+    <!-- ▲▲▲ 새로운 wrapper는 여기까지 입니다 ▲▲▲ -->
 
     <footer class="site-footer">
         <a href="https://github.com/Jeaho06" target="_blank">GitHub Profile</a>
