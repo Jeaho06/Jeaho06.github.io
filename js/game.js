@@ -249,11 +249,13 @@ function performNormalMove() {
         
         if (checkWin(board, -1)) { 
             endGame(getString('system_ai_win')); 
-        } else if (checkDraw()) { 
-
+        } else if (checkDraw()) {
+            endGame(getString('system_draw'));
         } else { 
             isAITurn = false; 
         }
+        // AI가 수를 둔 후, 현재 판세의 점수를 기반으로 승률을 다시 업데이트합니다.
+        updateAIWinRateUI(score);
     } else {
         logReason(getString('ai_title'), getString('system_no_move'));
         isAITurn = false;
@@ -444,9 +446,12 @@ function findBestMove() {
     // 오프닝 북에서 수를 찾지 못하면 기존의 계산 로직을 수행합니다.
     for (const move of relevantMoves) {
         if (board[move.row][move.col] === 0) {
-            const myScore = calculateScore(move.col, move.row, -1).totalScore;
+            // [수정] AI의 공격적인 성향을 강화하기 위해 공격 점수에 가중치를 부여합니다.
+            const aggressionFactor = 1.2;
+            const myScore = calculateScore(move.col, move.row, -1).totalScore * aggressionFactor;
             const opponentScore = calculateScore(move.col, move.row, 1).totalScore;
             const totalScore = myScore + opponentScore;
+
             if (totalScore > bestScore) {
                 bestScore = totalScore;
                 bestMove = move;
@@ -536,7 +541,8 @@ function calculateScoreForLine(x, y, dx, dy, player) {
 
     if (count >= 5) return 1000000;
     if (count === 4) return openEnds === 2 ? 100000 : 10000;
-    if (count === 3) return openEnds === 2 ? 5000 : 500;
+    // [수정] 한쪽이 막힌 3(닫힌 3)의 방어 점수 가치를 약간 낮춰, AI가 덜 중요한 방어보다 자신의 공격을 선호하게 만듭니다.
+    if (count === 3) return openEnds === 2 ? 5000 : 400;
     if (count === 2) return openEnds === 2 ? 100 : 10;
     if (count === 1 && openEnds === 2) return 1;
     return 0;
