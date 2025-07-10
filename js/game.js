@@ -254,8 +254,12 @@ function performNormalMove() {
         } else { 
             isAITurn = false; 
         }
-        // AI가 수를 둔 후, 현재 판세의 점수를 기반으로 승률을 다시 업데이트합니다.
-        updateAIWinRateUI(score);
+        // AI가 수를 둔 후, 변경된 판세를 다시 평가하여 승률을 업데이트합니다.
+        if (!gameOver) {
+            // AI가 수를 둔 후의 판세에 대한 최고 점수를 다시 계산합니다.
+            const { score: newBoardScore } = findBestMove();
+            updateAIWinRateUI(newBoardScore);
+        }
     } else {
         logReason(getString('ai_title'), getString('system_no_move'));
         isAITurn = false;
