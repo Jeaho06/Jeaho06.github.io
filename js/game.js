@@ -1,12 +1,13 @@
-// game.js 파일의 endGame 함수를 찾아 아래 코드로 교체하세요.
-
 // --- 필요한 함수들을 다른 모듈에서 import ---
-// [수정] updateUserStats 대신 updateUserGameResult를 import 합니다.
-import { createBoardUI, placeStone, removeStone, logMove, logReason, showEndGameMessage, getString, showLevelUpAnimation } from './ui.js';
+import { createBoardUI, placeStone, removeStone, logMove, logReason, showEndGameMessage, getString, showLevelUpAnimation, convertCoord } from './ui.js';
 import { db, updateUserGameResult } from './firebase.js';
-import { openingBook } from './openings.js';
+import { findBestMoveAI } from './ai.js';
+import { resetWinRate, updateWinRate } from './winRateManager.js';
+import { executeDestinyDenial } from './cheats/destinyDenial.js';
+import { executePlaceBomb } from './cheats/placeBomb.js';
+import { executeDoubleMove } from './cheats/doubleMove.js';
+import { executeStoneSwap } from './cheats/stoneSwap.js';
 
-// --- 원본 script.js의 전역 변수들을 모듈의 최상위 스코프로 이동 ---
 let board;
 let isAITurn;
 let lastMove;
@@ -31,8 +32,6 @@ export function initGameState(user, uData, gData) {
     guestData = gData;
 }
 
-// --- 이하 원본 script.js의 모든 게임 관련 함수 (버그 수정 포함) ---
-
 export function resetGame() {
     board = Array(19).fill(null).map(() => Array(19).fill(0));
     isAITurn = false;
@@ -46,26 +45,9 @@ export function resetGame() {
     document.getElementById('move-log').innerHTML = '';
     document.getElementById('reasoning-log').innerHTML = '';
     createBoardUI();
-    updateAIWinRateUI(0); // 승률 표시를 50%로 초기화
+    resetWinRate();
 }
 
-/**
- * AI의 판세 분석 점수를 기반으로 예상 승률 UI를 업데이트합니다.
- * @param {number} score - AI가 판단한 현재 판의 점수
- */
-function updateAIWinRateUI(score) {
-    if (gameOver) return;
-
-    // 점수를 0-100% 범위의 확률로 변환 (Sigmoid 함수 활용)
-    // 점수 0점 = 50%, 점수가 높을수록 100%에, 낮을수록 0%에 가까워집니다.
-    const winProbability = 1 / (1 + Math.exp(-score / 5000));
-    const winRate = Math.round(winProbability * 100);
-
-    const displayElement = document.getElementById('ai-win-rate-display');
-    if (displayElement) displayElement.textContent = `${winRate}%`;
-}
-
-// js/game.js 파일의 setupBoardClickListener 함수를 아래 코드로 교체하세요.
 
 export function setupBoardClickListener() {
   const boardElement = document.getElementById("game-board");
@@ -80,34 +62,25 @@ export function setupBoardClickListener() {
 
     if (col < 0 || col >= 19 || row < 0 || row >= 19) return;
     
-    // [수정] 사용자가 폭탄을 클릭하는 로직을 제거합니다.
-    // if (bombState.isArmed && bombState.col === col && bombState.row === row) {
-    //     detonateBomb();
-    //     return;
-    // }
-
     if (board[row][col] !== 0) {
         logReason(getString('user_title'), `[${convertCoord(col, row)}] ${getString('system_already_placed')}`);
         return; 
     }
     
+    // 거부권 확인을 위해 임시로 돌을 놓아봄
     board[row][col] = 1;
     const isWinningMove = checkWin(board, 1);
-    board[row][col] = 0;
+    board[row][col] = 0; // 확인 후 즉시 되돌림
     
-    if (isWinningMove && !isDestinyDenialUsed && document.getElementById('toggle-destiny-denial').checked) {
-        isDestinyDenialUsed = true; board[row][col] = 3; 
-        const deniedSpot = document.createElement("div"); deniedSpot.className = "denied-spot";
-        deniedSpot.style.left = `${col * gridSize + gridSize / 2}px`; deniedSpot.style.top = `${row * gridSize + gridSize / 2}px`;
-        newBoardElement.appendChild(deniedSpot);
-        const deniedCoord = convertCoord(col, row);
-        logMove(++moveCount, `${getString('ai_title')}: ${getString('cheat_veto')}!!`);
-        logReason(getString('ai_title'), getString('ai_veto_reason', {coord: deniedCoord}));
-        return; 
+    // [수정] '거부권' 로직을 모듈 호출로 변경
+    const denialContext = { board, col, row, isWinningMove, isDestinyDenialUsed, moveCount };
+    if (executeDestinyDenial(denialContext)) {
+        isDestinyDenialUsed = true; // 스킬 사용 상태 업데이트
+        moveCount++; // 수 카운트 업데이트
+        return; // AI 턴으로 넘어가지 않고 사용자 턴 유지
     }
     
     if (isForbiddenMove(col, row, 1)) { logReason(getString('user_title'), getString('system_forbidden')); return; }
-    
     board[row][col] = 1; 
     moveHistory.push({ col, row });
     placeStone(col, row, 'black'); 
@@ -119,20 +92,13 @@ export function setupBoardClickListener() {
     if (checkWin(board, 1)) { endGame(getString('system_user_win')); return; }
     if (checkDraw()) { endGame(getString('system_draw')); return; }
     
-    // 사용자가 수를 둔 후, AI가 생각하는 판세 점수를 계산하여 승률 UI 업데이트
     const { score: currentScore } = findBestMove();
-    updateAIWinRateUI(currentScore);
+    updateWinRate(currentScore, moveCount);
 
     isAITurn = true;
     setTimeout(aiMove, 500);
   });
 }
-
-// js/game.js
-
-// ... (다른 부분은 그대로 유지) ...
-
-// game.js
 
 async function endGame(message) {
     if (gameOver) return;
@@ -151,8 +117,6 @@ async function endGame(message) {
         if (result) {
             eventData.xpResult = result;
             eventData.oldUserData = oldUserData;
-            
-            // ▼▼▼ 핵심 수정 부분 ▼▼▼
 
             // 1. 게임 종료 메시지를 먼저 표시합니다.
             showEndGameMessage(eventData);
@@ -165,7 +129,6 @@ async function endGame(message) {
                 showLevelUpAnimation(result.newLevel - 1, result.newLevel);
             }
 
-            // ▲▲▲ 여기까지 입니다 ▲▲▲
         } else {
             // result가 없는 경우 (DB 업데이트 실패 등)에도 기본 메시지는 표시
             showEndGameMessage(eventData);
@@ -183,43 +146,58 @@ async function endGame(message) {
         showEndGameMessage(eventData);
         logReason("시스템", message);
     }
-
-    /* 기존에 이 위치에 있던 showEndGameMessage와 logReason 호출은 
-    if (currentUser) 블록 안으로 이동했으므로 여기서는 삭제합니다.
-    */
 }
-
-// js/game.js 파일의 aiMove 함수를 아래 코드로 교체하세요.
 
 function aiMove() {
   if (gameOver) return;
-  
-  // [수정] AI 턴이 시작될 때 폭탄이 설치되어 있으면 즉시 기폭시키는 로직을 복구합니다.
-  if (bombState.isArmed) {
+    if (bombState.isArmed) {
     detonateBomb();
-    return;
+    return; 
   }
 
   const willCheat = Math.random() < cheatProbability && !isFirstMove && lastMove;
   if (willCheat) {
     const availableCheats = [];
-    if (document.getElementById('toggle-bomb').checked) availableCheats.push(placeBomb);
-    if (document.getElementById('toggle-double-move').checked) availableCheats.push(performDoubleMove);
-    if (document.getElementById('toggle-swap').checked) availableCheats.push(performStoneSwap);
+    if (document.getElementById('toggle-bomb').checked) availableCheats.push(executePlaceBomb);
+    if (document.getElementById('toggle-double-move').checked) availableCheats.push(executeDoubleMove);
+    if (document.getElementById('toggle-swap').checked) availableCheats.push(executeStoneSwap);
+    
     if (availableCheats.length > 0) {
       const chosenCheat = availableCheats[Math.floor(Math.random() * availableCheats.length)];
-      const actionResult = chosenCheat();
-      if(actionResult) return;
+      
+      const context = {
+          board, bombState, lastMove, moveCount,
+          isAITurn,
+          performNormalMove: () => performNormalMove(), // 함수 참조 전달
+          playSound, updateWinRate, findBestMove, endGame, checkWin, gameOver: () => gameOver,
+          calculateScore, // [추가] stoneSwap 스킬에 필요한 함수들
+          convertCoord, 
+          removeStone, 
+          placeStone,
+          getString,
+          logMove,
+          logReason,
+          passTurnToPlayer
+        
+      };
+      
+      if (chosenCheat(context)) {
+          moveCount = context.moveCount; // 컨텍스트에서 변경되었을 수 있는 값 업데이트
+          isAITurn = context.isAITurn;
+          return; // 치트 사용 성공 시 일반 착수는 건너뜀
+      }
     }
   }
   performNormalMove();
 }
-// js/game.js 파일의 performNormalMove 함수를 아래 코드로 교체하세요.
+
+function passTurnToPlayer() {
+    isAITurn = false;
+}
 
 function performNormalMove() {
     const { move, score } = findBestMove();
     if (move && board[move.row][move.col] === 0) {
-        // [수정] 점수 계산 및 이유 생성 로직 전체 복구
         const myContext = calculateScore(move.col, move.row, -1);
         const opponentContext = calculateScore(move.col, move.row, 1);
         let reasonKey = 'reason_default';
@@ -234,14 +212,11 @@ function performNormalMove() {
         const reason = getString(reasonKey);
         const aiCoord = convertCoord(move.col, move.row);
 
-        // --- 이하 로직은 동일 ---
         board[move.row][move.col] = -1;
         moveHistory.push({ col: move.col, row: move.row });
         placeStone(move.col, move.row, 'white');
         playSound("Movement.mp3");
         logMove(++moveCount, `${getString('ai_title')}: ${aiCoord}`);
-        
-        // [수정] 구체적인 이유를 로그에 기록하도록 복구
         logReason(getString('ai_title'), getString('ai_reason_template', { reason: reason, coord: aiCoord }));
         
         isFirstMove = false; 
@@ -254,11 +229,10 @@ function performNormalMove() {
         } else { 
             isAITurn = false; 
         }
-        // AI가 수를 둔 후, 변경된 판세를 다시 평가하여 승률을 업데이트합니다.
+        
         if (!gameOver) {
-            // AI가 수를 둔 후의 판세에 대한 최고 점수를 다시 계산합니다.
             const { score: newBoardScore } = findBestMove();
-            updateAIWinRateUI(newBoardScore);
+            updateWinRate(newBoardScore, moveCount);
         }
     } else {
         logReason(getString('ai_title'), getString('system_no_move'));
@@ -275,6 +249,7 @@ function detonateBomb() {
     const boardElement = document.getElementById("game-board");
     const bombEffect = document.createElement("div");
     bombEffect.className = "bomb-effect";
+    const gridSize = 30;
     bombEffect.style.left = `${center.col * gridSize + gridSize / 2}px`;
     bombEffect.style.top = `${center.row * gridSize + gridSize / 2}px`;
     boardElement.appendChild(bombEffect);
@@ -283,187 +258,32 @@ function detonateBomb() {
             for (let c = center.col - 1; c <= center.col + 1; c++) {
                 if (r >= 0 && r < 19 && c >= 0 && c < 19) {
                     removeStone(c, r);
-                    board[r][c] = 0; // [수정] 원본 버그 수정을 위해 이 줄을 추가합니다.
+                    board[r][c] = 0;
                 }
             }
         }
         bombEffect.remove();
-        bombState = { isArmed: false, col: null, row: null };
+        bombState.isArmed = false;
+        bombState.col = null;
+        bombState.row = null;
+        
         if (checkWin(board, 1)) { 
             endGame(getString('system_user_win')); 
         } else if (checkWin(board, -1)) { 
             endGame(getString('system_ai_win')); 
         } else {
             isAITurn = false;
-            // 폭발 후 게임이 끝나지 않았다면, 변경된 판세를 기반으로 승률을 업데이트합니다.
             if (!gameOver) {
                 const { score } = findBestMove();
-                updateAIWinRateUI(score);
+                updateWinRate(score, moveCount);
             }
         }
     }, 500);
 }
 
-function placeBomb() {
-    const move = findBestBombLocation();
-    if (move) {
-        board[move.row][move.col] = 2;
-        bombState = { isArmed: true, col: move.col, row: move.row };
-        placeStone(move.col, move.row, 'bomb');
-        playSound("tnt_installation.mp3");
-        const bombCoord = convertCoord(move.col, move.row);
-        logMove(++moveCount, `${getString('ai_title')}: ${bombCoord}!!`);
-        logReason(getString('ai_title'), getString('ai_bomb_place_reason', { coord: bombCoord }));
-        isAITurn = false;
-        const { score } = findBestMove();
-        updateAIWinRateUI(score);
-        return true;
-    }
-    return false;
-}
-
-function performDoubleMove() {
-    performNormalMove();
-    if (gameOver) return true;
-    setTimeout(() => {
-        if(gameOver) return;
-        performNormalMove();
-    }, 800);
-    return true;
-}
-
-function performStoneSwap() {
-    if (!lastMove) return false;
-    const userStone = lastMove;
-    const aiStoneToSwap = findBestSwapTarget();
-    if (aiStoneToSwap) {
-        const userCoord = convertCoord(userStone.col, userStone.row);
-        const aiCoord = convertCoord(aiStoneToSwap.col, aiStoneToSwap.row);
-        logMove(++moveCount, `${getString('ai_title')}: ${userCoord}↔${aiCoord}!!`);
-        logReason(getString('ai_title'), getString('ai_swap_reason', { userCoord, aiCoord }));
-        removeStone(userStone.col, userStone.row);
-        removeStone(aiStoneToSwap.col, aiStoneToSwap.row);
-        setTimeout(() => {
-            board[userStone.row][userStone.col] = -1;
-            placeStone(userStone.col, userStone.row, 'white');
-            board[aiStoneToSwap.row][aiStoneToSwap.col] = 1;
-            placeStone(aiStoneToSwap.col, aiStoneToSwap.row, 'black');
-            const { score } = findBestMove();
-            updateAIWinRateUI(score);
-            playSound("Movement.mp3");
-            if (checkWin(board, -1)) { endGame(getString('system_ai_win')); }
-            else { isAITurn = false; }
-        }, 500);
-        return true;
-    }
-    return false;
-}
-
-function findBestBombLocation() {
-    let bestLocation = null; let maxScore = -Infinity;
-    for (let r = 0; r < 19; r++) {
-        for (let c = 0; c < 19; c++) {
-            if (board[r][c] === 0) {
-                let currentScore = 0;
-                for (let y = r - 1; y <= r + 1; y++) for (let x = c - 1; x <= c + 1; x++) {
-                    if (y >= 0 && y < 19 && x >= 0 && x < 19) {
-                        if (board[y][x] === 1) { currentScore += 3; if (isCriticalStone(x, y, 1)) currentScore += 5; }
-                        else if (board[y][x] === -1) currentScore -= 1;
-                    }
-                }
-                if (currentScore > maxScore) { maxScore = currentScore; bestLocation = { col: c, row: r }; }
-            }
-        }
-    }
-    return maxScore > 0 ? bestLocation : null;
-}
-
-function findBestSwapTarget() {
-    let bestSwap = { stoneToSwap: null, netAdvantage: -Infinity };
-    if (!lastMove) return null;
-    for (let r = 0; r < 19; r++) for (let c = 0; c < 19; c++) {
-        if (board[r][c] === -1) {
-            const aiStone = { col: c, row: r };
-            const aiGain = calculateScore(lastMove.col, lastMove.row, -1).totalScore;
-            const userGain = calculateScore(aiStone.col, aiStone.row, 1).totalScore;
-            const netAdvantage = aiGain - userGain;
-            if (netAdvantage > bestSwap.netAdvantage) bestSwap = { stoneToSwap: aiStone, netAdvantage };
-        }
-    }
-    return bestSwap.stoneToSwap;
-}
-
-function isCriticalStone(x, y, player) {
-    const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
-    for (const [dx, dy] of directions) {
-        let count = 1;
-        for(let i=1; i<4; i++){ const nx = x + i * dx, ny = y + i * dy; if(nx<0||nx>=19||ny<0||ny>=19||board[ny][nx] !== player) break; count++;}
-        for(let i=1; i<4; i++){ const nx = x - i * dx, ny = y - i * dy; if(nx<0||nx>=19||ny<0||ny>=19||board[ny][nx] !== player) break; count++;}
-        if (count >= 3) return true;
-    }
-    return false;
-}
-
-/**
- * 오프닝 북에서 현재 수순에 맞는 다음 수를 찾습니다.
- * @returns {object|null} 찾은 경우 좌표 객체, 못 찾은 경우 null
- */
-function findMoveInOpeningBook() {
-    if (moveHistory.length === 0) return null;
-
-    // 현재까지의 수순으로 키를 생성합니다. (e.g., "9,9_9,10")
-    const key = moveHistory.map(m => `${m.col},${m.row}`).join('_');
-    const possibleMoves = openingBook[key];
-
-    if (possibleMoves && possibleMoves.length > 0) {
-        // 오프닝 북에 정의된 수들 중, 현재 비어있는 칸을 찾습니다.
-        const validMoves = possibleMoves.filter(move => board[move.row][move.col] === 0);
-        if (validMoves.length > 0) {
-            // 여러 개의 유효한 수가 있다면 그중 하나를 무작위로 선택합니다.
-            return validMoves[Math.floor(Math.random() * validMoves.length)];
-        }
-    }
-    // 일치하는 수순이 없는 경우
-    return null;
-}
-
 function findBestMove() {
-    let bestMove = null;
-    let bestScore = -Infinity;
-    const relevantMoves = getRelevantMoves();
-
-    if (relevantMoves.length === 0) {
-        // 둘 곳이 없는 비상 상황 (이론상 발생하지 않음)
-        return { move: { col: 9, row: 9 }, score: 0 };
-    }
-
-    // [핵심] 오프닝 북 로직: 게임 초반(7수 미만)에만 작동합니다.
-    if (moveCount < 7) {
-        const openingMove = findMoveInOpeningBook();
-        if (openingMove) {
-            // 오프닝 북에서 찾은 수를 높은 점수와 함께 반환하여 즉시 선택하도록 합니다.
-            // 사유 로깅은 performNormalMove에서 일괄 처리하여 더 그럴듯하게 보입니다.
-            return { move: openingMove, score: 50000 };
-        }
-    }
-
-    // 오프닝 북에서 수를 찾지 못하면 기존의 계산 로직을 수행합니다.
-    for (const move of relevantMoves) {
-        if (board[move.row][move.col] === 0) {
-            // [수정] AI의 공격적인 성향을 강화하기 위해 공격 점수에 가중치를 부여합니다.
-            const aggressionFactor = 1.2;
-            const myScore = calculateScore(move.col, move.row, -1).totalScore * aggressionFactor;
-            const opponentScore = calculateScore(move.col, move.row, 1).totalScore;
-            const totalScore = myScore + opponentScore;
-
-            if (totalScore > bestScore) {
-                bestScore = totalScore;
-                bestMove = move;
-            }
-        }
-    }
-    // 만약 유효한 수를 찾지 못했다면(예: 모든 관련 위치가 이미 채워짐), 첫 번째 관련 수나 중앙을 반환합니다.
-    return { move: bestMove || relevantMoves[0], score: bestScore };
+    // AI의 두뇌 역할을 새로운 ai.js 모듈에 위임합니다.
+    return findBestMoveAI(board, moveCount, isFirstMove, lastMove, moveHistory);
 }
 
 function getRelevantMoves() {
@@ -570,8 +390,6 @@ function checkWin(board, player) {
     return false;
 }
 
-// js/game.js 파일의 isForbiddenMove 함수를 아래 코드로 교체하세요.
-
 function isForbiddenMove(x, y, player) {
     // 3-3 금수는 흑에게만 적용됩니다.
     if (player !== 1) {
@@ -656,6 +474,5 @@ function checkOpenThree(x, y, dx, dy) {
     return count === 3 && openEnds === 2;
 }
 
-function convertCoord(col, row) { return String.fromCharCode(65 + col) + (row + 1); }
 function playSound(soundFile) { const audio = new Audio(`sounds/${soundFile}`); audio.play(); }
 function checkDraw() { return moveCount >= 361; }

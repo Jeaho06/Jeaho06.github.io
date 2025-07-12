@@ -256,3 +256,13 @@ export function showLevelUpAnimation(oldLevel, newLevel) {
         overlay.classList.remove('is-animating');
     }, 2500);
 }
+
+/**
+ * 좌표(col, row)를 'A1'과 같은 형식의 문자로 변환합니다.
+ * @param {number} col - 열 번호
+ * @param {number} row - 행 번호
+ * @returns {string} 변환된 좌표 문자열
+ */
+export function convertCoord(col, row) {
+    return String.fromCharCode(65 + col) + (row + 1);
+}
