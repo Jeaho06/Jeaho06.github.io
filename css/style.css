@@ -434,6 +434,7 @@ input:checked + .slider:before {
 
 #game-over-message.visible {
     opacity: 1;
+    pointer-events: auto;
 }
 .hidden {
     display: none !important;

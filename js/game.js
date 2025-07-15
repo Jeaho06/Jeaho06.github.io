@@ -100,6 +100,10 @@ export function setupBoardClickListener() {
   });
 }
 
+// js/game.js
+
+// ... (파일의 나머지 부분은 그대로 유지) ...
+
 async function endGame(message) {
     if (gameOver) return;
     gameOver = true;
@@ -118,8 +122,8 @@ async function endGame(message) {
             eventData.xpResult = result;
             eventData.oldUserData = oldUserData;
 
-            // 1. 게임 종료 메시지를 먼저 표시합니다.
-            showEndGameMessage(eventData);
+            // 1. 게임 종료 메시지를 먼저 표시합니다. (resetGame 콜백 전달)
+            showEndGameMessage(eventData, resetGame);
             logReason("시스템", message);
             
             // 2. 만약 레벨업을 했다면, 그 위로 레벨업 연출을 덮어씌웁니다.
@@ -130,8 +134,8 @@ async function endGame(message) {
             }
 
         } else {
-            // result가 없는 경우 (DB 업데이트 실패 등)에도 기본 메시지는 표시
-            showEndGameMessage(eventData);
+            // result가 없는 경우 (DB 업데이트 실패 등)에도 기본 메시지는 표시 (resetGame 콜백 전달)
+            showEndGameMessage(eventData, resetGame);
             logReason("시스템", message);
         }
     } else {
@@ -142,11 +146,13 @@ async function endGame(message) {
         else guestData.stats.losses++;
         localStorage.setItem('omok_guestData', JSON.stringify(guestData));
         
-        // 게스트일 때도 게임 종료 메시지를 표시합니다.
-        showEndGameMessage(eventData);
+        // 게스트일 때도 게임 종료 메시지를 표시합니다. (resetGame 콜백 전달)
+        showEndGameMessage(eventData, resetGame);
         logReason("시스템", message);
     }
 }
+
+// ... (파일의 나머지 부분은 그대로 유지) ...
 
 function aiMove() {
   if (gameOver) return;

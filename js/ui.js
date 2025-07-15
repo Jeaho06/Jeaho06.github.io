@@ -81,26 +81,36 @@ export function createBoardUI() {
 
 // js/ui.js
 
-export function showEndGameMessage(eventData) {
-    // ▼▼▼ 바로 이 부분을 추가해야 합니다! ▼▼▼
-    // 함수가 호출될 때마다 기존 메시지가 있다면 먼저 삭제합니다.
+// js/ui.js
+
+// ... (파일의 다른 부분은 그대로 유지) ...
+
+// js/ui.js
+
+// ... (파일의 다른 부분은 그대로 유지) ...
+
+// js/ui.js
+
+// ... (파일의 다른 부분은 그대로 유지) ...
+
+export function showEndGameMessage(eventData, resetGameCallback) {
+    // 기존에 표시된 게임 종료 메시지가 있다면 삭제합니다.
     const existingMsg = document.getElementById('game-over-message');
     if (existingMsg) {
         existingMsg.remove();
     }
-    // ▲▲▲ 여기까지 입니다 ▲▲▲
 
     const boardElement = document.getElementById('game-board');
     const msgDiv = document.createElement('div');
     msgDiv.id = 'game-over-message';
 
-    // 메인 메시지 생성
+    // 1. 메인 메시지 (예: "AI가 승리했습니다!")를 생성하여 추가합니다.
     const mainMessage = document.createElement('div');
     mainMessage.className = 'main-message';
     mainMessage.textContent = eventData.message;
     msgDiv.appendChild(mainMessage);
 
-    // 로그인 유저이고, 경험치 결과가 있을 경우 상세 정보 표시
+    // 2. 경험치 상세 정보가 있을 경우(로그인 상태), 이를 담는 컨테이너를 만들어 추가합니다.
     if (eventData.xpResult && eventData.oldUserData) {
         const xpResult = eventData.xpResult;
         const oldData = eventData.oldUserData;
@@ -111,7 +121,7 @@ export function showEndGameMessage(eventData) {
         const detailsContainer = document.createElement('div');
         detailsContainer.className = 'xp-details';
         
-        // 1. 획득 경험치
+        // 획득 경험치
         let xpGainedText = getString('game_over_xp_gained', { xpGained: xpResult.xpGained });
         if (xpResult.didGetDailyBonus) {
             xpGainedText += ` ${getString('game_over_daily_bonus')}`;
@@ -120,7 +130,7 @@ export function showEndGameMessage(eventData) {
         xpGainedEl.textContent = xpGainedText;
         detailsContainer.appendChild(xpGainedEl);
 
-        // 2. 경험치 변화
+        // 경험치 변화
         const requiredXpForOldLevel = getRequiredXpForLevel(oldLevel);
         const xpChangeEl = document.createElement('p');
         let newXpForDisplay, requiredXpForNewLevel;
@@ -140,19 +150,43 @@ export function showEndGameMessage(eventData) {
         });
         detailsContainer.appendChild(xpChangeEl);
 
-        // 3. 현재 레벨
+        // 현재 레벨
         const currentLevelEl = document.createElement('p');
         const finalLevel = xpResult.didLevelUp ? xpResult.newLevel : oldLevel;
         currentLevelEl.textContent = getString('game_over_current_level', { level: finalLevel });
         detailsContainer.appendChild(currentLevelEl);
 
+        // 완성된 경험치 컨테이너를 메시지 창에 추가합니다.
         msgDiv.appendChild(detailsContainer);
     }
     
+    // 3. '새 게임' 버튼을 생성하여 경험치 정보 아래에 추가합니다.
+    const newGameButton = document.createElement('button');
+    newGameButton.className = 'new-game-button-modal';
+    newGameButton.textContent = getString('new_game_btn'); 
+    
+    // ▼▼▼ 버튼 클릭 로직을 아래와 같이 간결하게 수정 ▼▼▼
+    // 콜백 함수가 있으면 버튼에 바로 연결합니다.
+    // resetGame 함수가 보드 클리어를 포함한 모든 초기화를 담당하므로 가장 안정적입니다.
+    if (resetGameCallback) {
+        // ▼▼▼ 바로 이 부분을 수정해야 합니다! ▼▼▼
+        newGameButton.addEventListener('click', (event) => {
+            // 클릭 이벤트가 바둑판까지 전달되는 것을 막습니다.
+            event.stopPropagation(); 
+            // 게임을 리셋하는 원래 함수를 호출합니다.
+            new Audio('sounds/Click.mp3').play();
+            resetGameCallback();
+        });
+        // ▲▲▲ 여기까지 입니다 ▲▲▲
+    }
+    msgDiv.appendChild(newGameButton);
+    
+    // 최종적으로 완성된 메시지 창을 게임 보드에 추가합니다.
     boardElement.appendChild(msgDiv);
     requestAnimationFrame(() => msgDiv.classList.add('visible'));
 }
 
+// ... (파일의 나머지 부분은 그대로 유지) ...
 export function updateAuthUI(user) {
     const guestDisplay = document.getElementById('guest-display');
     const userDisplay = document.getElementById('user-display');
