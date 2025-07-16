@@ -39,6 +39,10 @@
   "reason_win": "이 수로 승리할 수 있기 때문에",
   "reason_block_win": "당신의 승리를 막기 위해",
   "reason_attack_4": "필승의 열린 4를 만들기 위해",
+  "profile_luna_title": "보유 루나",
+  "luna_unit": "루나",
+  "game_over_luna_gained": "획득 루나: +{lunaGained} 루나",
+  "game_over_luna_change": "보유 루나: {oldLuna} → {newLuna}",
   "reason_block_4": "당신의 열린 4를 막기 위해",
   "reason_attack_3": "강력한 열린 3 공격을 하기 위해",
   "reason_block_3": "당신의 열린 3 공격을 막기 위해",
@@ -87,6 +91,14 @@
   "stats_draws": "무승부",
   "system_draw": "무승부",
   "update_logs": [
+    {
+      "version": "1.8",
+      "date": "2025-07-16",
+      "notes": [
+        "인공지능 연산 로직 강화",
+        "신규 기능 화폐 '루나' 추가"
+      ]
+    },
     {
       "version": "1.7",
       "date": "2025-07-12",

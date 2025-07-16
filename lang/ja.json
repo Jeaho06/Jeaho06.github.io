@@ -76,6 +76,10 @@
   "achievements_empty": "まだ達成した実績はありません。",
   "profile_title_user": "{nickname}さんのプロフィール",
   "ai_win_rate_title": "AI予想勝率",
+  "profile_luna_title": "保有ルナ",
+  "luna_unit": "ルナ",
+  "game_over_luna_gained": "獲得ルナ: +{lunaGained} ルナ",
+  "game_over_luna_change": "保有ルナ: {oldLuna} → {newLuna}",
   "profile_title_guest": "ゲストプロフィール",
   "level_info_title": "レベル情報",
   "level_info_display": "LV. {level} ({currentXp} / {requiredXp} XP)",
@@ -87,6 +91,14 @@
   "no_new_mail": "新しいメールはありません！",
   "privacy_policy": "プライバシーポリシー",
   "update_logs": [
+    {
+      "version": "1.8",
+      "date": "2025-07-16",
+      "notes": [
+        "AIの演算ロジックを強化",
+        "新規通貨「ルナ」を追加"
+      ]
+    },
     {
       "version": "1.7",
       "date": "2025-07-12",

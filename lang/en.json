@@ -78,6 +78,10 @@
   "stats_wins": "Wins",
   "new_game_btn": "New Game",
   "stats_losses": "Losses",
+  "profile_luna_title": "Luna Balance",
+  "luna_unit": "Luna",
+  "game_over_luna_gained": "Luna Gained: +{lunaGained} Luna",
+  "game_over_luna_change": "Luna: {oldLuna} → {newLuna}",
   "stats_win_rate": "Win Rate",
   "achievements_empty": "No achievements yet.",
   "profile_title_user": "{nickname}'s Profile",
@@ -87,6 +91,14 @@
   "stats_draws": "Draws",
   "system_draw": "Draw",
   "update_logs": [
+    {
+      "version": "1.8",
+      "date": "2025-07-16",
+      "notes": [
+        "Enhanced AI calculation logic",
+        "Added new currency 'Luna'"
+      ]
+    },
     {
       "version": "1.7",
       "date": "2025-07-12",

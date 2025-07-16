@@ -40,7 +40,8 @@ export async function signUp(nickname, password) {
             // --- [수정] 레벨, 경험치 및 일일 보너스 추적을 위한 필드 추가 ---
             level: 1,
             experience: 0,
-            lastWinTimestamp: null // 마지막 승리 시간을 기록하기 위함
+            lastWinTimestamp: null, // 마지막 승리 시간을 기록하기 위함
+            luna: 100 // ▼▼▼ 신규 가입 시 기본 루나 지급 ▼▼▼
         };
         await setDoc(doc(db, "users", user.uid), initialData);
         return { success: true, message: '회원가입에 성공했습니다!' };
@@ -99,7 +100,8 @@ export function getRequiredXpForLevel(level) {
 // ... (다른 부분은 그대로) ...
 
 export async function updateUserGameResult(uid, gameResult, moveCount) {
-    const XP_TABLE = { win: 50, loss: 10, draw: 20 };
+    const XP_TABLE = { win: 150, loss: 10, draw: 20 };
+    const LUNA_TABLE = { win: 20, loss: 5, draw: 10 };
     const XP_PER_MOVE_CAP = 15;
     const DAILY_BONUS = 100;
     const userRef = doc(db, "users", uid);
@@ -140,6 +142,9 @@ export async function updateUserGameResult(uid, gameResult, moveCount) {
             
             experience += xpGained;
 
+            const lunaGained = LUNA_TABLE[gameResult];
+            luna += lunaGained;
+
             // 3. 레벨업 체크
             let didLevelUp = false;
             let requiredXp = getRequiredXpForLevel(level);
@@ -155,6 +160,7 @@ export async function updateUserGameResult(uid, gameResult, moveCount) {
                 stats,
                 level,
                 experience,
+                luna,
                 lastWinTimestamp: (gameResult === 'win' && didGetDailyBonus) ? serverTimestamp() : lastWinTimestamp
             };
             transaction.update(userRef, newData);
@@ -164,7 +170,8 @@ export async function updateUserGameResult(uid, gameResult, moveCount) {
                 xpGained,
                 didLevelUp,
                 newLevel: level,
-                didGetDailyBonus
+                didGetDailyBonus,
+                lunaGained
             };
         });
     } catch (e) {

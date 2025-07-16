@@ -5,6 +5,10 @@
 // 숫자가 클수록 AI가 똑똑해지지만, 계산 시간이 길어집니다. 4로 상향 조정합니다.
 const SEARCH_DEPTH = 2; 
 
+// js/ai.js
+
+// ... (파일 상단의 SEARCH_DEPTH 및 다른 함수들은 그대로 유지) ...
+
 /**
  * AI의 수읽기 로직을 적용하여 최적의 수를 찾습니다. (메인 함수)
  * @param {Array} board - 현재 게임 보드
@@ -14,53 +18,60 @@ const SEARCH_DEPTH = 2;
  * @returns {{move: object, score: number}} - 최적의 수와 그 수의 평가 점수
  */
 export function findBestMoveAI(board, moveCount, isFirstMove, lastMove) {
-    // ▼▼▼ 핵심 수정 부분: AI의 첫 수 처리 로직 ▼▼▼
     // 게임 전체에서 두 번째 수(moveCount === 1)일 때 특별 로직을 실행합니다.
     if (moveCount === 1 && lastMove) {
         const adjacentMoves = [];
-        const { col, row } = lastMove; // 사용자의 첫 수 좌표
-
-        // 8방향(상하좌우, 대각선)을 정의합니다.
+        const { col, row } = lastMove;
         const directions = [
-            [-1, -1], [-1, 0], [-1, 1],
-            [ 0, -1],          [ 0, 1],
-            [ 1, -1], [ 1, 0], [ 1, 1]
+            [-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]
         ];
 
-        // 8방향을 모두 확인하여 둘 수 있는 빈칸을 찾습니다.
         for (const [dr, dc] of directions) {
             const newRow = row + dr;
             const newCol = col + dc;
-
-            // 좌표가 보드 안이고 빈칸인지 확인합니다.
             if (newRow >= 0 && newRow < 19 && newCol >= 0 && newCol < 19 && board[newRow][newCol] === 0) {
                 adjacentMoves.push({ col: newCol, row: newRow });
             }
         }
-
-        // 둘 수 있는 주변 수가 있다면, 그중 하나를 무작위로 선택합니다.
         if (adjacentMoves.length > 0) {
             const randomMove = adjacentMoves[Math.floor(Math.random() * adjacentMoves.length)];
-            // 무작위로 선택한 수를 다음 수로 결정하고 함수를 즉시 종료합니다.
             return { move: randomMove, score: 0 };
         }
     }
-    // ▲▲▲ 여기까지 입니다. AI의 첫 수가 아니면 아래의 기존 수읽기 로직을 실행합니다. ▲▲▲
 
-    // --- 기존 미니맥스 알고리즘 시작 ---
     let bestMove = null;
     let bestScore = -Infinity;
     const relevantMoves = getRelevantMoves(board, isFirstMove, lastMove);
 
     if (relevantMoves.length === 0) {
-        return { move: { col: 9, row: 9 }, score: 0 }; // 비상시 중앙 반환
+        return { move: { col: 9, row: 9 }, score: 0 };
     }
 
-    for (const move of relevantMoves) {
+    // --- ▼▼▼ 후보 수 정렬 로직 추가 ▼▼▼ ---
+
+    // 1. 각 후보 수에 대한 우선순위 점수를 계산합니다.
+    const scoredMoves = relevantMoves.map(move => {
+        // 현재 AI(-1)가 이 자리에 두었을 때의 공격 점수
+        const attackScore = calculateScore(move.col, move.row, -1, board).totalScore;
+        // 상대방(1)이 이 자리에 두었을 때를 막는 수비 점수
+        const defenseScore = calculateScore(move.col, move.row, 1, board).totalScore;
+        
+        // 공격 가치와 수비 가치를 합산하여 최종 우선순위 결정
+        // 중요: 공격적인 AI를 위해 공격 점수에 가중치를 줍니다 (예: 1.1배).
+        const priorityScore = (attackScore * 1.1) + defenseScore;
+        return { move, score: priorityScore };
+    });
+
+    // 2. 계산된 우선순위 점수가 높은 순으로 후보 수 목록을 정렬합니다.
+    scoredMoves.sort((a, b) => b.score - a.score);
+
+    // --- ▲▲▲ 여기까지 추가된 정렬 로직입니다 ▲▲▲ ---
+
+    // 3. 정렬된 목록을 사용하여 미니맥스 탐색을 시작합니다.
+    for (const { move } of scoredMoves) { // 'relevantMoves' 대신 정렬된 'scoredMoves' 사용
         const tempBoard = board.map(row => row.slice());
         tempBoard[move.row][move.col] = -1; // AI(백)의 수를 가상으로 둠
 
-        // AI가 수를 둔 후, 다음은 사용자의 턴(Minimizing player)이므로 isMaximizingPlayer는 false
         const score = minimax(tempBoard, SEARCH_DEPTH - 1, -Infinity, Infinity, false);
 
         if (score > bestScore) {
@@ -70,6 +81,8 @@ export function findBestMoveAI(board, moveCount, isFirstMove, lastMove) {
     }
     return { move: bestMove || relevantMoves[0], score: bestScore };
 }
+
+// ... (minimax, evaluateBoardScore 등 나머지 함수들은 그대로 유지) ...*/
 
 /**
  * AI의 수읽기(Minimax)를 위한 재귀 함수
