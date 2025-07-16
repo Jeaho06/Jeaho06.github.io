@@ -767,3 +767,31 @@ input:checked + .slider:before {
     margin: 8px 0;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
 }
+
+/* style.css 파일의 맨 아래 등에 추가하세요. */
+
+/* 1. body를 기준점으로 설정합니다. */
+body {
+    position: relative;
+}
+
+/* 2. 메인 컨텐츠(.main-content-wrapper)가 워터마크 위에 오도록 설정합니다. */
+.main-content-wrapper {
+    position: relative; /* z-index를 적용하기 위해 position 설정 */
+    z-index: 1; /* 워터마크보다 높은 z-index */
+    background-color: #ffffff; /* 내용 뒤로 워터마크가 비치지 않도록 배경색 지정 */
+}
+
+/* 3. 워터마크 스타일링 */
+#background-watermark {
+    position: fixed; /* 화면에 고정되어 스크롤해도 움직이지 않음 */
+    top: 0;
+    left: 0;
+    width: 100vw; /* 화면 전체 너비 */
+    height: 100vh; /* 화면 전체 높이 */
+    z-index: -1; /* 모든 콘텐츠 뒤로 보내기 */
+
+    /* SVG를 이용한 동적 워터마크 생성 */
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="450" height="450"><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="32" font-family="Arial, sans-serif" font-weight="bold" fill="rgba(0,0,0,0.06)" transform="rotate(-45 225 225)">omok.ai.kr</text></svg>');
+    background-repeat: repeat; /* 패턴 반복 */
+}
