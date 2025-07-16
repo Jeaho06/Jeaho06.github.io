@@ -99,11 +99,13 @@ export function getRequiredXpForLevel(level) {
 
 // ... (다른 부분은 그대로) ...
 
+// firebase.js 파일의 updateUserGameResult 함수를 아래 코드로 전체 교체해주세요.
+
 export async function updateUserGameResult(uid, gameResult, moveCount) {
-    const XP_TABLE = { win: 150, loss: 10, draw: 20 };
+    const XP_TABLE = { win: 50, loss: 10, draw: 20 };
     const LUNA_TABLE = { win: 20, loss: 5, draw: 10 };
-    const XP_PER_MOVE_CAP = 15;
     const DAILY_BONUS = 100;
+    const XP_PER_MOVE_CAP = 15;
     const userRef = doc(db, "users", uid);
 
     try {
@@ -113,13 +115,15 @@ export async function updateUserGameResult(uid, gameResult, moveCount) {
 
             const oldData = userDoc.data();
             
-            // ▼▼▼ 바로 이 부분이 수정의 핵심입니다! ▼▼▼
-            // 기존 유저에게 level, experience 필드가 없을 경우 기본값을 1과 0으로 설정합니다.
+            // 기존 데이터 가져오기 (필드가 없을 경우 기본값 설정)
             const stats = oldData.stats || { wins: 0, losses: 0, draws: 0 };
             let level = oldData.level || 1;
             let experience = oldData.experience || 0;
             const lastWinTimestamp = oldData.lastWinTimestamp || null;
-            // ▲▲▲ 여기까지 입니다 ▲▲▲
+
+            // --- ▼▼▼ 바로 이 한 줄이 누락되었습니다 ▼▼▼ ---
+            let luna = oldData.luna || 0; 
+            // --- ▲▲▲ 여기까지 추가 ▲▲▲ ---
 
             // 1. 전적 업데이트
             if (gameResult === 'win') stats.wins++;
@@ -142,10 +146,11 @@ export async function updateUserGameResult(uid, gameResult, moveCount) {
             
             experience += xpGained;
 
+            // 3. 루나 계산
             const lunaGained = LUNA_TABLE[gameResult];
             luna += lunaGained;
 
-            // 3. 레벨업 체크
+            // 4. 레벨업 체크
             let didLevelUp = false;
             let requiredXp = getRequiredXpForLevel(level);
             while (experience >= requiredXp) {
@@ -155,17 +160,18 @@ export async function updateUserGameResult(uid, gameResult, moveCount) {
                 didLevelUp = true;
             }
 
-            // 4. 데이터베이스 업데이트 준비
+            // 5. 데이터베이스 업데이트 준비
             const newData = {
                 stats,
                 level,
                 experience,
                 luna,
-                lastWinTimestamp: (gameResult === 'win' && didGetDailyBonus) ? serverTimestamp() : lastWinTimestamp
+                lastWinTimestamp: (gameResult === 'win' && didGetDailyBonus) ? serverTimestamp() : oldData.lastWinTimestamp
             };
+            
             transaction.update(userRef, newData);
             
-            // 5. 프론트엔드에 전달할 결과 반환
+            // 6. 프론트엔드에 전달할 결과 반환
             return {
                 xpGained,
                 didLevelUp,
