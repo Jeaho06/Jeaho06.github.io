@@ -64,7 +64,6 @@ function setupEventListeners() {
     // 1. 업데이트 팝업
     const updateButton = document.getElementById('update-button');    
     updateButton.addEventListener('click', () => { 
-        playClickSound();
         renderNewsContent(); 
         showPopup('update-popup'); 
     });
