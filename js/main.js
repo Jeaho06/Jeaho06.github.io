@@ -22,7 +22,7 @@ async function loadLanguage(lang) {
         // UI 텍스트 즉시 업데이트
         document.querySelectorAll('[data-i18n-key]').forEach(el => {
             const key = el.dataset.i18nKey;
-            if (strings[key]) el.textContent = strings[key];
+            if (strings[key]) el.innerHTML = strings[key];
         });
         document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
             const key = el.dataset.i18nPlaceholder;
