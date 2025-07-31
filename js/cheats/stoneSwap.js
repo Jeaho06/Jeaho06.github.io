@@ -12,7 +12,7 @@
 
 export function executeStoneSwap(context) {
     // [수정] context에서 passTurnToPlayer 함수를 받아옵니다.
-    const { board, lastMove, playSound, updateWinRate, findBestMove, endGame, checkWin, moveCount, calculateScore, removeStone, placeStone, convertCoord, logMove, logReason, getString, passTurnToPlayer } = context;
+    const { board, lastMove, playSfx, updateWinRate, findBestMove, endGame, checkWin, moveCount, calculateScore, removeStone, placeStone, convertCoord, logMove, logReason, getString, passTurnToPlayer } = context;
 
     if (!lastMove) return false;
     
@@ -36,7 +36,7 @@ export function executeStoneSwap(context) {
             placeStone(userStone.col, userStone.row, 'white');
             placeStone(aiStoneToSwap.col, aiStoneToSwap.row, 'black');
             
-            playSound("Movement.mp3");
+            playSfx('move');
             if (checkWin(board, -1)) {
                 endGame(getString('system_ai_win'));
             } else {

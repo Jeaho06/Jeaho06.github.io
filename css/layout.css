@@ -1,0 +1,101 @@
+/* --- 전체 레이아웃 구조 --- */
+.main-content-wrapper {
+  width: 95%;
+  max-width: 1250px;
+  padding: 30px; /* 내부 여백을 넉넉하게 */
+  margin-bottom: 20px;
+  background-color: var(--panel-color); /* base.css에 정의된 흰색 변수 사용 */
+  border: none; /* 테두리 제거 */
+  border-radius: 16px; /* 모서리를 더 둥글게 */
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08); /* 부드러운 그림자 효과 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px; /* 내부 요소 간 간격 증가 */
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+}
+
+#background-watermark {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw; 
+    height: 100vh; 
+    z-index: -1;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="450" height="450"><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="32" font-family="Arial, sans-serif" font-weight="bold" fill="rgba(0,0,0,0.06)" transform="rotate(-45 225 225)">omok.ai.kr</text></svg>');
+    background-repeat: repeat;
+}
+
+.top-right-controls {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  gap: 10px;
+  z-index: 2000;
+}
+
+.site-footer {
+  margin-top: 30px;
+  padding: 10px;
+  text-align: center;
+  font-size: 14px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.site-footer a { color: #555; text-decoration: none; }
+.site-footer a:hover { text-decoration: underline; }
+
+/* --- 페이지 공통 레이아웃 --- */
+#level-bar-container {
+    width: 100%;
+    padding: 0;
+    box-sizing: border-box;
+    display: none;
+}
+#level-bar-background {
+    width: 100%;
+    max-width: 800px;
+    height: 25px;
+    margin: 0 auto;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 15px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+}
+#level-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(to right, #6ab1d7, #337ab7);
+    border-radius: 15px;
+    transition: width 0.7s cubic-bezier(0.25, 1, 0.5, 1);
+}
+#level-bar-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px black;
+    white-space: nowrap;
+}
+
+/* --- 페이지 헤더 공통 스타일 --- */
+.lobby-header {
+    display: flex;
+    justify-content: flex-end; /* 내용을 오른쪽 끝으로 정렬 */
+    align-items: center;
+    padding: 15px 30px;
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    gap: 15px;
+    width: 100%; /* 너비를 100%로 설정하여 전체 공간을 차지하게 함 */
+    box-sizing: border-box; /* 패딩이 너비에 포함되도록 설정 */
+}

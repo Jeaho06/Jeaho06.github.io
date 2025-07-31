@@ -4,7 +4,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 // --- [수정] runTransaction을 추가로 import 합니다. ---
-import { getFirestore, doc, setDoc, getDoc, updateDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { arrayUnion, FieldValue, getFirestore, doc, setDoc, getDoc, updateDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // [중요] YOUR... 부분들을 실제 본인의 Firebase 프로젝트 값으로 반드시 교체해야 합니다.
 const firebaseConfig = {
@@ -100,8 +100,14 @@ export function getRequiredXpForLevel(level) {
 // ... (다른 부분은 그대로) ...
 
 // firebase.js 파일의 updateUserGameResult 함수를 아래 코드로 전체 교체해주세요.
+const REWARD_TABLE = {
+    veto: { xp: 5, luna: 2 },
+    bomb: { xp: 10, luna: 5 },
+    doubleMove: { xp: 15, luna: 8 },
+    swap: { xp: 20, luna: 10 }
+};
 
-export async function updateUserGameResult(uid, gameResult, moveCount) {
+export async function updateUserGameResult(uid, gameResult, moveCount, activeCheats = {}) {
     const XP_TABLE = { win: 50, loss: 10, draw: 20 };
     const LUNA_TABLE = { win: 20, loss: 5, draw: 10 };
     const DAILY_BONUS = 100;
@@ -115,29 +121,61 @@ export async function updateUserGameResult(uid, gameResult, moveCount) {
 
             const oldData = userDoc.data();
             
-            // 기존 데이터 가져오기 (필드가 없을 경우 기본값 설정)
+            // 1. 전체 전적 업데이트
             const stats = oldData.stats || { wins: 0, losses: 0, draws: 0 };
-            let level = oldData.level || 1;
-            let experience = oldData.experience || 0;
-            const lastWinTimestamp = oldData.lastWinTimestamp || null;
-
-            // --- ▼▼▼ 바로 이 한 줄이 누락되었습니다 ▼▼▼ ---
-            let luna = oldData.luna || 0; 
-            // --- ▲▲▲ 여기까지 추가 ▲▲▲ ---
-
-            // 1. 전적 업데이트
             if (gameResult === 'win') stats.wins++;
             else if (gameResult === 'loss') stats.losses++;
             else if (gameResult === 'draw') stats.draws++;
 
-            // 2. 경험치 계산
+            // ▼▼▼ [핵심] 반칙별 전적 업데이트 로직 ▼▼▼
+            const stats_by_cheat = oldData.stats_by_cheat || {};
+            // 무승부는 반칙별 전적에 기록하지 않습니다.
+            if (gameResult === 'win' || gameResult === 'loss') { 
+                for (const cheat in activeCheats) {
+                    // 활성화된 반칙에 대해서만 기록합니다.
+                    if (activeCheats[cheat] === true) {
+                        // 해당 반칙에 대한 기록이 없으면 { wins: 0, losses: 0 } 으로 초기화합니다.
+                        if (!stats_by_cheat[cheat]) {
+                            stats_by_cheat[cheat] = { wins: 0, losses: 0 };
+                        }
+                        // 승/패에 따라 카운트를 1 증가시킵니다.
+                        if (gameResult === 'win') {
+                            stats_by_cheat[cheat].wins++;
+                        } else {
+                            stats_by_cheat[cheat].losses++;
+                        }
+                    }
+                }
+            }
+            // ▲▲▲ 로직 추가 완료 ▲▲▲
+
+            // --- 기존 경험치 및 루나 계산 (보너스 포함) ---
+            let level = oldData.level || 1;
+            let experience = oldData.experience || 0;
+            let luna = oldData.luna || 0;
+            
             let xpGained = XP_TABLE[gameResult];
             xpGained += Math.min(moveCount, XP_PER_MOVE_CAP);
 
+            let lunaGained = LUNA_TABLE[gameResult];
+
+            let bonusXp = 0;
+            let bonusLuna = 0;
+            if (gameResult === 'win') {
+                for (const cheat in activeCheats) {
+                    if (activeCheats[cheat] === true && REWARD_TABLE[cheat]) {
+                        bonusXp += REWARD_TABLE[cheat].xp;
+                        bonusLuna += REWARD_TABLE[cheat].luna;
+                    }
+                }
+            }
+            xpGained += bonusXp;
+            lunaGained += bonusLuna;
+            
             let didGetDailyBonus = false;
             if (gameResult === 'win') {
                 const now = new Date();
-                const lastWinDate = lastWinTimestamp ? lastWinTimestamp.toDate() : null;
+                const lastWinDate = oldData.lastWinTimestamp ? oldData.lastWinTimestamp.toDate() : null;
                 if (!lastWinDate || lastWinDate.toDateString() !== now.toDateString()) {
                     xpGained += DAILY_BONUS;
                     didGetDailyBonus = true;
@@ -145,12 +183,8 @@ export async function updateUserGameResult(uid, gameResult, moveCount) {
             }
             
             experience += xpGained;
-
-            // 3. 루나 계산
-            const lunaGained = LUNA_TABLE[gameResult];
             luna += lunaGained;
 
-            // 4. 레벨업 체크
             let didLevelUp = false;
             let requiredXp = getRequiredXpForLevel(level);
             while (experience >= requiredXp) {
@@ -160,9 +194,10 @@ export async function updateUserGameResult(uid, gameResult, moveCount) {
                 didLevelUp = true;
             }
 
-            // 5. 데이터베이스 업데이트 준비
+            // 5. 데이터베이스에 업데이트할 최종 데이터를 준비합니다.
             const newData = {
                 stats,
+                stats_by_cheat, // <<< 새로 추가된 데이터를 업데이트 목록에 포함
                 level,
                 experience,
                 luna,
@@ -177,11 +212,91 @@ export async function updateUserGameResult(uid, gameResult, moveCount) {
                 didLevelUp,
                 newLevel: level,
                 didGetDailyBonus,
-                lunaGained
+                lunaGained,
+                bonusXp,
+                bonusLuna
             };
         });
     } catch (e) {
-        console.error("레벨 업데이트 트랜잭션 실패: ", e);
+        console.error("전적 업데이트 트랜잭션 실패: ", e);
         return null;
+    }
+}
+
+/**
+ * Firestore 트랜잭션을 사용하여 아이템 구매를 처리합니다.
+ * (사용자 루나 차감 및 아이템 추가)
+ * @param {string} userId - 사용자 UID
+ * @param {string} itemId - 구매한 아이템 ID
+ * @param {number} itemPrice - 아이템 가격
+ */
+export async function purchaseItemInFirebase(userId, itemId, itemPrice) {
+    const userRef = doc(db, "users", userId);
+
+    try {
+        await runTransaction(db, async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            if (!userDoc.exists()) {
+                throw "유저 문서를 찾을 수 없습니다.";
+            }
+
+            const currentLuna = userDoc.data().luna || 0;
+            if (currentLuna < itemPrice) {
+                throw "루나가 부족합니다.";
+            }
+
+            const newLuna = currentLuna - itemPrice;
+            
+            transaction.update(userRef, {
+                luna: newLuna,
+                ownedItems: arrayUnion(itemId) // 배열에 아이템 ID 추가
+            });
+        });
+    } catch (e) {
+        console.error("Firebase 트랜잭션 실패: ", e);
+        throw e; // 에러를 다시 던져서 호출한 쪽에서 처리하게 함
+    }
+}
+
+/**
+ * 사용자의 장착 아이템 정보를 Firestore에 업데이트합니다. (트랜잭션 사용)
+ * [수정] 장착/해제 로직을 모두 처리하고, 결과를 반환합니다.
+ * @param {string} userId - 사용자 UID
+ * @param {object} itemToEquip - 장착할 아이템 객체
+ * @returns {Promise<string>} 'equipped' 또는 'unequipped' 문자열을 반환
+ */
+export async function updateEquippedItemInFirebase(userId, itemToEquip) {
+    const userRef = doc(db, "users", userId);
+    const equippedField = `equippedItems.${itemToEquip.type}`;
+
+    try {
+        const result = await runTransaction(db, async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            if (!userDoc.exists()) {
+                throw "유저 문서를 찾을 수 없습니다.";
+            }
+
+            const equippedItems = userDoc.data().equippedItems || {};
+            let action = 'equipped'; // 기본 동작은 '장착'
+
+            // 현재 아이템이 이미 장착되어 있는지 확인
+            if (equippedItems[itemToEquip.type] === itemToEquip.id) {
+                // 장착 해제 로직: 해당 필드를 삭제합니다.
+                transaction.update(userRef, {
+                    [equippedField]: FieldValue.delete()
+                });
+                action = 'unequipped';
+            } else {
+                // 장착 로직
+                transaction.update(userRef, {
+                    [equippedField]: itemToEquip.id
+                });
+            }
+            return action;
+        });
+        return result;
+    } catch (e) {
+        console.error("Firebase 장착 트랜잭션 실패: ", e);
+        throw e;
     }
 }

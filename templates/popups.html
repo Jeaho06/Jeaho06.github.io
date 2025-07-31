@@ -1,0 +1,193 @@
+<div id="popup-overlay"></div>
+
+<div id="update-popup" class="popup update-popup-redesign">
+    <div class="popup-header">
+        <button id="mail-button" class="tab-button active" data-i18n-key="mail_tab"></button>
+        <button id="news-button" class="tab-button" data-i18n-key="news_tab"></button>
+    </div>
+    <div id="mail-content" class="tab-content active">
+        <p data-i18n-key="no_new_mail"></p>
+    </div>
+    <div id="news-content" class="tab-content"></div>
+    <button class="popup-close-button" data-i18n-key="close_btn"></button>
+</div>
+<div id="news-popup" class="popup" style="display: none;"></div>
+
+<div id="profile-popup" class="popup">
+    <h2 id="profile-popup-title"></h2>
+    <div class="profile-section">
+        <h3 data-i18n-key="stats_title"></h3>
+        <div class="stats-grid">
+            <div><span data-i18n-key="stats_wins"></span><p id="profile-wins">0</p></div>
+            <div><span data-i18n-key="stats_losses"></span><p id="profile-losses">0</p></div>
+            <div><span data-i18n-key="stats_draws"></span><p id="profile-draws">0</p></div>
+            <div><span data-i18n-key="stats_win_rate"></span><p id="profile-win-rate">0%</p></div>
+        </div>
+    </div>
+    <div class="profile-section">
+        <h3 data-i18n-key="cheat_stats_title">전적 (반칙별)</h3>
+        <div id="stats-by-cheat-grid" class="stats-by-cheat"></div>
+    </div>
+    <div class="profile-section">
+        <h3 data-i18n-key="level_info_title"></h3>
+        <p id="profile-level-info"></p>
+        <p id="profile-luna-balance"></p>
+    </div>
+    <div class="profile-section">
+        <h3 data-i18n-key="achievements_title"></h3>
+        <div id="achievements-list"><p data-i18n-key="achievements_empty"></p></div>
+    </div>
+    <button class="popup-close-button" data-i18n-key="close_btn"></button>
+</div>
+
+<div id="auth-modal" class="popup" style="display: none; width: 350px;">
+    <div id="login-form">
+        <h2 data-i18n-key="login_title"></h2>
+        <input type="text" id="login-nickname" data-i18n-placeholder="nickname_placeholder">
+        <input type="password" id="login-password" data-i18n-placeholder="password_placeholder">
+        <button id="login-btn" data-i18n-key="login_btn"></button>
+        <p><span data-i18n-key="no_account_q"></span> <a href="#" id="show-signup" data-i18n-key="signup_title"></a></p>
+    </div>
+    <div id="signup-form" style="display: none;">
+        <h2 data-i18n-key="signup_title"></h2>
+        <p style="font-size: 12px; color: red;" data-i18n-key="password_recovery_notice"></p>
+        <input type="text" id="signup-nickname" data-i18n-placeholder="nickname_placeholder">
+        <input type="password" id="signup-password" data-i18n-placeholder="password_placeholder">
+        <button id="signup-btn" data-i18n-key="signup_btn"></button>
+        <p><span data-i18n-key="have_account_q"></span> <a href="#" id="show-login" data-i18n-key="login_title"></a></p>
+    </div>
+    <button class="popup-close-button" data-i18n-key="close_btn"></button>
+</div>
+
+<div id="game-settings-popup" class="popup" style="display: none; width: 400px;">
+    <h2 data-i18n-key="game_settings_title">게임 설정</h2>
+    <p data-i18n-key="game_settings_desc"></p>
+    <div class="settings-options">
+        <div class="option-item">
+            <label><input type="checkbox" data-cheat="veto"><span data-i18n-key="cheat_veto"></span></label>
+            <span class="reward-tag">+5 XP, +2 Luna</span>
+        </div>
+        <div class="option-item">
+            <label><input type="checkbox" data-cheat="bomb"><span data-i18n-key="cheat_bomb"></span></label>
+            <span class="reward-tag">+10 XP, +5 Luna</span>
+        </div>
+        <div class="option-item">
+            <label><input type="checkbox" data-cheat="doubleMove"><span data-i18n-key="cheat_double_move"></span></label>
+            <span class="reward-tag">+15 XP, +8 Luna</span>
+        </div>
+        <div class="option-item">
+            <label><input type="checkbox" data-cheat="swap"><span data-i18n-key="cheat_swap"></span></label>
+            <span class="reward-tag">+20 XP, +10 Luna</span>
+        </div>
+    </div>
+    <div class="popup-buttons">
+        <button id="confirm-start-game-btn" data-i18n-key="confirm_start_btn">이 조건으로 시작</button>
+        <button class="popup-close-button" data-i18n-key="close_btn">취소</button>
+    </div>
+</div>
+
+<div id="settings-popup" class="popup">
+    <div class="popup-content">
+        <h2 data-i18n-key="settings_title">설정</h2>
+        <button class="popup-close-button" data-i18n-key="close_btn"></button>
+        <div class="settings-grid">
+            <div class="setting-item">
+                <label for="bgm-volume-slider" data-i18n-key="settings_bgm_volume">배경음악 볼륨</label>
+                <div class="slider-container">
+                    <span class="volume-icon" id="bgm-volume-icon">🔊</span>
+                    <input type="range" id="bgm-volume-slider" min="0" max="1" step="0.01">
+                    <span id="bgm-volume-value">100%</span>
+                </div>
+            </div>
+            <div class="setting-item">
+                <label for="sfx-volume-slider" data-i18n-key="settings_sfx_volume">효과음 볼륨</label>
+                <div class="slider-container">
+                    <span class="volume-icon" id="sfx-volume-icon">🔊</span>
+                    <input type="range" id="sfx-volume-slider" min="0" max="1" step="0.01">
+                    <span id="sfx-volume-value">100%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="popup-overlay"></div>
+
+<div id="update-popup" class="popup update-popup-redesign">
+    <button class="popup-close-button" data-i18n-key="close_btn"></button>
+</div>
+<div id="news-popup" class="popup" style="display: none;"></div>
+
+<div id="profile-popup" class="popup">
+    <button class="popup-close-button" data-i18n-key="close_btn"></button>
+</div>
+
+<div id="auth-modal" class="popup" style="display: none; width: 350px;">
+    <button class="popup-close-button" data-i18n-key="close_btn"></button>
+</div>
+
+<div id="game-settings-popup" class="popup" style="display: none; width: 400px;">
+    <div class="popup-buttons">
+        <button id="confirm-start-game-btn" data-i18n-key="confirm_start_btn">이 조건으로 시작</button>
+        <button class="popup-close-button" data-i18n-key="close_btn">취소</button>
+    </div>
+</div>
+
+<div id="settings-popup" class="popup">
+    <button class="popup-close-button" data-i18n-key="close_btn"></button>
+</div>
+
+<div id="shop-popup" class="popup" style="display: none; width: 600px;">
+    <div class="shop-header">
+        <h2 data-i18n-key="shop_title">상점</h2>
+        <div id="user-luna-balance" class="luna-balance-display"></div>
+    </div>
+    
+    <div class="shop-tabs">
+        <button class="tab-button active" data-category="all">전체</button>
+        <button class="tab-button" data-category="stone_skin">바둑돌</button>
+        <button class="tab-button" data-category="board_skin">바둑판</button>
+        <button class="tab-button" data-category="item">아이템</button>
+        <button class="tab-button" data-category="etc">기타</button>
+    </div>
+    <div id="shop-items-container" class="shop-grid">
+        </div>
+
+    <button class="popup-close-button" data-i18n-key="close_btn">닫기</button>
+</div>
+
+<div id="inventory-popup" class="popup" style="display: none; width: 600px;">
+    <div class="inventory-header">
+        <h2 data-i18n-key="inventory_title">인벤토리</h2>
+    </div>
+    <div class="inventory-tabs">
+        <button class="tab-button active" data-category="all">전체</button>
+        <button class="tab-button" data-category="stone_skin">바둑돌</button>
+        <button class="tab-button" data-category="board_skin">바둑판</button>
+        <button class="tab-button" data-category="item">아이템</button>
+        <button class="tab-button" data-category="etc">기타</button>
+    </div>
+    <div id="inventory-items-container" class="inventory-grid">
+        </div>
+    <button class="popup-close-button" data-i18n-key="close_btn">닫기</button>
+</div>
+
+<div id="game-mode-popup" class="popup" style="display: none; width: 450px;">
+    <h2 data-i18n-key="select_mode_title">게임 모드 선택</h2>
+    <p data-i18n-key="select_mode_desc">플레이할 게임 모드를 선택해주세요.</p>
+    <div class="settings-options mode-selection">
+        <div class="option-item mode-basic">
+            <button id="select-mode-basic" class="nav-button" data-i18n-key="mode_basic_title">베이직 모드</button>
+            <p data-i18n-key="mode_basic_desc">반칙 없는 기본 오목 규칙으로 AI와 대결합니다.</p>
+        </div>
+        <div class="option-item mode-normal">
+            <button id="select-mode-normal" class="nav-button" data-i18n-key="mode_normal_title">일반전</button>
+            <p data-i18n-key="mode_normal_desc">AI가 사용할 반칙을 직접 설정하여 대결합니다.</p>
+        </div>
+        <div class="option-item mode-ranked">
+            <button id="select-mode-ranked" class="nav-button" data-i18n-key="mode_ranked_title">경쟁전</button>
+            <p data-i18n-key="mode_ranked_desc">AI가 무작위 반칙을 사용합니다. 오직 실력으로만 승부하세요!</p>
+        </div>
+    </div>
+    <button class="popup-close-button" data-i18n-key="close_btn">취소</button>
+</div>

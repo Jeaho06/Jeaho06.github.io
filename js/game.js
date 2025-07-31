@@ -1,5 +1,5 @@
 // --- 필요한 함수들을 다른 모듈에서 import ---
-import { createBoardUI, placeStone, removeStone, logMove, logReason, showEndGameMessage, getString, showLevelUpAnimation, convertCoord } from './ui.js';
+import { updatePlayerInfoBox, updateLevelUI, getInitializedString, createBoardUI, placeStone, removeStone, logMove, logReason, showEndGameMessage, getString, showLevelUpAnimation, convertCoord } from './ui.js';
 import { db, updateUserGameResult } from './firebase.js';
 import { findBestMoveAI } from './ai.js';
 import { resetWinRate, updateWinRate } from './winRateManager.js';
@@ -7,6 +7,17 @@ import { executeDestinyDenial } from './cheats/destinyDenial.js';
 import { executePlaceBomb } from './cheats/placeBomb.js';
 import { executeDoubleMove } from './cheats/doubleMove.js';
 import { executeStoneSwap } from './cheats/stoneSwap.js';
+import { updateGuestGameResult, loadGuestData } from './guestManager.js';
+import { playSfx } from './audioManager.js'; // 새로 추가
+import { getCurrentUser, getUserData, getGuestData } from './common.js';
+import { checkAndPlayEffects, playEffectForTesting } from './effectController.js';
+
+const urlParams = new URLSearchParams(window.location.search);
+const isDevMode = urlParams.get('dev') === 'true';
+const gameType = urlParams.get('type') || 'basic'; // 'normal', 'ranked', 없으면 'basic'
+
+window.testEffect = playEffectForTesting;
+console.log("개발자용 테스트 함수 'testEffect(eventName, data)'가 준비되었습니다.");
 
 let board;
 let isAITurn;
@@ -19,6 +30,7 @@ let isDestinyDenialUsed;
 let bombState;
 let cheatProbability = 0.4;
 const gridSize = 30;
+let activeCheats = {}; // <<< 현재 게임에 활성화된 반칙을 저장할 변수 추가
 
 // main.js에서 현재 유저 상태를 받아오기 위한 변수
 let currentUser, userData, guestData;
@@ -32,7 +44,77 @@ export function initGameState(user, uData, gData) {
     guestData = gData;
 }
 
-export function resetGame() {
+export function updateActiveCheatsLanguage() {
+    const activeCheatsList = document.getElementById('active-cheats-list');
+    if (!activeCheatsList) return;
+
+    // 목록 안에 있는 각 반칙 태그(span)를 찾습니다.
+    activeCheatsList.querySelectorAll('.cheat-tag').forEach(tag => {
+        const i18nKey = tag.dataset.i18nKey; // span에 저장된 언어 키를 가져옵니다.
+        if (i18nKey) {
+            tag.textContent = getString(i18nKey); // 키를 사용해 다시 번역합니다.
+        }
+    });
+}
+
+export async function resetGame(settings = {}) {
+    console.log(`Game Start! Type: ${gameType}`);
+    
+    updatePlayerTitle(userData, guestData);
+        // ▼▼▼ 이 코드를 추가하면 안정성이 높아집니다 ▼▼▼
+    const moveLog = document.getElementById('move-log');
+    if (!moveLog) {
+      // 게임 보드 요소가 없으면 함수를 실행하지 않고 종료
+      return; 
+    }
+        // 전달받은 설정에 따라 activeCheats 객체를 설정
+    activeCheats = {
+        veto: settings.cheats?.includes('veto') || false,
+        bomb: settings.cheats?.includes('bomb') || false,
+        doubleMove: settings.cheats?.includes('doubleMove') || false,
+        swap: settings.cheats?.includes('swap') || false,
+    };
+    // ▲▲▲ 여기까지 추가 ▲▲▲
+
+        // ▼▼▼ 이 코드를 추가합니다 ▼▼▼
+    const activeCheatsList = document.getElementById('active-cheats-list');
+    if (activeCheatsList) {
+        activeCheatsList.innerHTML = ''; // 목록 초기화
+        // ▼▼▼ 이 부분을 수정합니다 ▼▼▼
+        // 각 반칙 키(doubleMove)를 실제 언어 파일 키(cheat_double_move)와 직접 매핑합니다.
+        const cheatNameMap = {
+            veto: 'cheat_veto',
+            bomb: 'cheat_bomb',
+            doubleMove: 'cheat_double_move', // JavaScript 변수 'doubleMove'를 'cheat_double_move' 키에 연결
+            swap: 'cheat_swap'
+        };
+        
+        const enabledCheats = Object.keys(activeCheats).filter(key => activeCheats[key]);
+        
+        if (enabledCheats.length > 0) {
+        // forEach는 await를 기다려주지 않으므로, for...of 루프로 변경합니다.
+        for (const cheatKey of enabledCheats) {
+            const cheatTag = document.createElement('span');
+            cheatTag.className = 'cheat-tag';
+            
+            const i18nKey = cheatNameMap[cheatKey];
+            // ▼▼▼ 이 부분을 수정합니다 ▼▼▼
+            // 나중에 다시 번역할 수 있도록, span에 언어 키(꼬리표)를 저장해 둡니다.
+            cheatTag.dataset.i18nKey = i18nKey; 
+            cheatTag.textContent = await getInitializedString(i18nKey); 
+            // ▲▲▲ 여기까지 수정 ▲▲▲
+            activeCheatsList.appendChild(cheatTag);
+        }
+        } else {
+            // ▼▼▼ 이 부분을 수정합니다 ▼▼▼
+            // '없음' 텍스트를 표시하고, 꼬리표를 추가합니다.
+            activeCheatsList.dataset.i18nKey = 'no_cheats_enabled';
+            activeCheatsList.textContent = await getInitializedString('no_cheats_enabled');
+            // ▲▲▲ 여기까지 수정 ▲▲▲
+        }
+        // ▲▲▲ 여기까지 수정 ▲▲▲
+    }
+    // ▲▲▲ 여기까지 추가 ▲▲▲
     board = Array(19).fill(null).map(() => Array(19).fill(0));
     isAITurn = false;
     lastMove = null;
@@ -46,6 +128,20 @@ export function resetGame() {
     document.getElementById('reasoning-log').innerHTML = '';
     createBoardUI();
     resetWinRate();
+
+        // ▼▼▼ 이 부분을 추가하세요 ▼▼▼
+    const notification = document.getElementById('game-start-notification');
+    if (notification) {
+        notification.classList.remove('hidden'); // 일단 보이게
+        notification.classList.add('show');
+        playSfx('start');
+        // 2.5초 후에 애니메이션이 끝나므로 DOM에서 완전히 숨김
+        setTimeout(() => {
+            notification.classList.remove('show');
+            notification.classList.add('hidden');
+        }, 2500);
+    }
+    // ▲▲▲ 여기까지 ▲▲▲
 }
 
 
@@ -73,7 +169,7 @@ export function setupBoardClickListener() {
     board[row][col] = 0; // 확인 후 즉시 되돌림
     
     // [수정] '거부권' 로직을 모듈 호출로 변경
-    const denialContext = { board, col, row, isWinningMove, isDestinyDenialUsed, moveCount };
+    const denialContext = { board, col, row, isWinningMove, isDestinyDenialUsed, moveCount, isVetoActive: activeCheats.veto};
     if (executeDestinyDenial(denialContext)) {
         isDestinyDenialUsed = true; // 스킬 사용 상태 업데이트
         moveCount++; // 수 카운트 업데이트
@@ -84,10 +180,11 @@ export function setupBoardClickListener() {
     board[row][col] = 1; 
     moveHistory.push({ col, row });
     placeStone(col, row, 'black'); 
-    playSound("Movement.mp3");
+    playSfx('move'); // playSound("Movement.mp3")를 이 코드로 변경합니다.
     logMove(++moveCount, `${getString('user_title')}: ${convertCoord(col, row)}??`);
     isFirstMove = false; 
     lastMove = { col, row };
+    checkAndPlayEffects({ board, row, col, player: 1 });
     
     if (checkWin(board, 1)) { endGame(getString('system_user_win')); return; }
     if (checkDraw()) { endGame(getString('system_draw')); return; }
@@ -104,6 +201,8 @@ export function setupBoardClickListener() {
 
 // ... (파일의 나머지 부분은 그대로 유지) ...
 
+// js/game.js
+
 async function endGame(message) {
     if (gameOver) return;
     gameOver = true;
@@ -114,95 +213,127 @@ async function endGame(message) {
     const isDraw = message === getString('system_draw');
     const gameResult = isUserWin ? 'win' : (isDraw ? 'draw' : 'loss');
 
+    // 현재 활성화된 반칙 목록을 배열로 만듭니다. (예: ['bomb', 'swap'])
+    const currentCheats = Object.keys(activeCheats).filter(key => activeCheats[key]);
+
     if (currentUser) {
         const oldUserData = { ...userData }; 
-        const result = await updateUserGameResult(currentUser.uid, gameResult, moveCount);
+        const result = await updateUserGameResult(currentUser.uid, gameResult, moveCount, activeCheats);
         
         if (result) {
             eventData.xpResult = result;
             eventData.oldUserData = oldUserData;
 
-            // 1. 게임 종료 메시지를 먼저 표시합니다. (resetGame 콜백 전달)
-            showEndGameMessage(eventData, resetGame);
+            // 로그인 유저 경험치 바 즉시 업데이트
+            const newExperience = (oldUserData.experience || 0) + result.xpGained;
+            const updatedDataForUI = { ...oldUserData, experience: newExperience, level: result.newLevel };
+            updateLevelUI(updatedDataForUI);
+
+            // [수정] '새 게임' 시 마지막 반칙 설정을 유지하도록 콜백을 수정합니다.
+            showEndGameMessage(eventData, () => resetGame({ cheats: currentCheats }));
             logReason("시스템", message);
             
-            // 2. 만약 레벨업을 했다면, 그 위로 레벨업 연출을 덮어씌웁니다.
             if (result.didLevelUp) {
-                console.log("레벨 업! 새로운 레벨:", result.newLevel);
-                // z-index가 높기 때문에, 이 연출이 게임 종료 메시지보다 위에 나타납니다.
                 showLevelUpAnimation(result.newLevel - 1, result.newLevel);
             }
-
         } else {
-            // result가 없는 경우 (DB 업데이트 실패 등)에도 기본 메시지는 표시 (resetGame 콜백 전달)
-            showEndGameMessage(eventData, resetGame);
+            showEndGameMessage(eventData, () => resetGame({ cheats: currentCheats }));
             logReason("시스템", message);
         }
     } else {
         // 게스트일 경우
-        const guestData = JSON.parse(localStorage.getItem('omok_guestData')) || { stats: { wins: 0, losses: 0, draws: 0 } };
-        if (gameResult === 'win') guestData.stats.wins++;
-        else if (gameResult === 'draw') guestData.stats.draws++;
-        else guestData.stats.losses++;
-        localStorage.setItem('omok_guestData', JSON.stringify(guestData));
+        const oldGuestData = loadGuestData();
+        const result = updateGuestGameResult(gameResult, moveCount, activeCheats);
         
-        // 게스트일 때도 게임 종료 메시지를 표시합니다. (resetGame 콜백 전달)
-        showEndGameMessage(eventData, resetGame);
+        const newGuestData = loadGuestData();
+        updateLevelUI(newGuestData);
+
+        eventData.xpResult = result;
+        eventData.oldUserData = oldGuestData;
+
+        // [수정] '새 게임' 시 마지막 반칙 설정을 유지하도록 콜백을 수정합니다.
+        showEndGameMessage(eventData, () => resetGame({ cheats: currentCheats }));
         logReason("시스템", message);
+        
+        if (result.didLevelUp) {
+            showLevelUpAnimation(result.newLevel - 1, result.newLevel);
+        }
     }
 }
 
 // ... (파일의 나머지 부분은 그대로 유지) ...
 
+/**
+ * [수정됨] AI의 턴을 시작하는 메인 함수.
+ * 반칙을 사용하지 않을 경우, AI의 수를 계산하고 착수합니다.
+ * 개발자 모드에서는 생각(원)을 먼저 보여주고, 3초 뒤에 착수합니다.
+ */
 function aiMove() {
-  if (gameOver) return;
+    if (gameOver) return;
     if (bombState.isArmed) {
-    detonateBomb();
-    return; 
-  }
-
-  const willCheat = Math.random() < cheatProbability && !isFirstMove && lastMove;
-  if (willCheat) {
-    const availableCheats = [];
-    if (document.getElementById('toggle-bomb').checked) availableCheats.push(executePlaceBomb);
-    if (document.getElementById('toggle-double-move').checked) availableCheats.push(executeDoubleMove);
-    if (document.getElementById('toggle-swap').checked) availableCheats.push(executeStoneSwap);
-    
-    if (availableCheats.length > 0) {
-      const chosenCheat = availableCheats[Math.floor(Math.random() * availableCheats.length)];
-      
-      const context = {
-          board, bombState, lastMove, moveCount,
-          isAITurn,
-          performNormalMove: () => performNormalMove(), // 함수 참조 전달
-          playSound, updateWinRate, findBestMove, endGame, checkWin, gameOver: () => gameOver,
-          calculateScore, // [추가] stoneSwap 스킬에 필요한 함수들
-          convertCoord, 
-          removeStone, 
-          placeStone,
-          getString,
-          logMove,
-          logReason,
-          passTurnToPlayer
-        
-      };
-      
-      if (chosenCheat(context)) {
-          moveCount = context.moveCount; // 컨텍스트에서 변경되었을 수 있는 값 업데이트
-          isAITurn = context.isAITurn;
-          return; // 치트 사용 성공 시 일반 착수는 건너뜀
-      }
+        detonateBomb();
+        return; 
     }
-  }
-  performNormalMove();
+
+    const willCheat = Math.random() < cheatProbability && !isFirstMove && lastMove;
+    if (willCheat) {
+        const availableCheats = [];
+        if (activeCheats.bomb) availableCheats.push(executePlaceBomb);
+        if (activeCheats.doubleMove) availableCheats.push(executeDoubleMove);
+        if (activeCheats.swap) availableCheats.push(executeStoneSwap);
+        
+        if (availableCheats.length > 0) {
+            const chosenCheat = availableCheats[Math.floor(Math.random() * availableCheats.length)];
+            const context = {
+                board, bombState, lastMove, moveCount, isAITurn,
+                performNormalMove: () => placeAIMove(findBestMove()), // 수정됨: 일반 착수 함수 연결
+                playSfx, updateWinRate, findBestMove, endGame, checkWin, gameOver: () => gameOver,
+                calculateScore, convertCoord, removeStone, placeStone,
+                getString, logMove, logReason,
+                passTurnToPlayer: () => { isAITurn = false; }
+            };
+            
+            if (chosenCheat(context)) {
+                moveCount = context.moveCount;
+                isAITurn = context.isAITurn;
+                return;
+            }
+        }
+    }
+
+    // --- 일반 착수 로직 시작 ---
+    // 1. AI가 즉시 최적의 수를 계산합니다.
+    const result = findBestMove();
+
+    // 2. 개발자 모드인지 확인합니다.
+    if (isDevMode) {
+        // 2-1. 개발자 모드라면 계산 결과를 즉시 시각화합니다.
+        visualizeAIPolicy(result.policy);
+        
+        // 2-2. 3초(3000ms)의 지연을 둔 후에 돌을 놓는 함수를 호출합니다.
+        setTimeout(() => {
+            placeAIMove(result);
+        }, 3000);
+
+    } else {
+        // 2-3. 개발자 모드가 아니라면 지연 없이 즉시 돌을 놓습니다.
+        placeAIMove(result);
+    }
 }
 
-function passTurnToPlayer() {
-    isAITurn = false;
-}
+/**
+ * [새로 추가됨] AI의 계산 결과를 받아 실제로 돌을 놓고 게임을 진행하는 함수.
+ * (기존 performNormalMove의 역할을 대체합니다)
+ */
+function placeAIMove(result) {
 
-function performNormalMove() {
-    const { move, score } = findBestMove();
+        // ▼▼▼ 여기에 코드를 추가합니다 ▼▼▼
+    if (isDevMode) {
+        clearAIPolicyVisualization();
+    }
+    // ▲▲▲ 여기까지 추가 ▲▲▲
+    const { move, score, policy } = result;
+
     if (move && board[move.row][move.col] === 0) {
         const myContext = calculateScore(move.col, move.row, -1);
         const opponentContext = calculateScore(move.col, move.row, 1);
@@ -221,7 +352,7 @@ function performNormalMove() {
         board[move.row][move.col] = -1;
         moveHistory.push({ col: move.col, row: move.row });
         placeStone(move.col, move.row, 'white');
-        playSound("Movement.mp3");
+        playSfx('move');
         logMove(++moveCount, `${getString('ai_title')}: ${aiCoord}`);
         logReason(getString('ai_title'), getString('ai_reason_template', { reason: reason, coord: aiCoord }));
         
@@ -251,7 +382,7 @@ function detonateBomb() {
     const centerCoord = convertCoord(center.col, center.row);
     logMove(++moveCount, `${getString('ai_title')}: ${centerCoord}💥!!`);
     logReason(getString('ai_title'), getString('ai_bomb_detonate_reason', { coord: centerCoord }));
-    playSound("tnt_explosion.mp3");
+    playSfx('explosion');
     const boardElement = document.getElementById("game-board");
     const bombEffect = document.createElement("div");
     bombEffect.className = "bomb-effect";
@@ -480,5 +611,118 @@ function checkOpenThree(x, y, dx, dy) {
     return count === 3 && openEnds === 2;
 }
 
-function playSound(soundFile) { const audio = new Audio(`sounds/${soundFile}`); audio.play(); }
+// js/game.js (파일의 아무 곳에나 추가)
+
+/**
+ * [수정됨] AI가 계산한 후보 수들을 색상과 상대 가치(%)로 시각화합니다.
+ * @param {Array} policyData - AI가 반환한 후보 수와 점수 목록
+ */
+function visualizeAIPolicy(policyData) {
+    const visualizationLayer = document.getElementById('ai-policy-visualization');
+    if (!visualizationLayer) return;
+    visualizationLayer.innerHTML = '';
+
+    // 후보 수가 없거나 최고 점수가 0 이하이면 시각화를 중단합니다.
+    if (policyData.length === 0 || policyData[0].score <= 0) return;
+
+    // 전체 최고점(1순위)을 기준으로 퍼센테이지를 계산하기 위해 저장합니다.
+    const bestScore = policyData[0].score;
+
+    // 차선 그룹(2순위 이하)의 최대 점수를 찾습니다. 후보 수가 1개일 경우를 대비합니다.
+    const secondMaxScore = policyData.length > 1 ? policyData[1].score : 0;
+
+    // 상위 10개의 후보만 시각화합니다.
+    policyData.slice(0, 10).forEach((item, index) => {
+        const { move, score } = item;
+
+        const circle = document.createElement('div');
+        circle.className = 'policy-circle';
+
+        let colors;
+
+        if (index === 0) {
+            // 최선의 수(1순위)는 항상 1.0 값(파란색)을 가집니다.
+            colors = getColorForScore(1.0);
+        } else {
+            // 차선 그룹은 그룹 내 최고점(secondMaxScore)을 기준으로 다시 정규화하고,
+            // 이 값을 0.0 ~ 0.7(빨강-초록) 범위에 매핑하여 색을 결정합니다.
+            const secondaryNormalized = secondMaxScore > 0 ? (score / secondMaxScore) : 0;
+            colors = getColorForScore(secondaryNormalized * 0.7);
+        }
+
+        // 퍼센테이지는 항상 전체 최고점(bestScore)을 기준으로 표시합니다.
+        const percentage = Math.round((score / bestScore) * 100);
+        circle.textContent = `${percentage}%`;
+
+        const size = 30;
+        circle.style.width = `${size}px`;
+        circle.style.height = `${size}px`;
+        circle.style.lineHeight = '1.1';
+        circle.style.backgroundColor = colors.background;
+        circle.style.borderColor = colors.border;
+        circle.style.left = `${move.col * 30 + 15}px`;
+        circle.style.top = `${move.row * 30 + 15}px`;
+
+        visualizationLayer.appendChild(circle);
+    });
+}
+
+/**
+ * 시각화된 내용을 모두 지웁니다.
+ */
+function clearAIPolicyVisualization() {
+    const visualizationLayer = document.getElementById('ai-policy-visualization');
+    if (visualizationLayer) {
+        visualizationLayer.innerHTML = '';
+    }
+}
+
+/**
+ * [수정됨] 0과 1 사이의 정규화된 점수를 받아 연속적인 색상 코드를 반환합니다.
+ * @param {number} value - 0 (최악) ~ 1 (최선) 사이의 점수
+ * @returns {{background: string, border: string}} - 원의 배경 및 테두리 색상
+ */
+function getColorForScore(value) {
+    // 색상 그라데이션 정의: [지점, [R, G, B]]
+    const gradient = [
+        [0.0, [220, 53, 69]],  // 0%  = Red
+        [0.4, [255, 193, 7]],  // 40% = Yellow
+        [0.7, [40, 167, 69]],  // 70% = Green
+        [1.0, [0, 123, 255]]   // 100% = Blue
+    ];
+
+    let color1, color2, t;
+    for (let i = 0; i < gradient.length - 1; i++) {
+        if (value >= gradient[i][0] && value <= gradient[i+1][0]) {
+            color1 = gradient[i][1];
+            color2 = gradient[i+1][1];
+            t = (value - gradient[i][0]) / (gradient[i+1][0] - gradient[i][0]);
+            break;
+        }
+    }
+
+    const r = Math.round(color1[0] + t * (color2[0] - color1[0]));
+    const g = Math.round(color1[1] + t * (color2[1] - color1[1]));
+    const b = Math.round(color1[2] + t * (color2[2] - color1[2]));
+
+    return { background: `rgba(${r}, ${g}, ${b}, 0.5)`, border: `rgba(${r}, ${g}, ${b}, 0.8)` };
+}
+
 function checkDraw() { return moveCount >= 361; }
+
+/**
+ * 게임 화면의 플레이어 제목을 유저 데이터에 맞게 업데이트합니다.
+ * @param {object} uData - 로그인한 사용자의 데이터
+ * @param {object} gData - 게스트의 데이터
+ */
+function updatePlayerTitle(uData, gData) {
+    const playerTitleEl = document.getElementById('player-title');
+    if (!playerTitleEl) return;
+
+    if (uData && uData.nickname) { // 로그인 유저
+        playerTitleEl.textContent = uData.nickname;
+    } else { // 게스트
+        playerTitleEl.textContent = 'Guest';
+    }
+}
+

@@ -1,0 +1,150 @@
+/* css/skins.css */
+
+/* --- 1. 기본 바둑돌 스타일 --- */
+/* 스킨이 없는 기본 돌에만 적용 */
+#game-board #stone-container .stone.black:not([class*="skin-"]) {
+  background: radial-gradient(circle at 70% 30%, #4a4a4a, #1a1a1a);
+  box-shadow: inset 0 2px 3px rgba(0,0,0,0.5), 0 3px 6px rgba(0,0,0,0.4);
+  border: 1px solid black;
+}
+#game-board #stone-container .stone.white {
+  background: radial-gradient(circle at 70% 30%, #ffffff, #dcdcdc);
+  box-shadow: inset 0 2px 3px rgba(0,0,0,0.1), 0 3px 6px rgba(0,0,0,0.3);
+  border: 1px solid rgba(0,0,0,0.2);
+}
+
+/* --- 2. 옥 보석 스킨 --- */
+
+/* [핵심 수정] 스킨의 '기본 디자인' 정의 (상점, 인게임 공통) */
+/* 이 규칙은 #game-board가 없어도 적용됩니다. */
+.stone.skin-jade-black {
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 20%), 
+              radial-gradient(circle at 50% 50%, #99d4d9 0%, #5daab0 100%);
+}
+
+/* [핵심 수정] '게임 보드 위에서'만 적용될 추가 효과 (그림자, 테두리 등) */
+#game-board #stone-container .stone.skin-jade-black {
+  box-shadow: inset 0 2px 3px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.3);
+  opacity: 0.95;
+}
+
+/* --- 3. 마지막 둔 돌 표시 --- */
+.last-move::after {
+  content: "";
+  position: absolute;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* [수정] 플레이어(검은 돌/옥스킨) 위의 마지막 표시는 '흰색'으로 고정 */
+#stone-container .stone.black.last-move::after,
+#stone-container .stone.skin-jade-black.last-move::after {
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+/* [수정] AI(흰 돌) 위의 마지막 표시는 '검은색'으로 고정 */
+#stone-container .stone.white.last-move::after {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+
+/* --- 4. 은하수 스킨 --- */
+
+/* [신규] 은하수 스킨 '기본 디자인' (상점, 인게임 공통) */
+.stone.skin-galaxy-black {
+  /* 여러 개의 그라데이션을 겹쳐 은하수와 성운을 표현합니다. */
+  background:
+    /* 1. 밝은 중심부 (은하 핵) */
+    radial-gradient(ellipse at 50% 30%, rgba(200, 200, 255, 0.5) 0%, rgba(200, 200, 255, 0) 40%),
+    /* 2. 보라색 성운 */
+    radial-gradient(ellipse at 20% 70%, rgba(180, 40, 180, 0.6) 0%, rgba(180, 40, 180, 0) 50%),
+    /* 3. 푸른색 성운 */
+    radial-gradient(ellipse at 80% 60%, rgba(40, 100, 200, 0.7) 0%, rgba(40, 100, 200, 0) 50%),
+    /* 4. 기본 밤하늘 배경색 */
+    radial-gradient(circle at 50% 50%, #2a2a3a 0%, #1a1a2a 100%);
+}
+
+/* [신규] 반짝이는 별 효과 (box-shadow를 이용한 트릭) */
+.stone.skin-galaxy-black::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  background: transparent;
+  box-shadow: 
+    8px 20px 1px rgba(255, 255, 255, 0.8),  /* x y 크기 색상 */
+    21px 15px 1px rgba(255, 255, 255, 0.9),
+    10px 8px 1px rgba(255, 255, 255, 0.7),
+    22px 5px 1px rgba(255, 255, 255, 0.8),
+    18px 24px 1px rgba(255, 255, 255, 0.9);
+}
+
+
+/* [신규] '게임 보드 위에서'만 적용될 추가 효과 (광택, 그림자 등) */
+#game-board #stone-container .stone.skin-galaxy-black {
+  border: 1px solid rgba(100, 100, 150, 0.5);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.3), 0 4px 8px rgba(0,0,0,0.4);
+  opacity: 0.95;
+}
+
+
+/* --- 5. 나전칠기 스킨 --- */
+
+/* [신규] 나전칠기 스킨 '기본 디자인' (상점, 인게임 공통) */
+.stone.skin-najeon-black {
+  /* [수정] 여러 개의 작은 그라데이션을 겹쳐 자개 조각의 느낌을 표현 */
+  background:
+    /* 푸른색 자개 조각 */
+    radial-gradient(ellipse at 25% 25%, rgba(100, 150, 255, 0.6) 0%, rgba(100, 150, 255, 0) 50%),
+    /* 녹색 자개 조각 */
+    radial-gradient(ellipse at 75% 35%, rgba(100, 255, 150, 0.5) 0%, rgba(100, 255, 150, 0) 40%),
+    /* 붉은색 자개 조각 */
+    radial-gradient(ellipse at 60% 75%, rgba(255, 100, 100, 0.5) 0%, rgba(255, 100, 100, 0) 40%),
+    /* 기본 옻칠 배경 */
+    #1a1a1a;
+}
+/* [신규] 자개의 오색찬란한 빛 효과 */
+.stone.skin-najeon-black::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  border-radius: 50%; /* 원 모양으로 만듭니다 */
+  background: conic-gradient(
+    from 90deg,
+    rgba(255, 100, 100, 0.4), rgba(255, 255, 100, 0.4),
+    rgba(100, 255, 100, 0.4), rgba(100, 255, 255, 0.4),
+    rgba(100, 100, 255, 0.4), rgba(255, 100, 255, 0.4),
+    rgba(255, 100, 100, 0.4)
+  );
+  animation: najeon-rotate 8s linear infinite;
+}
+
+/* [신규] 옻칠의 매끈한 광택 효과 */
+.stone.skin-najeon-black::after {
+    content: '';
+    position: absolute;
+    top: 5%; left: 10%;
+    width: 80%; height: 40%;
+    border-radius: 50%;
+    background: linear-gradient(to top, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 100%);
+    transform: rotate(-15deg);
+}
+
+/* [신규] '게임 보드 위에서'만 적용될 추가 효과 */
+#game-board #stone-container .stone.skin-najeon-black {
+  border: 1px solid rgba(0,0,0,0.5);
+  box-shadow: inset 0 2px 3px rgba(0,0,0,0.4), 0 4px 8px rgba(0,0,0,0.4);
+  opacity: 0.95;
+}
+
+/* [신규] 자개 빛 회전 애니메이션 */
+@keyframes najeon-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

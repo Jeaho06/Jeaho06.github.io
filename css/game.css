@@ -1,0 +1,427 @@
+/* --- 게임 페이지 레이아웃 및 구성요소 --- */
+.game-container {
+  display: flex;
+  align-items: flex-start; /* 상단 정렬로 변경 */
+  justify-content: center;
+  margin-bottom: 20px;
+  width: 100%; /* 너비를 꽉 채움 */
+  gap: 30px; /* 컨테이너 사이 간격 추가 */
+}
+.ai-container, .user-container {
+  flex: 1 1 240px; /* 기본 너비를 살짝 늘림 */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* 내부 요소들 왼쪽 정렬 */
+  padding: 10px;
+  box-sizing: border-box;
+  text-align: left; /* 텍스트 왼쪽 정렬 */
+  min-height: 570px; /* 바둑판 높이와 맞춤 */
+}
+
+.ai-container h2, .user-container h2 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color); /* 제목 아래에 얇은 선 추가 */
+    width: 100%;
+}
+.board-container {
+  flex: 0 0 610px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.chat-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  width: 90%;
+  max-width: 610px;
+  text-align: center;
+}
+
+.chat-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 50%;
+}
+
+.chat-box {
+  width: 100%;
+  height: 150px;
+  border: 1px solid var(--border-color); /* 새로운 테두리 색상 적용 */
+  overflow-y: scroll;
+  padding: 15px; /* 내부 여백 증가 */
+  background-color: var(--bg-color); /* 배경색을 아주 옅은 회색으로 */
+  border-radius: 8px; /* 둥근 모서리 적용 */
+  font-family: 'Noto Sans KR', sans-serif; /* 기본 폰트 적용 */
+  box-sizing: border-box;
+}
+
+#move-log p {
+  margin: 2px 0;
+  font-weight: bold;
+}
+
+#reasoning-log p {
+  margin: 2px 0;
+}
+
+
+/* --- 게임 보드 및 돌 --- */
+#game-board {
+  position: relative;
+  width: 570px;
+  height: 570px;
+  background-color: #deb887;
+  border: 3px solid #8b4513;
+}
+
+.line {
+  position: absolute;
+  background-color: #8b4513;
+  pointer-events: none;
+}
+
+.horizontal-line {
+  width: calc(100% - 30px);
+  height: 1px;
+  left: 15px;
+}
+
+.vertical-line {
+  width: 1px;
+  height: calc(100% - 30px);
+  top: 15px;
+}
+
+.hwajeom-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background-color: #8b4513;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* game.css */
+.stone {
+  position: absolute;
+  width: 29px;
+  height: 29px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%); /* [수정] 이 줄을 다시 추가합니다. */
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.4);
+}
+
+.stone.black:not([class*="skin-"]) {
+  background-color: black;
+}
+.stone.white:not([class*="skin-"]) {
+  background-color: white;
+}
+
+.stone.last-move::after {
+  content: ""; position: absolute; width: 10px; height: 10px;
+  border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%);
+}
+.stone.black.last-move::after { background-color: white; }
+.stone.white.last-move::after { background-color: black; }
+
+.stone.bomb {
+  background-color: #ff4747; border: 2px solid #c40000; box-shadow: 0 0 10px 3px #ff4747;
+}
+
+.denied-spot {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  background-color: rgba(255, 0, 0, 0.4);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  border: 2px dashed red;
+}
+
+.coordinate-label {
+  position: absolute; font-size: 12px; font-weight: bold;
+  color: #333; pointer-events: none; user-select: none;
+}
+.top-label { top: -20px; transform: translateX(-50%); }
+.left-label { left: -25px; transform: translateY(-50%); }
+
+.bomb-effect {
+  position: absolute; width: 90px; height: 90px; background-color: rgba(255, 100, 0, 0.7);
+  border: 3px solid rgba(255, 0, 0, 0.8); border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0); animation: explode 0.5s ease-out; pointer-events: none;
+}
+
+@keyframes explode {
+  from { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+  to { transform: translate(-50%, -50%) scale(1.2); opacity: 0; }
+}
+
+
+/* --- AI 컨트롤 및 반칙 UI --- */
+#cheat-controls {
+  margin-top: 20px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  width: auto;
+  min-width: 200px;
+}
+
+#cheat-controls h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  text-align: center;
+  font-size: 18px;
+  color: #333;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 12px;
+}
+
+.control-group:last-child {
+  margin-bottom: 0;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 28px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:checked + .slider:before {
+  transform: translateX(22px);
+}
+
+.control-group span {
+  margin-left: 12px;
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+#cheat-controls hr {
+    border: none;
+    border-top: 1px solid #e0e0e0;
+    margin: 15px 0;
+}
+
+#ai-win-rate-container h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #555;
+    font-weight: normal;
+}
+
+#ai-win-rate-display {
+    font-size: 28px;
+    font-weight: bold;
+    color: #337ab7;
+    margin: 0;
+}
+
+#win-rate-graph {
+    width: 100%;
+    height: 80px;
+    margin-top: 15px;
+    background-color: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+}
+
+.active-cheats {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+.active-cheats h5 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: #666;
+    text-align: center;
+}
+#active-cheats-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+}
+.cheat-tag {
+    background-color: #e9ecef;
+    color: #495057;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* --- 게임 시작 알림 --- */
+#game-start-notification {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    font-size: 48px;
+    font-weight: bold;
+    padding: 20px 40px;
+    border-radius: 10px;
+    z-index: 101;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    animation: zoom-in-out 2.5s ease-in-out;
+    white-space: nowrap;
+}
+
+#game-start-notification.show {
+    opacity: 1;
+}
+
+@keyframes zoom-in-out {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    20% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+}
+
+.hidden {
+    display: none !important;
+}
+
+
+#ai-policy-visualization {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%; /* 부모 크기에 맞춤 */
+    height: 100%;
+    pointer-events: none;
+    z-index: 1; /* 아래쪽 레이어 */
+}
+
+/* ▼▼▼ 이 스타일 블록 전체를 추가해주세요 ▼▼▼ */
+#stone-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2; /* 위쪽 레이어 */
+}
+
+/* css/game.css */
+
+.policy-circle {
+    position: absolute;
+    border-radius: 50%;
+    /* background-color와 border는 JS에서 지정하므로 아래 두 줄을 삭제하거나 주석 처리합니다. */
+    /* background-color: rgba(0, 123, 255, 0.4); */
+    /* border: 2px solid rgba(0, 123, 255, 0.7); */
+    border: 2px solid; /* 테두리 두께는 유지 */
+    transform: translate(-50%, -50%);
+    transition: all 0.3s ease;
+}
+
+.policy-circle {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid; /* 테두리 두께는 유지 */
+    transform: translate(-50%, -50%);
+    transition: all 0.3s ease;
+    
+    /* ▼▼▼ 텍스트 스타일 추가 ▼▼▼ */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+/* css/game.css 파일 맨 아래에 추가 */
+
+#player-info-box {
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.player-info-section h5 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #666;
+  text-align: center;
+}
+
+#player-skin-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.info-tag {
+  background-color: #e7f1ff;
+  color: #007bff;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}

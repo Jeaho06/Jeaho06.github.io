@@ -7,15 +7,13 @@ const SEARCH_DEPTH = 2;
 
 // js/ai.js
 
-// ... (파일 상단의 SEARCH_DEPTH 및 다른 함수들은 그대로 유지) ...
-
 /**
  * AI의 수읽기 로직을 적용하여 최적의 수를 찾습니다. (메인 함수)
  * @param {Array} board - 현재 게임 보드
  * @param {number} moveCount - 현재까지 진행된 전체 수
  * @param {boolean} isFirstMove - 첫 수인지 여부
  * @param {object} lastMove - 마지막으로 둔 수의 좌표
- * @returns {{move: object, score: number}} - 최적의 수와 그 수의 평가 점수
+ * @returns {{move: object, score: number, policy: Array}} - 최적의 수, 점수, 그리고 후보 수 목록
  */
 export function findBestMoveAI(board, moveCount, isFirstMove, lastMove) {
     // 게임 전체에서 두 번째 수(moveCount === 1)일 때 특별 로직을 실행합니다.
@@ -35,7 +33,8 @@ export function findBestMoveAI(board, moveCount, isFirstMove, lastMove) {
         }
         if (adjacentMoves.length > 0) {
             const randomMove = adjacentMoves[Math.floor(Math.random() * adjacentMoves.length)];
-            return { move: randomMove, score: 0 };
+            // [수정] policy 키 추가
+            return { move: randomMove, score: 0, policy: [] };
         }
     }
 
@@ -44,20 +43,14 @@ export function findBestMoveAI(board, moveCount, isFirstMove, lastMove) {
     const relevantMoves = getRelevantMoves(board, isFirstMove, lastMove);
 
     if (relevantMoves.length === 0) {
-        return { move: { col: 9, row: 9 }, score: 0 };
+        // [수정] policy 키 추가
+        return { move: { col: 9, row: 9 }, score: 0, policy: [] };
     }
-
-    // --- ▼▼▼ 후보 수 정렬 로직 추가 ▼▼▼ ---
 
     // 1. 각 후보 수에 대한 우선순위 점수를 계산합니다.
     const scoredMoves = relevantMoves.map(move => {
-        // 현재 AI(-1)가 이 자리에 두었을 때의 공격 점수
         const attackScore = calculateScore(move.col, move.row, -1, board).totalScore;
-        // 상대방(1)이 이 자리에 두었을 때를 막는 수비 점수
         const defenseScore = calculateScore(move.col, move.row, 1, board).totalScore;
-        
-        // 공격 가치와 수비 가치를 합산하여 최종 우선순위 결정
-        // 중요: 공격적인 AI를 위해 공격 점수에 가중치를 줍니다 (예: 1.1배).
         const priorityScore = (attackScore * 1.1) + defenseScore;
         return { move, score: priorityScore };
     });
@@ -65,10 +58,8 @@ export function findBestMoveAI(board, moveCount, isFirstMove, lastMove) {
     // 2. 계산된 우선순위 점수가 높은 순으로 후보 수 목록을 정렬합니다.
     scoredMoves.sort((a, b) => b.score - a.score);
 
-    // --- ▲▲▲ 여기까지 추가된 정렬 로직입니다 ▲▲▲ ---
-
     // 3. 정렬된 목록을 사용하여 미니맥스 탐색을 시작합니다.
-    for (const { move } of scoredMoves) { // 'relevantMoves' 대신 정렬된 'scoredMoves' 사용
+    for (const { move } of scoredMoves) {
         const tempBoard = board.map(row => row.slice());
         tempBoard[move.row][move.col] = -1; // AI(백)의 수를 가상으로 둠
 
@@ -79,7 +70,13 @@ export function findBestMoveAI(board, moveCount, isFirstMove, lastMove) {
             bestMove = move;
         }
     }
-    return { move: bestMove || relevantMoves[0], score: bestScore };
+    
+    // [수정] policy 키 포함하여 최종 반환
+    return { 
+        move: bestMove || relevantMoves[0], 
+        score: bestScore,
+        policy: scoredMoves 
+    };
 }
 
 // ... (minimax, evaluateBoardScore 등 나머지 함수들은 그대로 유지) ...*/

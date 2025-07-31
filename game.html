@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>반칙 오목 - AI와 즐기는 색다른 오목 게임</title>
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/game.css">
+    <link rel="stylesheet" href="/css/skins.css"> 
+    <link rel="stylesheet" href="css/effects.css">
+</head>
+<body>
+    <div id="level-up-overlay">
+        <div class="level-up-content">
+            <div class="level-up-text"></div> 
+            <div class="level-transition-text"></div>
+        </div>
+        <audio id="level-up-sound" src="sounds/levelup.mp3" preload="auto"></audio>
+    </div>
+    <div id="background-watermark"></div>
+    <div id="feedback-widget"></div>
+
+    <div class="main-content-wrapper">
+        <header class="lobby-header">
+            <div id="user-display" style="display: none;">
+                <span id="nickname-display"></span>
+            </div>
+            <div class="global-controls">
+                <button id="give-up-button" class="header-btn" data-i18n-key="give_up_btn">포기하기</button>
+                <button id="profile-button" data-i18n-key="profile_btn"></button>
+                <button id="update-button" data-i18n-key="mail_btn"></button>
+                <div class="language-switcher">
+                    <button id="language-button" data-i18n-key="language_btn"></button>
+                </div>
+                <button id="logout-button" data-i18n-key="logout_btn" style="display: none;"></button>
+            </div>
+        </header>
+
+        <div class="game-container">
+            <div class="ai-container">
+                <h2 data-i18n-key="ai_title"></h2>
+                <div id="cheat-controls">
+                    <div id="ai-win-rate-container">
+                        <div id="active-cheats-display" class="active-cheats">
+                            <h5 data-i18n-key="active_cheats_title">허용된 반칙</h5>
+                            <div id="active-cheats-list"></div>
+                        </div>
+                        <h4 data-i18n-key="ai_win_rate_title"></h4>
+                        <p id="ai-win-rate-display">50%</p>
+                        <canvas id="win-rate-graph"></canvas>
+                    </div>
+                </div>
+            </div>
+                <div class="board-container">
+                    <div id="game-board">
+                        <div id="game-start-notification" class="hidden">게임 시작!</div>
+                        <div id="ai-policy-visualization"></div>
+                        
+                        <div id="stone-container"></div>
+                    </div>
+                </div>
+            <div class="user-container">
+                <h2 id="player-title"></h2>
+                <div id="player-info-box">
+        <div class="player-info-section">
+            <h5 data-i18n-key="equipped_skin_title">장착 스킨</h5>
+            <div id="player-skin-display" class="info-tag">기본 스킨</div>
+        </div>
+        </div>
+            </div>
+        </div> 
+        <div class="chat-container">
+            <div class="chat-wrapper">
+                <h3 data-i18n-key="log_move_title"></h3>
+                <div id="move-log" class="chat-box"></div>
+            </div>
+            <div class="chat-wrapper">
+                <h3 data-i18n-key="log_reason_title"></h3>
+                <div id="reasoning-log" class="chat-box"></div>
+            </div>
+        </div>
+        <div id="level-bar-container">
+            <div id="level-bar-background">
+                <div id="level-bar-fill"></div>
+                <span id="level-bar-text"></span>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-placeholder"></div>
+    <div id="popups-placeholder"></div>
+
+    <script type="module">
+        import { initializeApp } from './js/common.js';
+        import { loadComponents } from './js/componentLoader.js';
+        import { initializeGamePage } from './js/main.js';
+        import './js/winRateManager.js';
+
+        async function startApp() {
+            await loadComponents();
+            await initializeApp();
+            initializeGamePage();
+        }
+        startApp();
+    </script>
+</body>
+</html>

@@ -1,0 +1,174 @@
+/* css/shop.css */
+
+/* --- 상점 팝업 전체 스타일 --- */
+#shop-popup {
+    background-color: #f8f9fa; /* 부드러운 배경색 */
+    border-radius: 12px;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    width: 95%;
+    max-width: 850px; /* 팝업창 최대 너비 확장 */
+    border: 1px solid #e9ecef;
+}
+
+/* --- 헤더 --- */
+#shop-popup .shop-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 15px;
+    margin-bottom: 25px;
+}
+#shop-popup h2 {
+    color: #212529;
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+}
+
+/* --- 루나 잔액 --- */
+.luna-balance-display {
+    font-size: 16px;
+    font-weight: 600;
+    color: #495057;
+    background-color: #e9ecef;
+    padding: 8px 15px;
+    border-radius: 20px;
+}
+
+/* --- 아이템 그리드 --- */
+.shop-grid {
+    display: grid;
+    /* 아이템 카드 최소 너비를 줄여 한 줄에 더 많이 보이도록 수정 */
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
+    gap: 25px; /* 아이템 간 간격 확보 */
+    height: 500px; /* 그리드 높이 확보 */
+    overflow-y: auto;
+    padding: 5px 15px 5px 5px; /* 스크롤바 공간 확보 */
+    align-items: start;
+}
+
+/* --- 아이템 카드 --- */
+.shop-item {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e9ecef;
+    text-align: center;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+.shop-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* --- 아이템 미리보기 --- */
+.shop-item-preview {
+    height: 80px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.shop-item-preview img {
+    max-width: 100%;
+    max-height: 100%;
+    height: auto;
+}
+
+/* --- 아이템 이름 및 가격 --- */
+.shop-item-name {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+.shop-item-price {
+    color: #1a73e8; /* 포인트 컬러 변경 */
+    margin-bottom: 15px;
+    font-weight: bold;
+    font-size: 15px;
+}
+
+/* --- 구매 버튼 --- */
+.shop-item-buy-btn {
+    width: 100%;
+    padding: 10px;
+    cursor: pointer;
+    border: none;
+    background-color: #28a745; /* 새로운 포인트 컬러 (초록색) */
+    color: white;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: background-color 0.2s ease-in-out;
+}
+.shop-item-buy-btn:hover {
+    background-color: #218838; /* 호버 시 더 진한 초록색 */
+}
+
+/* --- 툴팁 스타일 (가독성 개선) --- */
+.shop-item-tooltip {
+    position: fixed;
+    background-color: rgba(33, 37, 41, 0.95); /* 더 진한 배경 */
+    color: #f8f9fa;
+    border-radius: 6px;
+    padding: 10px 15px;
+    z-index: 10000;
+    font-size: 14px;
+    line-height: 1.5;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    animation: tooltip-fade-in 0.15s ease-out forwards;
+}
+.shop-item-tooltip p {
+    margin: 0;
+    font-style: italic;
+    color: #dee2e6;
+}
+@keyframes tooltip-fade-in {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* css/shop.css 파일 맨 아래에 추가 */
+
+.shop-tabs {
+  margin-bottom: 20px;
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 15px;
+}
+.shop-tabs .tab-button {
+    padding: 8px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    background-color: transparent;
+    color: #495057;
+    border: 2px solid transparent;
+    border-radius: 20px;
+    margin-right: 10px;
+    transition: all 0.2s ease-in-out;
+}
+.shop-tabs .tab-button:hover {
+    background-color: #e9ecef;
+}
+.shop-tabs .tab-button.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.shop-item-preview .stone {
+    width: 50px;
+    height: 50px;
+    position: relative;
+    transform: none;
+    left: auto;
+    top: auto;
+    border-radius: 50%; /* 이 줄을 추가하여 원 모양으로 만듭니다. */
+}

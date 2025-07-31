@@ -1,0 +1,96 @@
+/* --- 여름 테마: 로비 (최종 수정본) --- */
+
+/* 전체 배경: 푸른 바다와 파도 */
+body {
+    /* 쉼표(,)를 사용해 그라데이션 배경 위에 이미지 패턴을 겹칩니다. */
+    background: url('https://www.transparenttextures.com/patterns/wave-grid.png'),
+                linear-gradient(to bottom, #89f7fe, #66a6ff) !important;
+    /* 혹시 모를 상황에 대비해 단색 배경도 지정합니다. */
+    background-color: #66a6ff !important;
+}
+
+/* 메인 콘텐츠 영역: 반투명 흰색으로 부드러운 느낌 */
+.main-content-wrapper {
+     background-color: rgba(255, 255, 255, 0.9) !important;
+     border-radius: 20px !important;
+     border: 1px solid rgba(255, 255, 255, 0.5) !important;
+     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* 로비 헤더: 맑은 하늘 */
+.lobby-header {
+    background: transparent !important;
+    box-shadow: none !important;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.7);
+    padding: 15px 30px;
+}
+
+/* 헤더 버튼: 모래사장과 조약돌 */
+.global-controls button, #guest-display button {
+    background-color: #f8d867;
+    color: #5d4037;
+    border: 2px solid #fff;
+    border-radius: 25px;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    transition: all 0.2s ease-in-out;
+}
+
+.global-controls button:hover, #guest-display button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    background-color: #ffca28;
+}
+
+/* 사이드바 메뉴: 해변의 오두막 */
+.lobby-sidebar {
+    background-color: rgba(255, 255, 255, 0.7) !important;
+    box-shadow: none !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.nav-button {
+    background-color: #ffffff;
+    border: 1px solid #dee2e6;
+    color: #495057;
+    transition: all 0.2s ease;
+}
+
+.nav-button:hover {
+    transform: translateX(5px);
+    background-color: #e0f7fa;
+    border-left: 5px solid #4facfe;
+}
+
+/* 게임 시작 패널: 시원한 물방울 느낌 */
+.start-panel {
+    background-color: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.game-title h1 {
+    color: #ffffff;
+    text-shadow: 0 0 15px rgba(0, 242, 254, 0.8), 0 0 10px rgba(79, 172, 254, 0.8);
+}
+
+/* 게임 시작 버튼: 시원한 파도 색 */
+#start-game-btn {
+    background: linear-gradient(to right, #4facfe, #00f2fe);
+    border-radius: 30px;
+    border: 2px solid white;
+    box-shadow: 0 4px 15px rgba(0, 242, 254, 0.4);
+    transition: all 0.3s ease;
+}
+
+#start-game-btn:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 6px 20px rgba(0, 242, 254, 0.6);
+}
+
+/* 내 정보 요약 */
+.user-stats-summary {
+    background-color: rgba(224, 247, 250, 0.5);
+    border-radius: 8px;
+    padding: 15px;
+}

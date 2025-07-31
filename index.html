@@ -3,184 +3,65 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>반칙 오목 - AI와 즐기는 색다른 오목 게임</title>
-    <meta name="description" content="AI가 폭탄, 2번 두기 등 다양한 반칙을 사용하는 새로운 컨셉의 온라인 오목 게임입니다. AI의 반칙을 이겨내고 승리해보세요!">
-    <meta name="keywords" content="오목, 온라인 오목, AI 오목, 반칙 오목, 인공지능 오목, Gomoku, Five in a Row">
-    <meta name="naver-site-verification" content="0c32604bb28a4e48fcdee00ec18eeb3a2dc796c8" />
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="css/style.css"/>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2484440328698714"
-         crossorigin="anonymous"></script>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DGM060XWX5"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-DGM060XWX5');
-    </script>
+    <title data-i18n-key="lobby_title">반칙 오목 - 로비</title>
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/lobby.css">
+    <link rel="stylesheet" href="/css/shop.css">
+    <link rel="stylesheet" href="/css/inventory.css">
+    <link rel="stylesheet" href="/css/skins.css">
+    <link rel="stylesheet" href="css/themes/summer-theme.css"> 
 </head>
 <body>
+    <audio id="bgm" loop src="sounds/SummerGoes.wav"></audio>
+
     <div id="background-watermark"></div>
 
-    <div id="level-up-overlay">
-        <div class="level-up-content">
-            <div class="level-up-text"></div> 
-            <div class="level-transition-text"></div>
-        </div>
-        <audio id="level-up-sound" src="sounds/levelup.mp3"></audio>
-    </div>
-
-    <div id="feedback-widget">
-        <button id="feedback-toggle-btn" data-i18n-key="feedback_toggle_btn">피드백</button>
-        <div id="feedback-form-container">
-            <h3 data-i18n-key="feedback_title">버그 및 피드백 제보</h3>
-            <p data-i18n-key="feedback_desc">AI의 허점, 버그, 또는 새로운 아이디어를 알려주세요!</p>
-
-            <form id="feedback-form" action="https://formspree.io/f/xanjknly" method="POST">
-                <textarea id="feedback-input" name="message" rows="4" data-i18n-placeholder="feedback_placeholder" required></textarea>
-                <button type="submit" data-i18n-key="feedback_submit_btn">보내기</button>
-            </form>
-        </div>
-    </div>
-
-    <div class="top-right-controls">
-        <div id="user-display" style="display: none;">
-            <span id="nickname-display"></span>
-            <button id="logout-button" data-i18n-key="logout_btn">로그아웃</button>
-        </div>
-        <div id="guest-display">
-            <button id="open-login-modal-btn" data-i18n-key="login_signup_btn">로그인/회원가입</button>
-        </div>
-
-        <button id="new-game-button" data-i18n-key="new_game_btn">새 게임</button>
-        <button id="profile-button" data-i18n-key="profile_btn">프로필</button>
-        <button id="update-button" data-i18n-key="mail_btn">메일</button>  <!-- 버튼 텍스트 변경 -->
-        <div class="language-switcher">
-            <button id="language-button" data-i18n-key="language_btn">언어</button>
-            <div id="language-dropdown" class="dropdown-content">
-                <a href="#" data-lang="ko">한국어</a>
-                <a href="#" data-lang="en">English</a>
-                <a href="#" data-lang="ja">日本語</a>
-            </div>
-        </div>
-    </div>
-
-    <div id="popup-overlay"></div>
-
-    <div id="update-popup" class="popup update-popup-redesign">  <!-- 팝업 제목 변경 -->
-        <div class="popup-header">
-            <button id="mail-button" class="tab-button active" data-i18n-key="mail_tab">메일</button>
-            <button id="news-button" class="tab-button" data-i18n-key="news_tab">뉴스</button>
-        </div>
-
-        <div id="mail-content" class="tab-content active">
-            <p data-i18n-key="no_new_mail">새 메일이 없습니다!</p>
-        </div>
-
-        <div id="news-content" class="tab-content">
-            <!-- 뉴스 항목은 js에서 동적으로 생성 -->
-        </div>
-
-        <button id="popup-close-button" class="popup-close-button" data-i18n-key="close_btn">닫기</button>
-    </div>
-
-    <!-- 3. 뉴스 팝업 추가 -->
-    <div id="news-popup" class="popup" style="display: none;">
-        <!-- 내용 js에서 채움 -->
-    </div>
-
-
-    <div id="profile-popup" class="popup">
-        <h2 id="profile-popup-title"></h2>
-        <div class="profile-section">
-            <h3 data-i18n-key="stats_title">전적</h3>
-            <div class="stats-grid">
-                <div>
-                    <span data-i18n-key="stats_wins">승리</span>
-                    <p id="profile-wins">0</p>
-                </div>
-                <div>
-                    <span data-i18n-key="stats_losses">패배</span>
-                    <p id="profile-losses">0</p>
-                </div>
-                <div>
-                    <span data-i18n-key="stats_draws">무승부</span>
-                    <p id="profile-draws">0</p>
-                </div>
-                <div>
-                    <span data-i18n-key="stats_win_rate">승률</span>
-                    <p id="profile-win-rate">0%</p>
-                </div>
-            </div>
-        </div>
-        <div class="profile-section">
-            <h3 data-i18n-key="level_info_title">레벨 정보</h3>
-            <p id="profile-level-info">LV. 1 (0 / 100 XP)</p>
-            <p id="profile-luna-balance">0 루나</p>
-        </div>
-        <div class="profile-section">
-            <h3 data-i18n-key="achievements_title">업적</h3>
-            <div id="achievements-list">
-                <p data-i18n-key="achievements_empty">아직 달성한 업적이 없습니다.</p>
-            </div>
-        </div>
-        <button class="popup-close-button" data-i18n-key="close_btn">닫기</button>
-    </div>
-    
-    <!-- ▼▼▼ 여기에 새로운 wrapper를 추가합니다 ▼▼▼ -->
     <div class="main-content-wrapper">
-        <div class="game-container">
-            <div class="ai-container">
-                <div class="info-wrapper">
-                    <h2 data-i18n-key="ai_title">인공지능</h2>
-                    <div id="cheat-controls">
-                        <h3 data-i18n-key="cheat_allow_title">반칙 허용</h3>
-                        <div class="control-group">
-                            <label class="switch"><input type="checkbox" id="toggle-destiny-denial" checked><span class="slider"></span></label>
-                            <span data-i18n-key="cheat_veto">거부권</span>
-                        </div>
-                        <hr>
-                        <div class="control-group">
-                            <label class="switch"><input type="checkbox" id="toggle-bomb" checked><span class="slider"></span></label>
-                            <span data-i18n-key="cheat_bomb">폭탄 설치</span>
-                        </div>
-                        <div class="control-group">
-                            <label class="switch"><input type="checkbox" id="toggle-double-move" checked><span class="slider"></span></label>
-                            <span data-i18n-key="cheat_double_move">2번 두기</span>
-                        </div>
-                        <div class="control-group">
-                            <label class="switch"><input type="checkbox" id="toggle-swap" checked><span class="slider"></span></label>
-                            <span data-i18n-key="cheat_swap">돌 바꾸기</span>
-                        </div>
-                        <hr>
-                        <div id="ai-win-rate-container">
-                            <h4 data-i18n-key="ai_win_rate_title">AI 예상 승률</h4>
-                            <p id="ai-win-rate-display">50%</p>
-                            <canvas id="win-rate-graph"></canvas>
-                        </div>
-                    </div>
+        <div class="lobby-container">
+            <header class="lobby-header">
+                <div id="user-display" style="display: none;">
+                    <span id="nickname-display"></span>
                 </div>
-            </div>
-            <div class="board-container">
-                <div id="game-board">
+                <div id="guest-display">
+                    <button id="open-login-modal-btn" data-i18n-key="login_btn">로그인</button>
+                </div>
+                <div class="global-controls">
+                    <button id="language-button" data-i18n-key="language_btn">언어</button>
+                </div>
+            </header>
+
+            <main class="lobby-main">
+                <aside class="lobby-sidebar">
+                    <h2 data-i18n-key="menu_title">메뉴</h2>
+                    <nav class="lobby-nav">
+                        <button id="open-shop-btn" class="nav-button" data-i18n-key="shop_btn">상점</button>
+                        <button id="lobby-profile-button" class="nav-button" data-i18n-key="profile_btn">프로필</button>
+                        <button id="lobby-update-button" class="nav-button" data-i18n-key="updates_btn">업데이트</button>
+                        <button class="nav-button" data-i18n-key="ranking_btn">랭킹</button>
+                        <button id="inventory-btn" class="nav-button" data-i18n-key="inventory_btn">🎒 인벤토리</button>
+                    </nav>
+                    <div class="user-stats-summary">
+                        <h3 data-i18n-key="my_info_summary">내 정보 요약</h3>
+                        <p><strong id="summary-nickname">Guest</strong></p>
+                        <p><span data-i18n-key="stat_level">레벨</span>: <span id="stat-level">1</span></p>
+                        <p><span data-i18n-key="stats_wins">승리</span>: <span id="stat-wins">0</span></p>
+                        <p><span data-i18n-key="stats_losses">패배</span>: <span id="stat-losses">0</span></p>
+                        <p><span data-i18n-key="profile_luna_title">보유 루나</span>: <span id="stat-luna">100</span></p>
                     </div>
-            </div>
-            <div class="user-container">
-                <h2 data-i18n-key="user_title">사용자</h2>
-            </div>
+                </aside>
+                <section class="lobby-content">
+                    <div class="start-panel">
+                        <div class="game-title">
+                            <h1 data-i18n-key="game_title">반칙 오목</h1>
+                            <p data-i18n-key="game_subtitle">AI와의 짜릿한 반칙 승부</p>
+                        </div>
+                        <button id="start-game-btn" data-i18n-key="start_game_btn">게임 시작</button>
+                    </div>
+                </section>
+            </main>
         </div>
-    
-        <div class="chat-container">
-            <div class="chat-wrapper">
-                <h3 data-i18n-key="log_move_title">기보 (좌표)</h3>
-                <div id="move-log" class="chat-box"></div>
-            </div>
-            <div class="chat-wrapper">
-                <h3 data-i18n-key="log_reason_title">설명</h3>
-                <div id="reasoning-log" class="chat-box"></div>
-            </div>
-        </div>
-    
         <div id="level-bar-container">
             <div id="level-bar-background">
                 <div id="level-bar-fill"></div>
@@ -188,37 +69,26 @@
             </div>
         </div>
     </div>
+    
+    <div id="footer-placeholder"></div>
+    <div id="popups-placeholder"></div>
 
-    <!-- ▲▲▲ 새로운 wrapper는 여기까지 입니다 ▲▲▲ -->
+    <script type="module">
+        import { loadComponents } from './js/componentLoader.js';
+        import { initializeLobby } from './js/lobby.js';
+        import { initializeApp } from './js/common.js';
+        // 앱을 시작하는 비동기 함수
+        async function startApp() {
+            // 1. 공용 HTML (팝업, 푸터)을 먼저 화면에 로드합니다.
+            await loadComponents();
+            // 2. 공용 스크립트(인증, 언어, 공용 팝업 제어)를 초기화합니다.
+            initializeApp();
+            // 3. 마지막으로 로비 전용 스크립트(게임 시작 버튼 등)를 초기화합니다.
+            initializeLobby();
+        }
 
-    <footer class="site-footer">
-        <a href="https://github.com/Jeaho06" target="_blank">GitHub Profile</a>
-        <a href="pages/about_ko.html" data-i18n-key="about_page">게임 소개</a>
-        <a href="pages/privacy_ko.html" data-i18n-key="privacy_policy">개인정보 처리방침</a>
-    </footer>
-
-    <div id="auth-modal" class="popup" style="display: none; width: 350px;">
-        <div id="login-form">
-            <h2 data-i18n-key="login_title">로그인</h2>
-            <input type="text" id="login-nickname" data-i18n-placeholder="nickname_placeholder">
-            <input type="password" id="login-password" data-i18n-placeholder="password_placeholder">
-            <button id="login-btn" data-i18n-key="login_btn">로그인</button>
-            <p><span data-i18n-key="no_account_q">계정이 없으신가요?</span> <a href="#" id="show-signup" data-i18n-key="signup_title">회원가입</a></p>
-        </div>
-        <div id="signup-form" style="display: none;">
-            <h2 data-i18n-key="signup_title">회원가입</h2>
-            <p style="font-size: 12px; color: red;" data-i18n-key="password_recovery_notice">※ 비밀번호는 복구가 불가능하니 꼭 기억해주세요!</p>
-            <input type="text" id="signup-nickname" data-i18n-placeholder="nickname_placeholder">
-            <input type="password" id="signup-password" data-i18n-placeholder="password_placeholder">
-            <button id="signup-btn" data-i18n-key="signup_btn">회원가입</button>
-            <p><span data-i18n-key="have_account_q">이미 계정이 있으신가요?</span> <a href="#" id="show-login" data-i18n-key="login_title">로그인</a></p>
-        </div>
-        <button class="popup-close-button" data-i18n-key="close_btn">닫기</button>
-    </div>
-
-
-
-    <script type="module" src="js/main.js"></script>
-    <script type="module" src="js/winRateManager.js"></script>
+        // 앱 시작
+        startApp();
+    </script>
 </body>
 </html>

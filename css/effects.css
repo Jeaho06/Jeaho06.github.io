@@ -1,0 +1,73 @@
+/* === 연출 효과: 닫힌 4 === */
+.effect-closed-four {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    border: 3px solid rgba(255, 100, 0, 0.7);
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+    pointer-events: none;
+    animation: effect-pulse-orange 1.5s ease-out forwards;
+}
+
+@keyframes effect-pulse-orange {
+    0% { transform: translate(-50%, -50%) scale(0.2); opacity: 1; }
+    70% { opacity: 0.8; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+}
+
+/* === 연출 효과: 닫힌 4 (로컬) === */
+.effect-closed-four {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    border: 3px solid rgba(255, 100, 0, 0.7);
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+    pointer-events: none;
+    animation: effect-pulse-orange 1.5s ease-out forwards;
+    z-index: 10; /* 다른 요소 위에 보이도록 z-index 추가 */
+}
+
+@keyframes effect-pulse-orange {
+    0% { transform: translate(-50%, -50%) scale(0.2); opacity: 1; }
+    70% { opacity: 0.8; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+}
+
+
+/* === 연출 효과: 닫힌 4 (궁극기 오버레이) - 새로 추가 === */
+.effect-ultimate-overlay {
+    position: fixed; /* 화면 전체에 고정 */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 999; /* 최상단에 표시 */
+    
+    /* JS에서 전달받은 좌표를 중심으로 하는 방사형 그라데이션 */
+    background: radial-gradient(
+        circle at var(--effect-x) var(--effect-y),
+        rgba(255, 150, 0, 0.6) 0%,
+        rgba(255, 150, 0, 0) 60%
+    );
+    
+    opacity: 0;
+    animation: effect-ultimate-burst 1.5s ease-out forwards;
+}
+
+@keyframes effect-ultimate-burst {
+    0% {
+        opacity: 1;
+        transform: scale(0.5);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(2); /* 화면 밖으로 사라지도록 크게 만듦 */
+    }
+}
+
+

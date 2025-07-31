@@ -8,7 +8,7 @@ import { placeStone, logMove, logReason, getString, convertCoord } from '../ui.j
  * @returns {boolean} 스킬이 성공적으로 사용되었으면 true
  */
 export function executePlaceBomb(context) {
-    const { board, playSound, updateWinRate, findBestMove, moveCount } = context;
+    const { board, playSfx, updateWinRate, findBestMove, moveCount } = context;
     // [수정] 새로운 findBestBombLocation 함수를 사용합니다.
     const move = findBestBombLocation(board); 
 
@@ -19,7 +19,7 @@ export function executePlaceBomb(context) {
         context.bombState.row = move.row;
         
         placeStone(move.col, move.row, 'bomb');
-        playSound("tnt_installation.mp3");
+        playSfx('install');
         
         const bombCoord = convertCoord(move.col, move.row);
         logMove(moveCount + 1, `${getString('ai_title')}: ${bombCoord}!!`);

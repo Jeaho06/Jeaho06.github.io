@@ -1,0 +1,2 @@
+/ 아이템 리셋 명령어
+import('/js/guestManager.js').then(module => module.resetGuestItems());
