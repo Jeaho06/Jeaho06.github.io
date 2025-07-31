@@ -27,7 +27,7 @@ export const shopItems = [
         name: '무지개 바둑알',
         price: 10,
         description: '장인의 손길로 완성된 오색찬란한 무지개 바둑돌입니다. 빛의 각도에 따라 다채롭게 빛납니다.',
-        cssClass: 'skin-najeon', // skins.css에 추가한 새 클sdaf래스 이름
+        cssClass: 'skin-najeon', // skins.css에 추가한 새 클래스 이름
         name_key: 'item_name_najeon_stone'
     }
 // ...
