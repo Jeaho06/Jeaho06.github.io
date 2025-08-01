@@ -259,43 +259,74 @@ async function loadLanguage(lang) {
     } catch (error) { console.error("Language Error:", error); }
 }
 
-export async function initializeApp() {
-    await loadComponents();
-    await loadLanguage(localStorage.getItem('omokLanguage') || 'ko');
+/**
+ * [수정됨] 앱 초기화 함수
+ * 이제 Promise를 반환하여, 첫 인증 상태가 확인될 때까지 기다릴 수 있습니다.
+ */
+export function initializeApp() {
+    // 인증과 무관하게 먼저 실행해도 되는 초기화 작업들
     initializeAudioManager();
     initializeEffectSettings();
 
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            const userRef = doc(db, "users", user.uid);
-            onSnapshot(userRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    currentUser = user;
-                    userData = docSnap.data();
-                    updateAuthUI(userData);
-                    updateLevelUI(userData);
-                    updateLobbySidebar(userData);
-                    if (document.getElementById('game-board')) {
-                        updatePlayerInfoBox(userData);
+    // Promise를 반환하여 호출한 쪽(game.html)에서 로딩을 기다리게 함
+    return new Promise(async (resolve) => {
+        // 1. 언어팩과 공용 HTML(팝업 등) 로딩을 먼저 완료
+        await loadLanguage(localStorage.getItem('omokLanguage') || 'ko');
+        await loadComponents();
+
+        // 2. 로드된 HTML 요소에 이벤트 핸들러 설정
+        setupCommonControls();
+        setupClickSounds();
+        setupShop();
+        setupInventory();
+        
+        // 3. 인증 상태 리스너 설정. 첫 실행 시 Promise를 resolve()하여 대기 해제
+        // onAuthStateChanged는 사용자가 로그인하거나 로그아웃할 때마다 호출됩니다.
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // 로그인 사용자: Firestore에서 실시간 데이터 수신
+                const userRef = doc(db, "users", user.uid);
+                onSnapshot(userRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        currentUser = user;
+                        userData = docSnap.data();
+                        
+                        // 모든 관련 UI 업데이트
+                        updateAuthUI(userData);
+                        updateLevelUI(userData);
+                        updateLobbySidebar(userData);
+                        
+                        // 게임 페이지에만 있는 UI 요소는 존재 여부 확인 후 업데이트
+                        if (document.getElementById('game-board')) {
+                            updatePlayerInfoBox(userData);
+                        }
+                        
+                        // 사용자 정보 로딩 및 UI 업데이트가 완료되었으므로,
+                        // Promise를 이행(resolve)하여 앱의 나머지 부분이 실행되도록 합니다.
+                        resolve();
+                    } else {
+                        // 인증은 됐으나 DB에 유저 정보가 없는 경우 (오류 상황)
+                        logOut(); // 안전을 위해 로그아웃 처리
+                        resolve(); // 다음으로 진행하기 위해 이행은 필수
                     }
+                });
+            } else {
+                // 게스트 사용자
+                currentUser = null;
+                userData = null;
+                guestData = loadGuestData();
+                
+                // 게스트용 UI 업데이트
+                updateAuthUI(null, guestData);
+                updateLevelUI(guestData);
+                updateLobbySidebar(guestData);
+                if (document.getElementById('game-board')) {
+                    updatePlayerInfoBox(guestData);
                 }
-            });
-        } else {
-            currentUser = null;
-            userData = null;
-            guestData = loadGuestData();
-            updateAuthUI(null, guestData);
-            updateLevelUI(guestData);
-            updateLobbySidebar(guestData);
-            if (document.getElementById('game-board')) {
-                updatePlayerInfoBox(guestData);
+                
+                // 게스트 정보 로딩이 완료되었으므로, Promise를 이행합니다.
+                resolve();
             }
-        }
+        });
     });
-
-    setupCommonControls();
-    setupClickSounds(); // 이제 이 함수가 위에 정의되어 있으므로 에러가 발생하지 않습니다.
-    setupShop();
-    setupInventory();
 }
-
