@@ -60,6 +60,12 @@ export function updateActiveCheatsLanguage() {
 export async function resetGame(settings = {}) {
     console.log(`Game Start! Type: ${gameType}`);
     
+        // ▼▼▼ 아래 4줄의 코드를 추가해주세요 ▼▼▼
+    // [수정] 게임 시작 시 유저 정보를 다시 가져와서 적용합니다.
+    currentUser = getCurrentUser();
+    userData = getUserData();
+    guestData = getGuestData();
+    // ▲▲▲ 여기까지 추가 ▲▲▲
     updatePlayerTitle(userData, guestData);
         // ▼▼▼ 이 코드를 추가하면 안정성이 높아집니다 ▼▼▼
     const moveLog = document.getElementById('move-log');
@@ -217,17 +223,20 @@ async function endGame(message) {
     const currentCheats = Object.keys(activeCheats).filter(key => activeCheats[key]);
 
     if (currentUser) {
-        const oldUserData = { ...userData }; 
+         // ▼▼▼ [수정] 이 부분을 아래와 같이 변경합니다. ▼▼▼
         const result = await updateUserGameResult(currentUser.uid, gameResult, moveCount, activeCheats);
         
-        if (result) {
+        if (result && result.oldData) { // result와 result.oldData가 있는지 확인
+            const oldUserData = result.oldData; // DB에서 직접 가져온 데이터 사용
+            
             eventData.xpResult = result;
-            eventData.oldUserData = oldUserData;
+            eventData.oldUserData = oldUserData; // UI 표시에 정확한 데이터 전달
 
             // 로그인 유저 경험치 바 즉시 업데이트
             const newExperience = (oldUserData.experience || 0) + result.xpGained;
             const updatedDataForUI = { ...oldUserData, experience: newExperience, level: result.newLevel };
             updateLevelUI(updatedDataForUI);
+        // ▲▲▲ 수정 완료 ▲▲▲
 
             // [수정] '새 게임' 시 마지막 반칙 설정을 유지하도록 콜백을 수정합니다.
             showEndGameMessage(eventData, () => resetGame({ cheats: currentCheats }));

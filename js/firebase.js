@@ -208,6 +208,7 @@ export async function updateUserGameResult(uid, gameResult, moveCount, activeChe
             
             // 6. 프론트엔드에 전달할 결과 반환
             return {
+                oldData: oldData, // UI 계산을 위해 계산 직전의 원본 데이터를 반환
                 xpGained,
                 didLevelUp,
                 newLevel: level,

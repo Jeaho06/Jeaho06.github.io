@@ -1,7 +1,7 @@
 /* --- 공용 컴포넌트: 버튼, 팝업, 위젯 등 --- */
 
 /* 공용 버튼 */
-#give-up-button, #how-to-play-button, #update-button, #language-button, #open-login-modal-btn, #profile-button, #settings-button {
+#give-up-button, #how-to-play-button, #logout-button, #update-button, #language-button, #open-login-modal-btn, #profile-button, #settings-button {
   padding: 10px 15px;
   font-size: 14px;
   font-weight: bold;
