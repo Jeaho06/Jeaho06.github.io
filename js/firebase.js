@@ -212,6 +212,7 @@ export async function updateUserGameResult(uid, gameResult, moveCount, activeChe
                 xpGained,
                 didLevelUp,
                 newLevel: level,
+                newExperience: experience,
                 didGetDailyBonus,
                 lunaGained,
                 bonusXp,

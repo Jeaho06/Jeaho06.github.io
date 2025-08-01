@@ -59,15 +59,17 @@ export function updateActiveCheatsLanguage() {
 
 export async function resetGame(settings = {}) {
     console.log(`Game Start! Type: ${gameType}`);
-    
-        // ▼▼▼ 아래 4줄의 코드를 추가해주세요 ▼▼▼
-    // [수정] 게임 시작 시 유저 정보를 다시 가져와서 적용합니다.
+
     currentUser = getCurrentUser();
     userData = getUserData();
     guestData = getGuestData();
-    // ▲▲▲ 여기까지 추가 ▲▲▲
+
+    const currentPlayer = currentUser ? userData : guestData;
+    updatePlayerTitle(currentPlayer); // 플레이어 닉네임 표시
+    updatePlayerInfoBox(currentPlayer); // 플레이어 스킨 정보 표시
+
     updatePlayerTitle(userData, guestData);
-        // ▼▼▼ 이 코드를 추가하면 안정성이 높아집니다 ▼▼▼
+
     const moveLog = document.getElementById('move-log');
     if (!moveLog) {
       // 게임 보드 요소가 없으면 함수를 실행하지 않고 종료
@@ -80,9 +82,7 @@ export async function resetGame(settings = {}) {
         doubleMove: settings.cheats?.includes('doubleMove') || false,
         swap: settings.cheats?.includes('swap') || false,
     };
-    // ▲▲▲ 여기까지 추가 ▲▲▲
-
-        // ▼▼▼ 이 코드를 추가합니다 ▼▼▼
+    
     const activeCheatsList = document.getElementById('active-cheats-list');
     if (activeCheatsList) {
         activeCheatsList.innerHTML = ''; // 목록 초기화
@@ -219,48 +219,54 @@ async function endGame(message) {
     const isDraw = message === getString('system_draw');
     const gameResult = isUserWin ? 'win' : (isDraw ? 'draw' : 'loss');
 
-    // 현재 활성화된 반칙 목록을 배열로 만듭니다. (예: ['bomb', 'swap'])
+    // 현재 활성화된 반칙 목록을 배열로 만듭니다.
     const currentCheats = Object.keys(activeCheats).filter(key => activeCheats[key]);
 
+    // --- 로그인 유저 처리 ---
     if (currentUser) {
-         // ▼▼▼ [수정] 이 부분을 아래와 같이 변경합니다. ▼▼▼
         const result = await updateUserGameResult(currentUser.uid, gameResult, moveCount, activeCheats);
         
-        if (result && result.oldData) { // result와 result.oldData가 있는지 확인
-            const oldUserData = result.oldData; // DB에서 직접 가져온 데이터 사용
+        // Firebase로부터 결과와 DB 원본 데이터를 성공적으로 받아왔는지 확인합니다.
+        if (result && result.oldData) {
+            const oldUserData = result.oldData;
             
             eventData.xpResult = result;
-            eventData.oldUserData = oldUserData; // UI 표시에 정확한 데이터 전달
+            eventData.oldUserData = oldUserData; // UI 표시에 DB 원본 데이터를 전달합니다.
 
-            // 로그인 유저 경험치 바 즉시 업데이트
-            const newExperience = (oldUserData.experience || 0) + result.xpGained;
-            const updatedDataForUI = { ...oldUserData, experience: newExperience, level: result.newLevel };
+            // ★★★ 핵심 수정 부분 ★★★
+            // 로컬에서 경험치를 재계산하지 않고, Firebase가 반환한 최종 결과를 그대로 사용합니다.
+            const updatedDataForUI = { 
+                ...oldUserData, 
+                experience: result.newExperience, // Firebase가 계산한 최종 경험치
+                level: result.newLevel          // Firebase가 계산한 최종 레벨
+            };
             updateLevelUI(updatedDataForUI);
-        // ▲▲▲ 수정 완료 ▲▲▲
 
-            // [수정] '새 게임' 시 마지막 반칙 설정을 유지하도록 콜백을 수정합니다.
+            // 게임 종료 메시지를 표시하고, '새 게임' 콜백을 연결합니다.
             showEndGameMessage(eventData, () => resetGame({ cheats: currentCheats }));
             logReason("시스템", message);
             
+            // 레벨업을 했다면 애니메이션을 보여줍니다.
             if (result.didLevelUp) {
                 showLevelUpAnimation(result.newLevel - 1, result.newLevel);
             }
         } else {
+            // Firebase 트랜잭션 실패 시
             showEndGameMessage(eventData, () => resetGame({ cheats: currentCheats }));
             logReason("시스템", message);
         }
-    } else {
-        // 게스트일 경우
+    } 
+    // --- 게스트 유저 처리 ---
+    else {
         const oldGuestData = loadGuestData();
         const result = updateGuestGameResult(gameResult, moveCount, activeCheats);
         
         const newGuestData = loadGuestData();
-        updateLevelUI(newGuestData);
+        updateLevelUI(newGuestData); // 게스트는 localStorage에서 최신 데이터를 다시 로드
 
         eventData.xpResult = result;
         eventData.oldUserData = oldGuestData;
 
-        // [수정] '새 게임' 시 마지막 반칙 설정을 유지하도록 콜백을 수정합니다.
         showEndGameMessage(eventData, () => resetGame({ cheats: currentCheats }));
         logReason("시스템", message);
         
