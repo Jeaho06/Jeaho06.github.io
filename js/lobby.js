@@ -1,7 +1,7 @@
 // js/lobby.js
 import { updateProfilePopup } from './ui.js';
 import { getCurrentUser, getUserData, getGuestData, showPopup  } from './common.js';
-
+import { logOut } from './firebase.js'; // [추가] 로그아웃 함수 가져오기
 /**
  * 로비 페이지에만 필요한 이벤트 리스너를 설정하는 함수
  */
@@ -67,5 +67,11 @@ export function initializeLobby() {
         
         updateProfilePopup(currentUser ? userData : guestData);
         showPopup('profile-popup');
+    });
+
+    const logoutButton = document.getElementById('logout-button');
+    logoutButton?.addEventListener('click', () => {
+        logOut();
+        window.location.href = '/index.html'; // 로그아웃 후 로비로 이동
     });
 }

@@ -181,25 +181,14 @@ export function showEndGameMessage(eventData, resetGameCallback) {
         xpGainedEl.textContent = xpGainedText;
         detailsContainer.appendChild(xpGainedEl);
 
-        // 경험치 변화
-        const requiredXpForOldLevel = getRequiredXpForLevel(oldData.level || 1);
-        const totalNewXp = oldXp + result.xpGained;
+        // [수정] 경험치 변화 표시 로직
         const xpChangeEl = document.createElement('p');
-        let newXpForDisplay, requiredXpForNewLevel;
-        if (result.didLevelUp) {
-            requiredXpForNewLevel = getRequiredXpForLevel(result.newLevel);
-            // 레벨업 후 남은 경험치를 계산하기 위해 이전 레벨들의 요구 경험치를 모두 빼야 할 수 있음
-            // 여기서는 단순화된 계산을 유지
-            newXpForDisplay = totalNewXp; 
-            let tempLevel = oldData.level || 1;
-            while(tempLevel < result.newLevel){
-                newXpForDisplay -= getRequiredXpForLevel(tempLevel);
-                tempLevel++;
-            }
-        } else {
-            requiredXpForNewLevel = requiredXpForOldLevel;
-            newXpForDisplay = totalNewXp;
-        }
+        const requiredXpForOldLevel = getRequiredXpForLevel(oldData.level || 1);
+        const requiredXpForNewLevel = getRequiredXpForLevel(result.newLevel);
+        
+        // Firebase 트랜잭션의 최종 결과값을 직접 사용 (로컬 재계산 제거)
+        const newXpForDisplay = result.newExperience;
+
         xpChangeEl.textContent = getString('game_over_xp_change', {
             oldXp: oldXp,
             reqOld: requiredXpForOldLevel,

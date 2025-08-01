@@ -68,7 +68,6 @@ export async function resetGame(settings = {}) {
     updatePlayerTitle(currentPlayer); // 플레이어 닉네임 표시
     updatePlayerInfoBox(currentPlayer); // 플레이어 스킨 정보 표시
 
-    updatePlayerTitle(userData, guestData);
 
     const moveLog = document.getElementById('move-log');
     if (!moveLog) {
@@ -82,7 +81,7 @@ export async function resetGame(settings = {}) {
         doubleMove: settings.cheats?.includes('doubleMove') || false,
         swap: settings.cheats?.includes('swap') || false,
     };
-    
+
     const activeCheatsList = document.getElementById('active-cheats-list');
     if (activeCheatsList) {
         activeCheatsList.innerHTML = ''; // 목록 초기화
@@ -726,18 +725,16 @@ function getColorForScore(value) {
 function checkDraw() { return moveCount >= 361; }
 
 /**
- * 게임 화면의 플레이어 제목을 유저 데이터에 맞게 업데이트합니다.
- * @param {object} uData - 로그인한 사용자의 데이터
- * @param {object} gData - 게스트의 데이터
+ * [수정] 게임 화면의 플레이어 제목을 데이터에 맞게 업데이트합니다.
+ * @param {object} playerData - 현재 플레이어의 데이터 (로그인 유저 또는 게스트)
  */
-function updatePlayerTitle(uData, gData) {
+function updatePlayerTitle(playerData) {
     const playerTitleEl = document.getElementById('player-title');
     if (!playerTitleEl) return;
 
-    if (uData && uData.nickname) { // 로그인 유저
-        playerTitleEl.textContent = uData.nickname;
-    } else { // 게스트
+    if (playerData && playerData.nickname) { // 로그인 유저 또는 게스트
+        playerTitleEl.textContent = playerData.nickname;
+    } else { // 데이터가 없거나 닉네임이 없는 경우
         playerTitleEl.textContent = 'Guest';
     }
 }
-
