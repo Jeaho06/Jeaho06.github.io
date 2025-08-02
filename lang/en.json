@@ -128,6 +128,16 @@
   "system_veto_activated": "Destiny's Denial has been activated.",
   "update_history_title": "Update History",
   "update_logs": [
+    {
+      "version": "2.0",
+      "date": "2025-08-02",
+      "notes": [
+        "Summer Season Part 1 Major Update (v2.0)",
+        "Added new Lobby environment",
+        "Introduced the Shop and Inventory systems",
+        "Added new Game Modes (Basic, Normal, Ranked)"
+      ]
+    },
     { "version": "1.8", "date": "2025-07-16", "notes": [ "Enhanced AI calculation logic", "Added new currency 'Luna'", "Added watermark feature" ] },
     { "version": "1.7", "date": "2025-07-12", "notes": [ "Added AI move analysis feature", "Script optimization" ] },
     { "version": "1.6", "date": "2025-07-10", "notes": [ "Added AI Win Rate display feature.", "Enhanced AI's early-game response logic and performance." ] },
