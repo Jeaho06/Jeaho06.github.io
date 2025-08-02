@@ -41,7 +41,7 @@ export function showPopup(id) {
 /**
  * 화면에 열려있는 모든 팝업을 닫습니다.
  */
-function closeAllPopups() {
+export function closeAllPopups() {
     const overlay = document.getElementById('popup-overlay');
     const popups = document.querySelectorAll('.popup');
     
@@ -259,46 +259,46 @@ async function loadLanguage(lang) {
     } catch (error) { console.error("Language Error:", error); }
 }
 
+// js/common.js
+
 /**
- * [수정됨] 앱 초기화 함수
- * 컴포넌트 로딩 후 언어를 적용하여 텍스트 누락 문제를 해결합니다.
+ * [최종 수정] 앱 전체의 초기화 순서를 책임지는 함수.
+ * 컴포넌트 로딩 -> 언어 적용 -> 공용 컨트롤 설정 -> 인증 확인 순서를 보장합니다.
  */
 export function initializeApp() {
-    // 인증과 무관하게 먼저 실행해도 되는 초기화 작업들
-    initializeAudioManager();
-    initializeEffectSettings();
-
-    // Promise를 반환하여 호출한 쪽에서 로딩을 기다리게 함
+    // Promise를 반환하여, 모든 비동기 초기화가 끝날 때까지 앱 실행을 대기시킵니다.
     return new Promise(async (resolve) => {
-        // [수정] 컴포넌트(popups.html 등)를 먼저 로드하여 DOM에 추가합니다.
+        
+        // 1. HTML 컴포넌트(popups.html 등)를 먼저 로드하여 DOM에 삽입합니다.
         await loadComponents();
-        // [수정] 그 다음, 로드된 컴포넌트 내의 텍스트를 번역합니다.
+
+        // 2. 삽입된 컴포넌트를 포함하여 페이지 전체의 언어를 적용합니다.
         await loadLanguage(localStorage.getItem('omokLanguage') || 'ko');
 
-        // 로드된 HTML 요소에 이벤트 핸들러 설정
+        // 3. 이제 모든 HTML 요소가 준비되었으므로, 공용 컨트롤과 이벤트 리스너를 설정합니다.
+        initializeAudioManager();
+        initializeEffectSettings();
         setupCommonControls();
         setupClickSounds();
         setupShop();
         setupInventory();
         
-        // 인증 상태 리스너 설정. 첫 실행 시 Promise를 resolve()하여 대기 해제
+        // 4. 마지막으로 사용자 인증 상태를 확인합니다.
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // 로그인 사용자: Firestore에서 실시간 데이터 수신
+                // 로그인 사용자
                 const userRef = doc(db, "users", user.uid);
                 onSnapshot(userRef, (docSnap) => {
                     if (docSnap.exists()) {
                         currentUser = user;
                         userData = docSnap.data();
-                        
                         updateAuthUI(userData);
                         updateLevelUI(userData);
                         updateLobbySidebar(userData);
-                        
                         if (document.getElementById('game-board')) {
                             updatePlayerInfoBox(userData);
                         }
-                        
+                        // 모든 설정이 끝났으므로 Promise를 이행(resolve)하여 대기를 해제합니다.
                         resolve();
                     } else {
                         logOut(); 
@@ -310,14 +310,13 @@ export function initializeApp() {
                 currentUser = null;
                 userData = null;
                 guestData = loadGuestData();
-
                 updateAuthUI(null, guestData);
                 updateLevelUI(guestData);
                 updateLobbySidebar(guestData);
                 if (document.getElementById('game-board')) {
                     updatePlayerInfoBox(guestData);
                 }
-                
+                // 모든 설정이 끝났으므로 Promise를 이행(resolve)하여 대기를 해제합니다.
                 resolve();
             }
         });

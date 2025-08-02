@@ -448,3 +448,80 @@
 .mode-ranked .nav-button:hover {
     background-color: #c82333;
 }
+
+/* css/components.css */
+
+/* [추가] 게임 종료 팝업 스타일 */
+#end-game-popup .popup-content {
+    text-align: center;
+}
+
+#end-game-popup h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+#end-game-popup .xp-details {
+    text-align: left;
+    margin: 25px 0;
+    font-size: 16px;
+    line-height: 1.8;
+    color: #555;
+}
+
+#end-game-popup .xp-details hr {
+    border: 0;
+    border-top: 1px solid #eee;
+    margin: 15px 0;
+}
+
+#end-game-popup .popup-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+#end-game-popup .popup-buttons button {
+    flex: 1;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: 500;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#end-game-popup #new-game-popup-btn {
+    background-color: #007bff;
+    color: white;
+}
+#end-game-popup #new-game-popup-btn:hover {
+    background-color: #0056b3;
+}
+
+#end-game-popup #go-to-lobby-popup-btn {
+    background-color: #6c757d;
+    color: white;
+}
+#end-game-popup #go-to-lobby-popup-btn:hover {
+    background-color: #5a6268;
+}
+/* css/components.css */
+
+/* [추가] 게임 종료 팝업의 모드 태그 스타일 */
+#end-game-popup .game-mode-tag {
+    display: inline-block;
+    padding: 4px 12px;
+    margin-top: -10px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 12px;
+    background-color: #e9ecef;
+    color: #495057;
+}

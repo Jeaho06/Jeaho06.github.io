@@ -2,6 +2,8 @@
 import { getRequiredXpForLevel } from './firebase.js'; // [추가]
 import { getStoneClasses } from './skinManager.js';
 import { shopItems } from './shopItems.js';
+import { showPopup, closeAllPopups } from './common.js'; // [추가]
+
 let currentStrings = {};
 
 export function setStrings(strings) {
@@ -141,124 +143,127 @@ export function createBoardUI() {
 
 // ui.js 파일의 showEndGameMessage 함수를 아래 코드로 전체 교체해주세요.
 
+// js/ui.js
+
+// 기존 showEndGameMessage 함수를 삭제하고 아래 코드로 교체하세요.
+
+/**
+ * [수정됨] 게임 종료 후, 결과를 팝업창으로 표시합니다.
+ * @param {object} eventData - 게임 결과(승패 메시지, 경험치, 루나) 데이터
+ * @param {function} resetGameCallback - '새 게임' 버튼 클릭 시 실행될 콜백 함수
+ */
 export function showEndGameMessage(eventData, resetGameCallback) {
-    // 기존에 표시된 게임 종료 메시지가 있다면 삭제합니다.
-    const existingMsg = document.getElementById('game-over-message');
-    if (existingMsg) {
-        existingMsg.remove();
+    // 1. 팝업의 기본 틀과 버튼 요소들을 가져옵니다.
+    const endGamePopup = document.getElementById('end-game-popup');
+    const titleEl = document.getElementById('end-game-title');
+    const modeEl = document.getElementById('end-game-mode');
+    const detailsEl = document.getElementById('end-game-details');
+    const newGameBtn = document.getElementById('new-game-popup-btn');
+    const lobbyBtn = document.getElementById('go-to-lobby-popup-btn');
+
+    // 필수 요소가 없으면 함수를 중단합니다.
+    if (!endGamePopup || !titleEl || !detailsEl || !newGameBtn || !lobbyBtn) {
+        console.error("게임 종료 팝업의 필수 HTML 요소를 찾을 수 없습니다.");
+        return;
     }
 
-    const boardElement = document.getElementById('game-board');
-    if (!boardElement) return;
+    // 2. 팝업 제목을 설정하고, 상세 내용 영역을 비웁니다.
+    titleEl.textContent = eventData.message;
 
-    const msgDiv = document.createElement('div');
-    msgDiv.id = 'game-over-message';
+    if (eventData.gameType) {
+        let modeKey = '';
+        switch (eventData.gameType) {
+            case 'basic':
+                modeKey = 'mode_basic_title';
+                break;
+            case 'normal':
+                modeKey = 'mode_normal_title';
+                break;
+            case 'ranked':
+                modeKey = 'mode_ranked_title';
+                break;
+        }
+        modeEl.textContent = getString(modeKey);
+        modeEl.style.display = 'inline-block'; // 보이도록 설정
+    } else {
+        modeEl.style.display = 'none'; // 정보가 없으면 숨김
+    }
+    detailsEl.innerHTML = ''; // 이전 정산 내용이 있다면 모두 삭제
 
-    // 1. 메인 메시지 생성
-    const mainMessage = document.createElement('div');
-    mainMessage.className = 'main-message';
-    mainMessage.textContent = eventData.message;
-    msgDiv.appendChild(mainMessage);
-
-    // 2. 경험치 및 루나 상세 정보가 있을 경우
+    // 3. 경험치 및 루나 정산 정보가 있을 경우, p 태그를 동적으로 생성하여 추가합니다.
     if (eventData.xpResult && eventData.oldUserData) {
-        const result = eventData.xpResult; 
+        const result = eventData.xpResult;
         const oldData = eventData.oldUserData;
         const oldXp = oldData.experience || 0;
-        
-        const detailsContainer = document.createElement('div');
-        detailsContainer.className = 'xp-details';
-        
-        // 획득 경험치
-        let xpGainedText = getString('game_over_xp_gained', { xpGained: result.xpGained });
-        if (result.bonusXp > 0) {
-            xpGainedText += ` (반칙 보너스 +${result.bonusXp}!)`;
-        }
-        if (result.didGetDailyBonus) {
-            xpGainedText += ` ${getString('game_over_daily_bonus')}`;
-        }
-        const xpGainedEl = document.createElement('p');
-        xpGainedEl.textContent = xpGainedText;
-        detailsContainer.appendChild(xpGainedEl);
-
-        // [수정] 경험치 변화 표시 로직
-        const xpChangeEl = document.createElement('p');
         const requiredXpForOldLevel = getRequiredXpForLevel(oldData.level || 1);
         const requiredXpForNewLevel = getRequiredXpForLevel(result.newLevel);
-        
-        // Firebase 트랜잭션의 최종 결과값을 직접 사용 (로컬 재계산 제거)
-        const newXpForDisplay = result.newExperience;
 
+        // 획득 경험치
+        let xpGainedText = getString('game_over_xp_gained', { xpGained: result.xpGained });
+        if (result.bonusXp > 0) xpGainedText += ` (+${result.bonusXp} Bonus)`;
+        if (result.didGetDailyBonus) xpGainedText += ` ${getString('game_over_daily_bonus')}`;
+        const xpGainedEl = document.createElement('p');
+        xpGainedEl.textContent = xpGainedText;
+
+        // 경험치 변화
+        const xpChangeEl = document.createElement('p');
         xpChangeEl.textContent = getString('game_over_xp_change', {
             oldXp: oldXp,
             reqOld: requiredXpForOldLevel,
-            newXp: newXpForDisplay,
+            newXp: result.newExperience,
             reqNew: requiredXpForNewLevel
         });
-        detailsContainer.appendChild(xpChangeEl);
 
         // 현재 레벨
-        const currentLevelEl = document.createElement('p');
-        currentLevelEl.textContent = getString('game_over_current_level', { level: result.newLevel });
-        detailsContainer.appendChild(currentLevelEl);
-        
-        // 루나 결과 표시 로직
+        const levelEl = document.createElement('p');
+        levelEl.textContent = getString('game_over_current_level', { level: result.newLevel });
+
+        // 생성된 요소들을 detailsEl에 추가
+        detailsEl.appendChild(xpGainedEl);
+        detailsEl.appendChild(xpChangeEl);
+        detailsEl.appendChild(levelEl);
+
+        // 루나 정보 (존재하는 경우)
         if (result.lunaGained !== undefined) {
-            const oldLuna = oldData.luna || 0;
-            const newLuna = oldLuna + result.lunaGained;
-            let lunaGainedText = getString('game_over_luna_gained', { lunaGained: result.lunaGained });
-            if (result.bonusLuna > 0) {
-                lunaGainedText += ` (반칙 보너스 +${result.bonusLuna}!)`;
-            }
-            const lunaGainedEl = document.createElement('p');
-            lunaGainedEl.textContent = lunaGainedText;
-            const lunaChangeEl = document.createElement('p');
-            lunaChangeEl.textContent = getString('game_over_luna_change', { oldLuna, newLuna });
-
             const divider = document.createElement('hr');
-            divider.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-            divider.style.margin = '10px 0';
-            detailsContainer.appendChild(divider);
-            detailsContainer.appendChild(lunaGainedEl);
-            detailsContainer.appendChild(lunaChangeEl);
+            const lunaGainedEl = document.createElement('p');
+            lunaGainedEl.textContent = getString('game_over_luna_gained', { lunaGained: result.lunaGained });
+            const lunaChangeEl = document.createElement('p');
+            lunaChangeEl.textContent = getString('game_over_luna_change', { oldLuna: oldData.luna || 0, newLuna: (oldData.luna || 0) + result.lunaGained });
+
+            detailsEl.appendChild(divider);
+            detailsEl.appendChild(lunaGainedEl);
+            detailsEl.appendChild(lunaChangeEl);
         }
-
-        msgDiv.appendChild(detailsContainer);
     }
-    
-    // 3. 버튼들을 담을 컨테이너 생성
-    const buttonContainer = document.createElement('div');
-    buttonContainer.className = 'game-over-buttons';
 
-    // '새 게임' 버튼 생성
-    const newGameButton = document.createElement('button');
-    newGameButton.className = 'new-game-button-modal';
-    newGameButton.textContent = getString('new_game_btn'); 
-    if (resetGameCallback) {
-        newGameButton.addEventListener('click', (event) => {
-            event.stopPropagation(); 
-            new Audio('/sounds/Click.mp3').play();
-            resetGameCallback();
-        });
+    // 4. 버튼에 이벤트 리스너를 설정합니다. (중복 등록을 막기 위해 기존 리스너를 제거 후 다시 설정)
+    const newGameClickHandler = (e) => {
+        e.stopPropagation();
+        closeAllPopups(); // 모든 팝업 닫기 (common.js 함수 사용)
+        if (resetGameCallback) resetGameCallback();
+    };
+
+    // 기존 핸들러가 있다면 제거
+    if (newGameBtn._clickHandler) {
+        newGameBtn.removeEventListener('click', newGameBtn._clickHandler);
     }
-    buttonContainer.appendChild(newGameButton);
-    
-    // '로비로 가기' 버튼 추가
-    const lobbyButton = document.createElement('button');
-    lobbyButton.className = 'new-game-button-modal';
-    lobbyButton.textContent = getString('go_to_lobby_btn');
-    lobbyButton.addEventListener('click', (event) => {
-        event.stopPropagation();
-        new Audio('/sounds/Click.mp3').play();
+    newGameBtn.addEventListener('click', newGameClickHandler);
+    newGameBtn._clickHandler = newGameClickHandler; // 핸들러 참조 저장
+
+    const lobbyClickHandler = (e) => {
+        e.stopPropagation();
         window.location.href = '/index.html';
-    });
-    buttonContainer.appendChild(lobbyButton);
+    };
 
-    // 버튼 컨테이너를 메인 div에 추가
-    msgDiv.appendChild(buttonContainer);
-    
-    boardElement.appendChild(msgDiv);
-    requestAnimationFrame(() => msgDiv.classList.add('visible'));
+    if (lobbyBtn._clickHandler) {
+        lobbyBtn.removeEventListener('click', lobbyBtn._clickHandler);
+    }
+    lobbyBtn.addEventListener('click', lobbyClickHandler);
+    lobbyBtn._clickHandler = lobbyClickHandler;
+
+    // 5. 공용 팝업 표시 함수를 호출하여 팝업을 띄웁니다.
+    showPopup('end-game-popup');
 }
 
 // ... (파일의 나머지 부분은 그대로 유지) ...

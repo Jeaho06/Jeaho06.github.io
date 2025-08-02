@@ -80,11 +80,34 @@ export async function getUserData(uid) {
     return docSnap.exists() ? docSnap.data() : null;
 }
 
-// --- [추가] 레벨업에 필요한 경험치를 계산하는 헬퍼 함수 ---
+/**
+ * [최종 적용] 사진 속 제안 모델 (계단식 + 주기적 허들)을 사용하여
+ * 특정 레벨에서 다음 레벨로 올라가는 데 필요한 경험치를 계산합니다.
+ * @param {number} level - 현재 레벨
+ * @returns {number} - 레벨업에 필요한 경험치
+ */
 export function getRequiredXpForLevel(level) {
-    return Math.floor(100 * Math.pow(1.5, level - 1));
-}
+    // 0레벨 또는 음수 레벨에 대한 예외 처리
+    if (level < 1) {
+        return 0;
+    }
 
+    // 1. 주기적인 허들 배율(F1, F2, F3) 계산
+    const F1 = (level % 5 === 0) ? 1.3 : 1;
+    const F2 = (level % 15 === 0) ? 1.4 : 1;
+    const F3 = (level % 45 === 0) ? 1.5 : 1;
+
+    // 2. 계단식으로 증가하는 기본 경험치(BaseXP) 계산
+    const baseXp = 120 +
+                 Math.floor(level / 5) * 60 +
+                 Math.floor(Math.pow(level, 2) / 225) * 120 +
+                 Math.floor(Math.pow(level, 2) / 2025) * 180;
+
+    // 3. 최종 경험치 = 기본 경험치 * 모든 허들 배율
+    const requiredXp = F1 * F2 * F3 * baseXp;
+
+    return Math.floor(requiredXp);
+}
 
 // --- [교체] updateUserStats 함수를 아래의 새로운 함수로 완전히 대체합니다. ---
 /**

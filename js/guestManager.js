@@ -118,7 +118,7 @@ export function updateGuestGameResult(gameResult, moveCount, activeCheats = {}) 
 
     // 6. 결과 반환
     return {
-        xpGained, didLevelUp, newLevel: guestData.level, didGetDailyBonus,
+        xpGained, didLevelUp, newLevel: guestData.level, newExperience: guestData.experience, didGetDailyBonus,
         lunaGained, bonusXp, bonusLuna
     };
 }
